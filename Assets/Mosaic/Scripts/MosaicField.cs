@@ -9,15 +9,15 @@ using UnityEditor;
 public class MosaicField : MonoBehaviour
 {
     public float m_block_size = 15.0f;
-    public Shader m_mosaic_shader;
-    Material m_mat_mosaic;
+    public Shader m_shader;
+    Material m_material;
     Dictionary<Camera, CommandBuffer> m_cameras = new Dictionary<Camera, CommandBuffer>();
 
 
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mosaic_shader = AssetDatabase.LoadAssetAtPath("Assets/Mosaic/Scripts/Mosaic.shader", typeof(Shader)) as Shader;
+        m_shader = AssetDatabase.LoadAssetAtPath("Assets/Mosaic/Scripts/Mosaic.shader", typeof(Shader)) as Shader;
     }
 #endif // UNITY_EDITOR
 
@@ -46,11 +46,11 @@ public class MosaicField : MonoBehaviour
             return;
         }
 
-        if(m_mat_mosaic==null)
+        if(m_material==null)
         {
-            m_mat_mosaic = new Material(m_mosaic_shader);
+            m_material = new Material(m_shader);
         }
-        m_mat_mosaic.SetVector("_BlockSize", new Vector4(m_block_size, m_block_size, m_block_size, m_block_size));
+        m_material.SetVector("_BlockSize", new Vector4(m_block_size, m_block_size, m_block_size, m_block_size));
 
         var cam = Camera.current;
         if (!cam || m_cameras.ContainsKey(cam)) return;
@@ -64,7 +64,7 @@ public class MosaicField : MonoBehaviour
         buf.Blit(BuiltinRenderTextureType.CurrentActive, screenCopyID);
 
         buf.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
-        buf.DrawRenderer(GetComponent<MeshRenderer>(), m_mat_mosaic);
+        buf.DrawRenderer(GetComponent<MeshRenderer>(), m_material);
 
         buf.ReleaseTemporaryRT(screenCopyID);
 
