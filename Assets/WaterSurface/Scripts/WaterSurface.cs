@@ -8,6 +8,7 @@ using UnityEditor;
 
 
 [RequireComponent(typeof(Camera))]
+[RequireComponent(typeof(FrameBufferUtils))]
 public class WaterSurface : MonoBehaviour
 {
     public float m_speed = 1.00f;
@@ -26,6 +27,8 @@ public class WaterSurface : MonoBehaviour
     void Reset()
     {
         m_shader = AssetDatabase.LoadAssetAtPath("Assets/WaterSurface/Shaders/WaterSurface.shader", typeof(Shader)) as Shader;
+        GetComponent<FrameBufferUtils>().m_enable_inv_matrices = true;
+        GetComponent<FrameBufferUtils>().m_enable_frame_buffer = true;
     }
 #endif // UNITY_EDITOR
 
@@ -57,19 +60,18 @@ public class WaterSurface : MonoBehaviour
 
     void OnPreRender()
     {
-        if (m_cb == null || WaterSurfaceEntity.dirty)
+        if (m_cb == null)
         {
-            WaterSurfaceEntity.dirty = false;
-
-            ReleaseCommandBuffer();
             m_cb = new CommandBuffer();
             m_cb.name = "WaterSurface";
-            WaterSurfaceEntity.instances.ForEach((e) =>
-            {
-                m_cb.DrawMesh(e.GetMesh(), e.GetMatrix(), m_material);
-            });
             GetComponent<Camera>().AddCommandBuffer(m_timing, m_cb);
         }
+
+        m_cb.Clear();
+        WaterSurfaceField.instances.ForEach((e) =>
+        {
+            m_cb.DrawMesh(e.GetMesh(), e.GetMatrix(), m_material);
+        });
 
         Camera cam = GetComponent<Camera>();
         Matrix4x4 proj = cam.projectionMatrix;

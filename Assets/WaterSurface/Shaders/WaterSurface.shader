@@ -1,8 +1,14 @@
 ﻿Shader "WaterSurface/Surface" {
 Properties {
+    g_speed ("g_speed", Float) = 1.0
+    g_refraction ("g_refraction", Float) = 0.05
+    g_reflection_intensity ("g_reflection_intensity ", Float) = 0.3
+    g_fresnel ("g_fresnel", Float) = 0.25
+    g_raymarch_step ("g_raymarch_step", Float) = 0.2
+    g_attenuation_by_distance ("g_attenuation_by_distance", Float) = 0.02
 }
 SubShader {
-    Tags { "RenderType"="Opaque" }
+    Tags { "Queue"="Transparent+100" "RenderType"="Opaque" }
     Blend Off
     ZTest Less
     ZWrite Off
@@ -11,7 +17,9 @@ SubShader {
 CGINCLUDE
 #include "Compat.cginc"
 #include "Noise.cginc"
-#include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
+#include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
+
+#define MAX_MARCH 16
 
 float g_speed;
 float g_refraction;
@@ -39,7 +47,7 @@ struct vs_out
 
 struct ps_out
 {
-    float4 color : COLOR0;
+    float4 color : SV_Target;
 };
 
 
@@ -87,61 +95,34 @@ ps_out frag(vs_out i)
 {
     float2 coord = (i.screen_pos.xy / i.screen_pos.w + 1.0) * 0.5;
     #if UNITY_UV_STARTS_AT_TOP
-        coord.y = 1.0-coord.y;
+        coord.y = 1.0 - coord.y;
     #endif
-
-    float4 pos = GetPosition(coord);
-    float d = 0.0;
-    if(d!=0.0) {
-        d = length(pos.xyz - i.world_pos.xyz);
-    }
-    else {
-        float2 offsets[8] = {
-            float2( 0.02, 0.00), float2(-0.02,  0.00),
-            float2( 0.00, 0.02), float2( 0.00, -0.02),
-            float2( 0.01, 0.01), float2(-0.01,  0.01),
-            float2( 0.01,-0.01), float2(-0.01, -0.01),
-        };
-        for(int oi=0; oi<8; ++oi) {
-            float4 p = pos = GetPosition(coord+offsets[oi]);
-            if(pos.w!=0.0) {
-                d = max(d, length(p.xyz - i.world_pos.xyz));
-                break;
-            }
-        }
-    }
 
     float3 n = guess_normal(i.world_pos.xyz, 1.0);
     float3x3 tbn = float3x3( i.tangent.xyz, i.binormal, i.normal.xyz);
     n = normalize(mul(n, tbn));
 
-
     float pd = length(i.world_pos.xyz - _WorldSpaceCameraPos.xyz);
     float fade = max(1.0-pd*0.05, 0.0);
-
     float3 cam_dir = normalize(i.world_pos - _WorldSpaceCameraPos);
-
     float2 ref_coord = 0.0;
     float ref_depth = 0.0;
 
     ps_out r;
     {
         float3 eye = normalize(_WorldSpaceCameraPos.xyz-i.world_pos.xyz);
-
-        int MaxMarch = 16;
         float adv = g_raymarch_step * jitter(i.world_pos.xyz);
         float3 refdir = normalize(-eye + -reflect(-eye, n.xyz)*g_refraction);
-        for(int k=0; k<MaxMarch; ++k) {
-            adv = adv + g_raymarch_step;
-            float4 tpos = mul(UNITY_MATRIX_VP, float4((i.world_pos+refdir*adv), 1.0) );
+        for(int k=0; k<MAX_MARCH; ++k) {
+            float4 tpos = mul(UNITY_MATRIX_VP, float4((i.world_pos+refdir * adv), 1.0) );
+            float ray_depth = ComputeDepth(tpos);
             ref_coord = (tpos.xy / tpos.w + 1.0) * 0.5;
             #if UNITY_UV_STARTS_AT_TOP
                 ref_coord.y = 1.0 - ref_coord.y;
             #endif
             ref_depth = GetDepth(ref_coord);
-            if(tpos.z >= ref_depth) {
-                break;
-            }
+            if(ray_depth >= ref_depth) { break; }
+            adv = adv + g_raymarch_step;
         }
 
         float f1 = max(1.0-abs(dot(n, eye))-0.5, 0.0)*2.0;
@@ -149,9 +130,11 @@ ps_out frag(vs_out i)
 
         r.color = GetFrameBuffer(ref_coord);
         r.color *= 0.9;
-        r.color = r.color * max(1.0-adv*g_attenuation_by_distance, 0.0);
+        r.color = r.color * max(1.0 - adv * g_attenuation_by_distance, 0.0);
         r.color += (f1 * f2) * g_fresnel * fade;
+        //r.color = adv;
     }
+#ifdef ENABLE_REFLECTIONS
     {
         float _RayMarchDistance = 1.0;
         float3 ref_dir = reflect(cam_dir, normalize(i.normal.xyz+n.xyz*0.2));
@@ -160,8 +143,9 @@ ps_out frag(vs_out i)
         #if UNITY_UV_STARTS_AT_TOP
             tcoord.y = 1.0-tcoord.y;
         #endif
-        r.color.xyz += GetFrameBuffer(tcoord).xyz * g_reflection_intensity * fade;
+        r.color.xyz += GetFrameBuffer(tcoord).xyz * g_reflection_intensity;
     }
+#endif // ENABLE_REFLECTIONS
     //r.color.rgb = pow(n*0.5+0.5, 4.0); // for debug
     //r.color.rgb = ref_depth; // for debug
     return r;
@@ -173,9 +157,6 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag
         #pragma target 3.0
-        #ifdef SHADER_API_OPENGL 
-            #pragma glsl
-        #endif
         ENDCG
     }
 }

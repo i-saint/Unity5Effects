@@ -2,7 +2,7 @@
 Properties {
 }
 SubShader {
-    Tags { "RenderType"="Opaque" }
+    Tags { "Queue"="Transparent+100" "RenderType"="Opaque" }
     Blend One One
     ZTest Greater
     ZWrite Off
@@ -11,7 +11,7 @@ SubShader {
 CGINCLUDE
 #include "Compat.cginc"
 #include "Noise.cginc"
-#include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
+#include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
 
 float g_intensity;
 float g_speed;
@@ -29,7 +29,7 @@ struct vs_out
 
 struct ps_out
 {
-    float4 color : COLOR0;
+    float4 color : SV_Target;
 };
 
 
@@ -77,9 +77,6 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag
         #pragma target 3.0
-        #ifdef SHADER_API_OPENGL 
-            #pragma glsl
-        #endif
         ENDCG
     }
 }

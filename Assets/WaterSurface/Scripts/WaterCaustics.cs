@@ -8,6 +8,7 @@ using UnityEditor;
 
 
 [RequireComponent(typeof(Camera))]
+[RequireComponent(typeof(FrameBufferUtils))]
 public class WaterCaustics : MonoBehaviour
 {
     public float m_speed = 1.00f;
@@ -22,6 +23,8 @@ public class WaterCaustics : MonoBehaviour
     void Reset()
     {
         m_shader = AssetDatabase.LoadAssetAtPath("Assets/WaterSurface/Shaders/WaterCaustics.shader", typeof(Shader)) as Shader;
+        GetComponent<FrameBufferUtils>().m_enable_inv_matrices = true;
+        GetComponent<FrameBufferUtils>().m_enable_frame_buffer = true;
     }
 #endif // UNITY_EDITOR
 
@@ -52,22 +55,19 @@ public class WaterCaustics : MonoBehaviour
 
     void OnPreRender()
     {
-        if (m_cb == null || WaterCausticsEntity.dirty)
+        if (m_cb == null)
         {
-            WaterCausticsEntity.dirty = false;
-
-            ReleaseCommandBuffer();
             m_cb = new CommandBuffer();
             m_cb.name = "Caustics";
-            WaterCausticsEntity.instances.ForEach((e) =>
-            {
-                m_cb.DrawMesh(e.GetMesh(), e.GetMatrix(), m_material);
-            });
             GetComponent<Camera>().AddCommandBuffer(m_timing, m_cb);
         }
 
-        //m_material.SetTexture("g_position_buffer", dsr.rtPositionBuffer);
-        //m_material.SetTexture("g_normal_buffer", dsr.rtNormalBuffer);
+        m_cb.Clear();
+        WaterCausticsField.instances.ForEach((e) =>
+        {
+            m_cb.DrawMesh(e.GetMesh(), e.GetMatrix(), m_material);
+        });
+
         m_material.SetFloat("g_speed", m_speed);
         m_material.SetFloat("g_intensity", m_intensity);
     }
