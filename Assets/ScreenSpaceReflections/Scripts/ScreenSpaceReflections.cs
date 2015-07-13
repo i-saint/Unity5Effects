@@ -24,17 +24,24 @@ public class ScreenSpaceReflections : MonoBehaviour
 
     public Algorithm m_algorithm = Algorithm.Temporal;
     public Quality m_quality = Quality.Medium;
+    [Range(0.1f, 1.0f)]
     public float m_resolution_scale = 0.5f;
-    public float m_intensity = 0.3f;
-    public float m_raymarch_distance = 0.2f;
+    [Range(0.0f, 2.0f)]
+    public float m_intensity = 1.0f;
+    [Range(0.0f, 1.0f)]
     public float m_ray_diffusion = 0.01f;
-    public float m_falloff_distance = 20.0f;
+
+    public float m_raymarch_distance = 5.0f;
+    public float m_falloff_distance = 5.0f;
+    public float m_object_thickness = 0.4f;
     public float m_max_accumulation = 25.0f;
     public Shader m_shader;
 
     Material m_material;
     Mesh m_quad;
-    public RenderTexture[] m_rt_tmp = new RenderTexture[2];
+    RenderTexture[] m_reflection_buffers = new RenderTexture[2];
+    RenderTexture[] m_accumulation_buffers = new RenderTexture[2];
+    RenderBuffer[] m_rb = new RenderBuffer[2];
 
 
 #if UNITY_EDITOR
@@ -51,12 +58,17 @@ public class ScreenSpaceReflections : MonoBehaviour
 
     void ReleaseRenderTargets()
     {
-        for (int i = 0; i < m_rt_tmp.Length; ++i)
+        for (int i = 0; i < m_reflection_buffers.Length; ++i)
         {
-            if (m_rt_tmp[i] != null)
+            if (m_reflection_buffers[i] != null)
             {
-                m_rt_tmp[i].Release();
-                m_rt_tmp[i] = null;
+                m_reflection_buffers[i].Release();
+                m_reflection_buffers[i] = null;
+            }
+            if (m_accumulation_buffers[i] != null)
+            {
+                m_accumulation_buffers[i].Release();
+                m_accumulation_buffers[i] = null;
             }
         }
     }
@@ -66,17 +78,22 @@ public class ScreenSpaceReflections : MonoBehaviour
         Camera cam = GetComponent<Camera>();
 
         Vector2 reso = new Vector2(cam.pixelWidth, cam.pixelHeight) * m_resolution_scale;
-        if (m_rt_tmp[0] != null && m_rt_tmp[0].width != (int)reso.x)
+        if (m_reflection_buffers[0] != null && m_reflection_buffers[0].width != (int)reso.x)
         {
             ReleaseRenderTargets();
         }
-        if (m_rt_tmp[0] == null || !m_rt_tmp[0].IsCreated())
+        if (m_reflection_buffers[0] == null || !m_reflection_buffers[0].IsCreated())
         {
-            for (int i = 0; i < m_rt_tmp.Length; ++i)
+            for (int i = 0; i < m_reflection_buffers.Length; ++i)
             {
-                m_rt_tmp[i] = EffectUtils.CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.ARGBHalf);
-                m_rt_tmp[i].filterMode = FilterMode.Point;
-                Graphics.SetRenderTarget(m_rt_tmp[i]);
+                m_reflection_buffers[i] = EffectUtils.CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.ARGB32);
+                m_reflection_buffers[i].filterMode = FilterMode.Point;
+                Graphics.SetRenderTarget(m_reflection_buffers[i]);
+                GL.Clear(false, true, Color.black);
+
+                m_accumulation_buffers[i] = EffectUtils.CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.R8);
+                m_accumulation_buffers[i].filterMode = FilterMode.Point;
+                Graphics.SetRenderTarget(m_accumulation_buffers[i]);
                 GL.Clear(false, true, Color.black);
             }
         }
@@ -115,25 +132,28 @@ public class ScreenSpaceReflections : MonoBehaviour
                 break;
         }
 
-        m_rt_tmp[1].filterMode = FilterMode.Point;
-        m_material.SetFloat("_Intensity", m_intensity);
-        m_material.SetFloat("_RayMarchDistance", m_raymarch_distance);
-        m_material.SetFloat("_RayDiffusion", m_ray_diffusion);
-        m_material.SetFloat("_FalloffDistance", m_falloff_distance);
-        m_material.SetFloat("_MaxAccumulation", m_max_accumulation);
-        m_material.SetTexture("_PrevResult", m_rt_tmp[1]);
+        m_reflection_buffers[1].filterMode = FilterMode.Point;
+        m_material.SetVector("_Params0", new Vector4(m_intensity, m_raymarch_distance, m_ray_diffusion, m_falloff_distance));
+        m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_object_thickness, 0.0f, 0.0f));
+        m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[1]);
+        m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[1]);
         m_material.SetTexture("_FrameBuffer1", src);
 
-        Graphics.SetRenderTarget(m_rt_tmp[0]);
+        m_rb[0] = m_reflection_buffers[0].colorBuffer;
+        m_rb[1] = m_accumulation_buffers[0].colorBuffer;
+        Graphics.SetRenderTarget(m_rb, m_reflection_buffers[0].depthBuffer);
         m_material.SetPass(0);
         Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
-        m_rt_tmp[0].filterMode = FilterMode.Bilinear;
+        m_reflection_buffers[0].filterMode = FilterMode.Bilinear;
         Graphics.SetRenderTarget(dst);
-        m_material.SetTexture("_ReflectionBuffer", m_rt_tmp[0]);
+        m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[0]);
+        m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[0]);
         m_material.SetPass(1);
         Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
-        Swap(ref m_rt_tmp[0], ref m_rt_tmp[1]);
+
+        Swap(ref m_reflection_buffers[0], ref m_reflection_buffers[1]);
+        Swap(ref m_accumulation_buffers[0], ref m_accumulation_buffers[1]);
     }
 
     public static void Swap<T>(ref T lhs, ref T rhs)
