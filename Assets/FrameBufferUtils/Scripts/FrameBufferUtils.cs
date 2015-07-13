@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 [RequireComponent(typeof(Camera))]
-[ExecuteInEditMode]
+//[ExecuteInEditMode]
 public class FrameBufferUtils : MonoBehaviour
 {
     public bool m_enable_inv_matrices;
@@ -16,21 +16,19 @@ public class FrameBufferUtils : MonoBehaviour
     public Shader m_sh_gbuffer_copy;
     public Mesh m_quad;
     Material m_mat_gbuffer_copy;
+    Matrix4x4 m_vp;
     Matrix4x4 m_inv_vp;
+    Matrix4x4 m_prev_vp;
     Matrix4x4 m_prev_inv_vp;
     CommandBuffer m_cb_framebuffer;
     public RenderTexture[] m_gbuffer_rt = new RenderTexture[5];
     RenderBuffer[] m_gbuffer_rb = new RenderBuffer[5];
 
 
-    public Matrix4x4 inv_vp
-    {
-        get { return m_inv_vp; }
-    }
-    public Matrix4x4 prev_inv_vp
-    {
-        get { return m_prev_inv_vp; }
-    }
+    public Matrix4x4 vp { get { return m_vp; } }
+    public Matrix4x4 inv_vp { get { return m_inv_vp; } }
+    public Matrix4x4 prev_vp { get { return m_prev_vp; } }
+    public Matrix4x4 prev_inv_vp { get { return m_prev_inv_vp; } }
 
 
 
@@ -92,15 +90,18 @@ public class FrameBufferUtils : MonoBehaviour
             Matrix4x4 view = cam.worldToCameraMatrix;
             Matrix4x4 proj = cam.projectionMatrix;
             // Unity internally modify projection matrix like this.
+            // (GL.GetGPUProjectionMatrix() maybe better solution)
             proj[2, 0] = proj[2, 0] * 0.5f + proj[3, 0] * 0.5f;
             proj[2, 1] = proj[2, 1] * 0.5f + proj[3, 1] * 0.5f;
             proj[2, 2] = proj[2, 2] * 0.5f + proj[3, 2] * 0.5f;
             proj[2, 3] = proj[2, 3] * 0.5f + proj[3, 3] * 0.5f;
-            Matrix4x4 viewproj = proj * view;
+            m_prev_vp = m_vp;
             m_prev_inv_vp = m_inv_vp;
-            m_inv_vp = viewproj.inverse;
-            Shader.SetGlobalMatrix("_PrevViewProjection", m_prev_inv_vp);
-            Shader.SetGlobalMatrix("_InvViewProjection", m_inv_vp);
+            m_vp = proj * view;
+            m_inv_vp = m_vp.inverse;
+            Shader.SetGlobalMatrix("_InvViewProj", m_inv_vp);
+            Shader.SetGlobalMatrix("_PrevViewProj", m_prev_vp);
+            Shader.SetGlobalMatrix("_PrevInvViewProj", m_prev_inv_vp);
         }
     }
 
@@ -110,6 +111,11 @@ public class FrameBufferUtils : MonoBehaviour
         var cam = GetComponent<Camera>();
         var ret = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, format);
         ret.filterMode = FilterMode.Point;
+        ret.useMipMap = false;
+        ret.generateMips = false;
+        //ret.enableRandomWrite = true;
+        //ret.wrapMode = TextureWrapMode.Repeat;
+        ret.Create();
         return ret;
     }
 
@@ -147,6 +153,7 @@ public class FrameBufferUtils : MonoBehaviour
             m_mat_gbuffer_copy.SetPass(0);
             Graphics.SetRenderTarget(m_gbuffer_rb, m_gbuffer_rt[0].depthBuffer);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+            Graphics.SetRenderTarget(null);
         }
     }
 

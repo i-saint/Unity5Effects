@@ -5,8 +5,8 @@ Properties {
 
 CGINCLUDE
 #include "UnityCG.cginc"
-#include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
 
+sampler2D _FrameBuffer1;
 float _BlockSize;
 
 struct v2f {
@@ -29,7 +29,7 @@ half4 frag (v2f i) : SV_Target
 #if UNITY_UV_STARTS_AT_TOP
     t.y = 1.0 - t.y;
 #endif // UNITY_UV_STARTS_AT_TOP
-    return GetFrameBuffer(t);
+    return tex2D(_FrameBuffer1, t);
 }
 ENDCG
 
@@ -38,6 +38,9 @@ Subshader {
     ZTest Less Cull Back ZWrite Off
     Fog { Mode off }
 
+    GrabPass {
+        "_FrameBuffer1"
+    }
     Pass {
         CGPROGRAM
         #pragma vertex vert

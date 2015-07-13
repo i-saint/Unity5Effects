@@ -21,6 +21,7 @@ CGINCLUDE
 
 #define MAX_MARCH 16
 
+sampler2D _FrameBuffer1;
 float g_speed;
 float g_refraction;
 float g_reflection_intensity;
@@ -128,7 +129,7 @@ ps_out frag(vs_out i)
         float f1 = max(1.0-abs(dot(n, eye))-0.5, 0.0)*2.0;
         float f2 = 1.0-abs(dot(i.normal, eye));
 
-        r.color = GetFrameBuffer(ref_coord);
+        r.color = tex2D(_FrameBuffer1, ref_coord);
         r.color *= 0.9;
         r.color = r.color * max(1.0 - adv * g_attenuation_by_distance, 0.0);
         r.color += (f1 * f2) * g_fresnel * fade;
@@ -143,7 +144,7 @@ ps_out frag(vs_out i)
         #if UNITY_UV_STARTS_AT_TOP
             tcoord.y = 1.0-tcoord.y;
         #endif
-        r.color.xyz += GetFrameBuffer(tcoord).xyz * g_reflection_intensity;
+        r.color.xyz += tex2D(_FrameBuffer1, tcoord).xyz * g_reflection_intensity;
     }
 #endif // ENABLE_REFLECTIONS
     //r.color.rgb = pow(n*0.5+0.5, 4.0); // for debug
@@ -152,6 +153,9 @@ ps_out frag(vs_out i)
 }
 ENDCG
 
+    GrabPass {
+        "_FrameBuffer1"
+    }
     Pass {
         CGPROGRAM
         #pragma vertex vert

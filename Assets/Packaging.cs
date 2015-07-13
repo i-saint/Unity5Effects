@@ -13,7 +13,6 @@ public class Packaging
     {
         string[] files = new string[]
         {
-"Assets/FrameBufferUtils",
 "Assets/Mosaic",
         };
         AssetDatabase.ExportPackage(files, "Mosaic.unitypackage", ExportPackageOptions.Recurse);

@@ -103,7 +103,7 @@ public class EffectUtils
         r.filterMode = FilterMode.Point;
         r.useMipMap = false;
         r.generateMips = false;
-        r.enableRandomWrite = true;
+        //r.enableRandomWrite = true;
         //r.wrapMode = TextureWrapMode.Repeat;
         r.Create();
         return r;
