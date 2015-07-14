@@ -24,27 +24,31 @@ float4 _Params1;
 #define _MaxAccumulation    _Params1.x
 #define _RayHitRadius       _Params1.y
 
-
-#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
-
-
- #if QUALITY_FAST
+// on OpenGL ES platforms, shader compiler goes infinite loop (?) without this workaround...
+#if defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
+    // QUALITY_FAST
     #define MAX_MARCH 12
     #define MAX_TRACEBACK_MARCH 4
     #define NUM_RAYS 1
- #elif QUALITY_MEDIUM
-    #define MAX_MARCH 16
-    #define MAX_TRACEBACK_MARCH 8
-    #define NUM_RAYS 1
- #elif QUALITY_HIGH
-    #define MAX_MARCH 24
-    #define MAX_TRACEBACK_MARCH 8
-    #define NUM_RAYS 2
- #elif QUALITY_ULTRA
-    #define MAX_MARCH 32
-    #define MAX_TRACEBACK_MARCH 8
-    #define NUM_RAYS 4
- #endif
+#else
+    #if QUALITY_FAST
+        #define MAX_MARCH 12
+        #define MAX_TRACEBACK_MARCH 4
+        #define NUM_RAYS 1
+    #elif QUALITY_HIGH
+        #define MAX_MARCH 24
+        #define MAX_TRACEBACK_MARCH 8
+        #define NUM_RAYS 2
+    #elif QUALITY_ULTRA
+        #define MAX_MARCH 24
+        #define MAX_TRACEBACK_MARCH 8
+        #define NUM_RAYS 4
+    #else // QUALITY_MEDIUM
+        #define MAX_MARCH 16
+        #define MAX_TRACEBACK_MARCH 8
+        #define NUM_RAYS 1
+    #endif
+#endif
 
 #define ENABLE_RAY_TRACEBACK
 #define ENABLE_BLURED_COMBINE
@@ -63,8 +67,8 @@ struct vs_out
 
 struct ps_out
 {
-    float4 color : SV_Target0;
-    float accumulation : SV_Target1;
+    half4 color : SV_Target0;
+    half4 accumulation : SV_Target1;
 };
 
 
@@ -78,6 +82,8 @@ vs_out vert(ia_out v)
 }
 
 
+// on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
+#define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
 
 float Jitter(float3 p)
 {
@@ -107,7 +113,7 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
         ray_pos = p.xyz + refdir * adv;
         float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos, 1.0));
         ray_pos4.y *= _ProjectionParams.x;
-        ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5;
+        ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
         float ray_depth = ComputeDepth(ray_pos4);
         float ref_depth = GetDepth(ray_coord);
 
@@ -121,12 +127,12 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
     }
 
 #ifdef ENABLE_RAY_TRACEBACK
-    for(int k=0; k<MAX_TRACEBACK_MARCH-1; ++k) {
+    for(int l=0; l<MAX_TRACEBACK_MARCH-1; ++l) {
         adv -= (march_step/MAX_TRACEBACK_MARCH);
         float3 ray_pos_ = p.xyz + refdir * adv;
         float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos_, 1.0));
         ray_pos4.y *= _ProjectionParams.x;
-        float2 ray_coord_ = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5;
+        float2 ray_coord_ = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
         float ray_depth = ComputeDepth(ray_pos4);
         float ref_depth = GetDepth(ray_coord_.xy);
 
@@ -152,7 +158,7 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
 
 ps_out frag_reflections(vs_out i)
 {
-    float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5;
+    float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5 + HalfPixelSize;
 
     ps_out r;
     r.color = 0.0;
@@ -193,6 +199,7 @@ ps_out frag_reflections(vs_out i)
     RayMarching(0.3, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
 #endif
     r.color = blend_color / accumulation;
+    //r.color = float4(diff, diff, diff, 1.0); // for debug
     r.accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
     return r;
 }
@@ -231,6 +238,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_reflections
         #pragma target 3.0
+        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
         ENDCG
     }
     Pass {

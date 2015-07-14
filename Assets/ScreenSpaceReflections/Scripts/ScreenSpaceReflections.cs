@@ -61,12 +61,14 @@ public class ScreenSpaceReflections : MonoBehaviour
 
     void Awake()
     {
+#if UNITY_EDITOR
         var cam = GetComponent<Camera>();
         if (cam.renderingPath != RenderingPath.DeferredShading &&
             (cam.renderingPath == RenderingPath.UsePlayerSettings && PlayerSettings.renderingPath != RenderingPath.DeferredShading))
         {
             Debug.Log("ScreenSpaceReflections: Rendering path must be deferred.");
         }
+#endif // UNITY_EDITOR
     }
 
     void OnDisable()

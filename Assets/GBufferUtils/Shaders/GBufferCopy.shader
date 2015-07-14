@@ -26,7 +26,7 @@ struct ps_out_gbuffer
 };
 struct ps_out_depth
 {
-    float depth             : SV_Target0;
+    float4 depth             : SV_Target0;
 };
 
 
@@ -39,9 +39,12 @@ vs_out vert(ia_out v)
     return o;
 }
 
+// on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
+#define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
+
 ps_out_gbuffer frag_gbuffer(vs_out v)
 {
-    float2 tc = v.screen_pos * 0.5 + 0.5;
+    float2 tc = v.screen_pos * 0.5 + 0.5 + HalfPixelSize;
 
     ps_out_gbuffer o;
     o.diffuse           = tex2D(_CameraGBufferTexture0, tc);
@@ -53,7 +56,7 @@ ps_out_gbuffer frag_gbuffer(vs_out v)
 
 ps_out_depth frag_depth(vs_out v)
 {
-    float2 tc = v.screen_pos * 0.5 + 0.5;
+    float2 tc = v.screen_pos * 0.5 + 0.5 + HalfPixelSize;
 
     ps_out_depth o;
     o.depth = tex2D(_CameraDepthTexture, tc).x;

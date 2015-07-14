@@ -14,8 +14,8 @@ CGINCLUDE
 #define MAX_MARCH_QPASS 40
 #define MAX_MARCH_HPASS 20
 #define MAX_MARCH_APASS 5
-
 #define MAX_MARCH_SINGLE_GBUFFER_PASS 100
+
 
 int g_scene;
 int g_hdr;
@@ -210,7 +210,7 @@ gbuffer_out frag_gbuffer(vs_out v)
 
 struct distance_out
 {
-    float distance : SV_Target0;
+    float4 distance : SV_Target0;
     //half steps : SV_Target1;
 };
 
@@ -242,7 +242,7 @@ opass_out frag_opass(vs_out v)
 }
 
 
-distance_out adaptive_pass(vs_out v, int max_steps)
+distance_out adaptive_pass(vs_out v, const int max_steps)
 {
 #if UNITY_UV_STARTS_AT_TOP
     v.spos.y *= -1.0;

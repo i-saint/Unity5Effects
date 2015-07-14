@@ -89,11 +89,13 @@ public class Raymarcher : MonoBehaviour
     void Awake()
     {
         var cam = GetComponent<Camera>();
+#if UNITY_EDITOR
         if (cam.renderingPath != RenderingPath.DeferredShading &&
             (cam.renderingPath == RenderingPath.UsePlayerSettings && PlayerSettings.renderingPath != RenderingPath.DeferredShading))
         {
             Debug.Log("Raymarcher: Rendering path must be deferred.");
         }
+#endif // UNITY_EDITOR
 
         m_camera = cam;
         m_enable_adaptive_prev = m_enable_adaptive;
