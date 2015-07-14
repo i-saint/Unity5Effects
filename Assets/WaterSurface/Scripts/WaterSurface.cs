@@ -89,20 +89,3 @@ public class WaterSurface : MonoBehaviour
         m_material.SetFloat("g_attenuation_by_distance", m_attenuation_by_distance);
     }
 }
-
-
-public class EffectUtils
-{
-    public static RenderTexture CreateRenderTexture(int w, int h, int d, RenderTextureFormat f)
-    {
-        Debug.Log("EffectsUtil.CreateRenderTexture() " + w + ", " + h + ", " + d);
-        RenderTexture r = new RenderTexture(w, h, d, f);
-        r.filterMode = FilterMode.Point;
-        r.useMipMap = false;
-        r.generateMips = false;
-        //r.enableRandomWrite = true;
-        //r.wrapMode = TextureWrapMode.Repeat;
-        r.Create();
-        return r;
-    }
-}

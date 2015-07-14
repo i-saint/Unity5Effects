@@ -40,6 +40,17 @@ public class ScreenSpaceReflections : MonoBehaviour
     RenderBuffer[] m_rb = new RenderBuffer[2];
 
 
+    public static RenderTexture CreateRenderTexture(int w, int h, int d, RenderTextureFormat f)
+    {
+        Debug.Log("EffectsUtil.CreateRenderTexture() " + w + ", " + h + ", " + d);
+        RenderTexture r = new RenderTexture(w, h, d, f);
+        r.filterMode = FilterMode.Point;
+        r.useMipMap = false;
+        r.generateMips = false;
+        r.Create();
+        return r;
+    }
+
 #if UNITY_EDITOR
     void Reset()
     {
@@ -94,12 +105,12 @@ public class ScreenSpaceReflections : MonoBehaviour
         {
             for (int i = 0; i < m_reflection_buffers.Length; ++i)
             {
-                m_reflection_buffers[i] = EffectUtils.CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.ARGB32);
+                m_reflection_buffers[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.ARGB32);
                 m_reflection_buffers[i].filterMode = FilterMode.Point;
                 Graphics.SetRenderTarget(m_reflection_buffers[i]);
                 GL.Clear(false, true, Color.black);
 
-                m_accumulation_buffers[i] = EffectUtils.CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.R8);
+                m_accumulation_buffers[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.R8);
                 m_accumulation_buffers[i].filterMode = FilterMode.Point;
                 Graphics.SetRenderTarget(m_accumulation_buffers[i]);
                 GL.Clear(false, true, Color.black);
