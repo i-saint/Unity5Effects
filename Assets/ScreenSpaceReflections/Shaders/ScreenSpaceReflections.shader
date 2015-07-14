@@ -175,11 +175,7 @@ ps_out frag_reflections(vs_out i)
         prev_coord = (ppos.xy / ppos.w) * 0.5 + 0.5;
         prev_result = tex2D(_ReflectionBuffer, prev_coord);
         accumulation = tex2D(_AccumulationBuffer, prev_coord).x * _MaxAccumulation;
-#if defined(SHADER_TARGET_GLSL) || defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
-        prev_pos = GetPositionByPrevMatrix(coord);
-#else
         prev_pos = GetPrevPosition(coord);
-#endif
     }
 
     float diff = length(p.xyz-prev_pos.xyz);

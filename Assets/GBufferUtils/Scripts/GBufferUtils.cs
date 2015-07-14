@@ -21,7 +21,7 @@ public class GBufferUtils : MonoBehaviour
     Matrix4x4 m_prev_inv_vp;
     CommandBuffer m_cb_framebuffer;
     public RenderTexture[] m_gbuffer_rt = new RenderTexture[5];
-    RenderBuffer[] m_gbuffer_rb = new RenderBuffer[5];
+    RenderBuffer[] m_gbuffer_rb = new RenderBuffer[4];
 
 
     public Matrix4x4 vp { get { return m_vp; } }
@@ -122,10 +122,10 @@ public class GBufferUtils : MonoBehaviour
                 m_gbuffer_rt[2] = CreateGBufferRT(RenderTextureFormat.ARGB2101010);
                 m_gbuffer_rt[3] = CreateGBufferRT(cam.hdr ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32);
                 m_gbuffer_rt[4] = CreateGBufferRT(RenderTextureFormat.RFloat);
-                for (int i = 0; i < m_gbuffer_rt.Length; ++i)
-                {
-                    m_gbuffer_rb[i] = m_gbuffer_rt[i].colorBuffer;
-                }
+                m_gbuffer_rb[0] = m_gbuffer_rt[0].colorBuffer;
+                m_gbuffer_rb[1] = m_gbuffer_rt[1].colorBuffer;
+                m_gbuffer_rb[2] = m_gbuffer_rt[2].colorBuffer;
+                m_gbuffer_rb[3] = m_gbuffer_rt[3].colorBuffer;
 
                 Shader.SetGlobalTexture("_PrevCameraGBufferTexture0", m_gbuffer_rt[0]);
                 Shader.SetGlobalTexture("_PrevCameraGBufferTexture1", m_gbuffer_rt[1]);
@@ -133,9 +133,16 @@ public class GBufferUtils : MonoBehaviour
                 Shader.SetGlobalTexture("_PrevCameraGBufferTexture3", m_gbuffer_rt[3]);
                 Shader.SetGlobalTexture("_PrevCameraDepthTexture", m_gbuffer_rt[4]);
             }
+
+            // currently max render targets on OpenGL platforms are 4. so we need 2 passes.
             m_mat_gbuffer_copy.SetPass(0);
             Graphics.SetRenderTarget(m_gbuffer_rb, m_gbuffer_rt[0].depthBuffer);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
+            m_mat_gbuffer_copy.SetPass(1);
+            Graphics.SetRenderTarget(m_gbuffer_rt[4]);
+            Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
             Graphics.SetRenderTarget(null);
         }
     }

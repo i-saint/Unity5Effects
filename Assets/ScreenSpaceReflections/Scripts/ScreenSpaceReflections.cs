@@ -42,7 +42,6 @@ public class ScreenSpaceReflections : MonoBehaviour
 
     public static RenderTexture CreateRenderTexture(int w, int h, int d, RenderTextureFormat f)
     {
-        Debug.Log("EffectsUtil.CreateRenderTexture() " + w + ", " + h + ", " + d);
         RenderTexture r = new RenderTexture(w, h, d, f);
         r.filterMode = FilterMode.Point;
         r.useMipMap = false;

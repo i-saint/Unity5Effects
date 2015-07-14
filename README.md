@@ -5,16 +5,18 @@ Unity5 用に書いたエフェクト置き場。現在あるもの：
 
 ### Temporal Screen Space Reflections
 ![alt text](doc/ScreenSpaceReflections.png)  
-[パッケージ](https://github.com/i-saint/Unity5Effects/raw/master/Packages/ScreenSpaceReflections.unitypackage)  
+[ScreenSpaceReflections.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/ScreenSpaceReflections.unitypackage)  
+
 スクリーンスペース反射です。  
 kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公開していますが、そちらとはアルゴリズムが違い、
-若干残像が出てしまう欠点があるものの、圧倒的に高速でクオリティも引けを取りません。  
+若干残像が残ってしまう欠点があるものの、圧倒的に高速でクオリティも引けを取りません。  
 実装の詳細に興味があれば[こちらの記事](http://i-saint.hatenablog.com/entry/2014/12/05/174706)もどうぞ。
 また、上記スクリーンショットの背景は[こちら](https://github.com/i-saint/RaymarchingOnUnity5)の Raymarcher によるものです。
 
 #### モザイク
 ![alt text](doc/mosaic.gif)  
-[パッケージ](https://github.com/i-saint/Unity5Effects/raw/master/Packages/Mosaic.unitypackage)  
+[Mosaic.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/Mosaic.unitypackage)  
+
 指定オブジェクトをモザイク領域化するシェーダです。
 
 
