@@ -8,6 +8,7 @@ using UnityEditor;
 
 [RequireComponent(typeof(Camera))]
 [RequireComponent(typeof(GBufferUtils))]
+//[ExecuteInEditMode]
 public class ScreenSpaceReflections : MonoBehaviour
 {
     public enum Quality
@@ -34,8 +35,8 @@ public class ScreenSpaceReflections : MonoBehaviour
 
     Material m_material;
     Mesh m_quad;
-    RenderTexture[] m_reflection_buffers = new RenderTexture[2];
-    RenderTexture[] m_accumulation_buffers = new RenderTexture[2];
+    public RenderTexture[] m_reflection_buffers = new RenderTexture[2];
+    public RenderTexture[] m_accumulation_buffers = new RenderTexture[2];
     RenderBuffer[] m_rb = new RenderBuffer[2];
 
 
@@ -47,6 +48,16 @@ public class ScreenSpaceReflections : MonoBehaviour
         GetComponent<GBufferUtils>().m_enable_prev_gbuffer = true;
     }
 #endif // UNITY_EDITOR
+
+    void Awake()
+    {
+        var cam = GetComponent<Camera>();
+        if (cam.renderingPath != RenderingPath.DeferredShading &&
+            (cam.renderingPath == RenderingPath.UsePlayerSettings && PlayerSettings.renderingPath != RenderingPath.DeferredShading))
+        {
+            Debug.Log("ScreenSpaceReflections: Rendering path must be deferred.");
+        }
+    }
 
     void OnDisable()
     {

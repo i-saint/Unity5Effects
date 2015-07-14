@@ -10,7 +10,7 @@ SubShader {
 
 CGINCLUDE
 #include "UnityCG.cginc"
-#include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
+#include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
 sampler2D _FrameBuffer1;
 sampler2D _ReflectionBuffer;
 sampler2D _AccumulationBuffer;
@@ -37,11 +37,11 @@ float4 _Params1;
     #define MAX_TRACEBACK_MARCH 8
     #define NUM_RAYS 1
  #elif QUALITY_HIGH
-    #define MAX_MARCH 16
+    #define MAX_MARCH 24
     #define MAX_TRACEBACK_MARCH 8
     #define NUM_RAYS 2
  #elif QUALITY_ULTRA
-    #define MAX_MARCH 16
+    #define MAX_MARCH 32
     #define MAX_TRACEBACK_MARCH 8
     #define NUM_RAYS 4
  #endif
@@ -175,7 +175,11 @@ ps_out frag_reflections(vs_out i)
         prev_coord = (ppos.xy / ppos.w) * 0.5 + 0.5;
         prev_result = tex2D(_ReflectionBuffer, prev_coord);
         accumulation = tex2D(_AccumulationBuffer, prev_coord).x * _MaxAccumulation;
+#if defined(SHADER_TARGET_GLSL) || defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
+        prev_pos = GetPositionByPrevMatrix(coord);
+#else
         prev_pos = GetPrevPosition(coord);
+#endif
     }
 
     float diff = length(p.xyz-prev_pos.xyz);
@@ -197,12 +201,12 @@ ps_out frag_reflections(vs_out i)
     return r;
 }
 
-
 float4 frag_combine(vs_out i) : SV_Target
 {
     float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5;
-    float accumulation = tex2D(_AccumulationBuffer, coord).x;
+    //return tex2D(_ReflectionBuffer, coord); // for debug
 
+    float accumulation = tex2D(_AccumulationBuffer, coord).x;
     float2 s = (_ScreenParams.zw-1.0) * 1.25;
     float4 color = tex2D(_FrameBuffer1, coord);
     float4 ref_color = 0.0;
@@ -220,7 +224,6 @@ float4 frag_combine(vs_out i) : SV_Target
     ref_color += tex2D(_ReflectionBuffer, coord);
 #endif
 
-    //color = tex2D(_ReflectionBuffer, coord); // for debug
     float alpha = ref_color.a * _Intensity;
     return float4(lerp(color.rgb, ref_color.rgb, alpha), 1.0);
 }
