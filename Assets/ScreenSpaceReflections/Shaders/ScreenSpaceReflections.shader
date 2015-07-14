@@ -9,6 +9,7 @@ SubShader {
     Cull Off
 
 CGINCLUDE
+#include "UnityCG.cginc"
 #include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
 sampler2D _FrameBuffer1;
 sampler2D _ReflectionBuffer;
@@ -21,21 +22,32 @@ float4 _Params1;
 #define _RayDiffusion       _Params0.z
 #define _FalloffDistance    _Params0.w
 #define _MaxAccumulation    _Params1.x
-#define _Thickness          _Params1.y
+#define _RayHitRadius       _Params1.y
 
 
-
-#pragma multi_compile ALGORITHM_SINGLE_PASS ALGORITHM_TEMPORAL
-#pragma multi_compile QUALITY_LOW QUALITY_MEDIUM QUALITY_HIGH
+#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
 
 
- #if QUALITY_LOW
-    #define MAX_MARCH 8
+ #if QUALITY_FAST
+    #define MAX_MARCH 12
+    #define MAX_TRACEBACK_MARCH 4
+    #define NUM_RAYS 1
  #elif QUALITY_MEDIUM
     #define MAX_MARCH 16
+    #define MAX_TRACEBACK_MARCH 8
+    #define NUM_RAYS 1
  #elif QUALITY_HIGH
     #define MAX_MARCH 16
+    #define MAX_TRACEBACK_MARCH 8
+    #define NUM_RAYS 2
+ #elif QUALITY_ULTRA
+    #define MAX_MARCH 16
+    #define MAX_TRACEBACK_MARCH 8
+    #define NUM_RAYS 4
  #endif
+
+#define ENABLE_RAY_TRACEBACK
+#define ENABLE_BLURED_COMBINE
 
 
 struct ia_out
@@ -78,62 +90,61 @@ float3 Diffusion(float3 p, float d)
     return (float3(frac(sin(p)*43758.5453))*2.0-1.0) * d;
 }
 
-void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, float smoothness, float march_step, float thickness,
+void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, float smoothness, float march_step, float hit_radius,
     inout float4 blend_color, inout float accumulation)
 {
-    float3 refdir = reflect(cam_dir, n.xyz) + Diffusion(p+seed, _RayDiffusion) * (1.0-smoothness);
+    float3 refdir = normalize(reflect(cam_dir, n.xyz) + Diffusion(p+seed, _RayDiffusion) * (1.0-smoothness));
     float jitter = march_step * Jitter(p+seed);
     float2 hit_coord = coord;
+    float hit = 0.0;
     float adv;
+
+    float3 ray_pos;
+    float2 ray_coord;
 
     for(int k=0; k<MAX_MARCH; ++k) {
         adv = march_step * k + jitter;
-        float3 ray_pos = p.xyz + refdir * adv;
+        ray_pos = p.xyz + refdir * adv;
         float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos, 1.0));
         ray_pos4.y *= _ProjectionParams.x;
-        float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5;
+        ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5;
         float ray_depth = ComputeDepth(ray_pos4);
+        float ref_depth = GetDepth(ray_coord);
 
-        float ref_depth = GetDepth(ray_coord.xy);
-        float4 ref_pos = GetPosition(ray_coord.xy);
-
-        if(ray_depth>ref_depth) {
-            if(ray_depth<ref_depth+thickness) {
-                hit_coord = ray_coord;
-                blend_color.a += max(1.0 - (adv / _FalloffDistance), 0.0) * smoothness;
-            }
+        if(ray_depth > ref_depth) {
+            hit = 1.0;
             break;
         }
         if(ray_coord.x>1.0 || ray_coord.x<0.0 || ray_coord.y>1.0 || ray_coord.y<0.0) {
             break;
         }
     }
-#if QUALITY_HIGH
-/*
-    for(int k=0; k<7; ++k) {
-        adv -= march_step*0.125;
-        float3 ray_pos = p.xyz + refdir * adv;
-        float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos, 1.0));
+
+#ifdef ENABLE_RAY_TRACEBACK
+    for(int k=0; k<MAX_TRACEBACK_MARCH-1; ++k) {
+        adv -= (march_step/MAX_TRACEBACK_MARCH);
+        float3 ray_pos_ = p.xyz + refdir * adv;
+        float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos_, 1.0));
         ray_pos4.y *= _ProjectionParams.x;
-        float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5;
+        float2 ray_coord_ = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5;
         float ray_depth = ComputeDepth(ray_pos4);
+        float ref_depth = GetDepth(ray_coord_.xy);
 
-        float ref_depth = GetDepth(ray_coord.xy);
-        float4 ref_pos = GetPosition(ray_coord.xy);
-
-        if(ray_depth>ref_depth) {
-            if(ray_depth<ref_depth+thickness) {
-                hit_coord = ray_coord;
-                blend_color.a += max(1.0 - (adv / _FalloffDistance), 0.0) * smoothness;
-            }
+        if(ray_depth < ref_depth) {
             break;
         }
-        if(ray_coord.x>1.0 || ray_coord.x<0.0 || ray_coord.y>1.0 || ray_coord.y<0.0) {
-            break;
-        }
+        ray_coord = ray_coord_;
+        ray_pos = ray_pos_;
     }
-*/
 #endif
+
+    float4 ref_pos = GetPosition(ray_coord);
+    float3 ref_normal = GetNormal(ray_coord);
+    if(dot(ref_normal, refdir) > 0.0 || length(ref_pos.xyz-ray_pos.xyz) > hit_radius) {
+        hit = 0.0;
+    }
+    hit_coord = lerp(hit_coord, ray_coord, hit);
+    blend_color.a += max(1.0 - (adv / _FalloffDistance), 0.0) * smoothness * hit;
 
     blend_color.rgb += tex2D(_FrameBuffer1, hit_coord).rgb;
     accumulation += 1.0;
@@ -171,13 +182,16 @@ ps_out frag_reflections(vs_out i)
     accumulation *= max(1.0-(0.05+diff*15.0), 0.0);
     float4 blend_color = prev_result * accumulation;
     float march_step = _RayMarchDistance / MAX_MARCH;
-    float thickness = _Thickness;
+    float hit_radius = _RayHitRadius;
 
-    RayMarching(0.0, p, coord, cam_dir, n, smoothness, march_step, thickness, blend_color, accumulation);
-#if QUALITY_HIGH
-    RayMarching(0.1, p, coord, cam_dir, n, smoothness, march_step, thickness, blend_color, accumulation);
+    RayMarching(0.0, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+#if NUM_RAYS >= 2
+    RayMarching(0.1, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
 #endif
-
+#if NUM_RAYS >= 4
+    RayMarching(0.2, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+    RayMarching(0.3, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+#endif
     r.color = blend_color / accumulation;
     r.accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
     return r;
@@ -189,12 +203,10 @@ float4 frag_combine(vs_out i) : SV_Target
     float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5;
     float accumulation = tex2D(_AccumulationBuffer, coord).x;
 
-    float2 s = (_ScreenParams.zw-1.0) * 1.73;
+    float2 s = (_ScreenParams.zw-1.0) * 1.25;
     float4 color = tex2D(_FrameBuffer1, coord);
     float4 ref_color = 0.0;
-    ref_color += tex2D(_ReflectionBuffer, coord);
-
-    /*
+#ifdef ENABLE_BLURED_COMBINE
     ref_color += tex2D(_ReflectionBuffer, coord+float2( 0.0, 0.0)) * 0.2;
     ref_color += tex2D(_ReflectionBuffer, coord+float2( s.x, 0.0)) * 0.125;
     ref_color += tex2D(_ReflectionBuffer, coord+float2(-s.x, 0.0)) * 0.125;
@@ -204,7 +216,9 @@ float4 frag_combine(vs_out i) : SV_Target
     ref_color += tex2D(_ReflectionBuffer, coord+float2(-s.x, s.y)) * 0.075;
     ref_color += tex2D(_ReflectionBuffer, coord+float2(-s.x,-s.y)) * 0.075;
     ref_color += tex2D(_ReflectionBuffer, coord+float2( s.x,-s.y)) * 0.075;
-    */
+#else
+    ref_color += tex2D(_ReflectionBuffer, coord);
+#endif
 
     //color = tex2D(_ReflectionBuffer, coord); // for debug
     float alpha = ref_color.a * _Intensity;

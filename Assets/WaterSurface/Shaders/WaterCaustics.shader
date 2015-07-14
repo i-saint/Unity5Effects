@@ -11,7 +11,7 @@ SubShader {
 CGINCLUDE
 #include "Compat.cginc"
 #include "Noise.cginc"
-#include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
+#include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
 
 float g_intensity;
 float g_speed;

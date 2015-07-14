@@ -8,7 +8,6 @@ using UnityEditor;
 
 
 [RequireComponent(typeof(Camera))]
-[RequireComponent(typeof(FrameBufferUtils))]
 public class WaterCaustics : MonoBehaviour
 {
     public float m_speed = 1.00f;
@@ -23,8 +22,6 @@ public class WaterCaustics : MonoBehaviour
     void Reset()
     {
         m_shader = AssetDatabase.LoadAssetAtPath("Assets/WaterSurface/Shaders/WaterCaustics.shader", typeof(Shader)) as Shader;
-        GetComponent<FrameBufferUtils>().m_enable_inv_matrices = true;
-        GetComponent<FrameBufferUtils>().m_enable_frame_buffer = true;
     }
 #endif // UNITY_EDITOR
 

@@ -1,3 +1,4 @@
+
 // G-Buffers (Unity internals)
 sampler2D _CameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
 sampler2D _CameraGBufferTexture1;   // spec color (rgb), smoothness (a)
@@ -29,7 +30,7 @@ half4 GetFrameBuffer(float2 uv) { return tex2D(_FrameBuffer, uv); }
 float4 GetPosition(float2 uv)
 {
     float2 screen_position = uv * 2.0 - 1.0;
-    float depth = tex2D(_CameraDepthTexture, uv).x;
+    float depth = GetDepth(uv);
     float4 pos4 = mul(_InvViewProj, float4(screen_position, depth, 1.0));
     return pos4 / pos4.w;
 }
@@ -51,7 +52,7 @@ half4 GetPrevFrameBuffer(float2 uv) { return tex2D(_PrevFrameBuffer, uv); }
 float4 GetPrevPosition(float2 uv)
 {
     float2 screen_position = uv * 2.0 - 1.0;
-    float depth = tex2D(_PrevCameraDepthTexture, uv).x;
+    float depth = GetPrevDepth(uv);
     float4 pos4 = mul(_PrevInvViewProj, float4(screen_position, depth, 1.0));
     return pos4 / pos4.w;
 }

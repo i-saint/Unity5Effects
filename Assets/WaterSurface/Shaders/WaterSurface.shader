@@ -17,7 +17,7 @@ SubShader {
 CGINCLUDE
 #include "Compat.cginc"
 #include "Noise.cginc"
-#include "Assets/FrameBufferUtils/Shaders/GBufferUtils.cginc"
+#include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
 
 #define MAX_MARCH 16
 

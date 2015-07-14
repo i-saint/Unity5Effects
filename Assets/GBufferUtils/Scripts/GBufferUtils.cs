@@ -8,10 +8,9 @@ using UnityEditor;
 
 [RequireComponent(typeof(Camera))]
 //[ExecuteInEditMode]
-public class FrameBufferUtils : MonoBehaviour
+public class GBufferUtils : MonoBehaviour
 {
     public bool m_enable_inv_matrices;
-    public bool m_enable_frame_buffer;
     public bool m_enable_prev_gbuffer;
     public Shader m_sh_gbuffer_copy;
     public Mesh m_quad;
@@ -35,7 +34,7 @@ public class FrameBufferUtils : MonoBehaviour
 #if UNITY_EDITOR
     void Reset()
     {
-        m_sh_gbuffer_copy = AssetDatabase.LoadAssetAtPath("Assets/FrameBufferUtils/Shaders/GBufferCopy.shader", typeof(Shader)) as Shader;
+        m_sh_gbuffer_copy = AssetDatabase.LoadAssetAtPath("Assets/GBufferUtils/Shaders/GBufferCopy.shader", typeof(Shader)) as Shader;
         m_quad = GenerateQuad();
     }
 #endif // UNITY_EDITOR
@@ -71,20 +70,6 @@ public class FrameBufferUtils : MonoBehaviour
 
         var cam = GetComponent<Camera>();
 
-        if (m_enable_frame_buffer && m_cb_framebuffer == null)
-        {
-            m_cb_framebuffer= new CommandBuffer();
-            m_cb_framebuffer.name = "GBufferUtils FrameBuffer";
-
-            int id_FrameBuffer = Shader.PropertyToID("_FrameBuffer");
-            int id_PrevFrameBuffer = Shader.PropertyToID("_PrevFrameBuffer");
-            m_cb_framebuffer.GetTemporaryRT(id_FrameBuffer, -1, -1, 0, FilterMode.Bilinear, RenderTextureFormat.ARGB32);
-            m_cb_framebuffer.GetTemporaryRT(id_PrevFrameBuffer, -1, -1, 0, FilterMode.Bilinear, RenderTextureFormat.ARGB32);
-            //m_cb_framebuffer.Blit(id_FrameBuffer, id_PrevFrameBuffer);
-            m_cb_framebuffer.Blit(BuiltinRenderTextureType.CurrentActive, id_FrameBuffer);
-            cam.AddCommandBuffer(CameraEvent.AfterSkybox, m_cb_framebuffer);
-        }
-
         if(m_enable_inv_matrices)
         {
             Matrix4x4 view = cam.worldToCameraMatrix;
@@ -113,8 +98,6 @@ public class FrameBufferUtils : MonoBehaviour
         ret.filterMode = FilterMode.Point;
         ret.useMipMap = false;
         ret.generateMips = false;
-        //ret.enableRandomWrite = true;
-        //ret.wrapMode = TextureWrapMode.Repeat;
         ret.Create();
         return ret;
     }

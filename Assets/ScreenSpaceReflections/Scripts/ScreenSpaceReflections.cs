@@ -7,22 +7,17 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 [RequireComponent(typeof(Camera))]
-[RequireComponent(typeof(FrameBufferUtils))]
+[RequireComponent(typeof(GBufferUtils))]
 public class ScreenSpaceReflections : MonoBehaviour
 {
-    public enum Algorithm
-    {
-        SinglePass,
-        Temporal,
-    }
     public enum Quality
     {
-        Low,
+        Fast,
         Medium,
         High,
+        VeryHigh,
     }
 
-    public Algorithm m_algorithm = Algorithm.Temporal;
     public Quality m_quality = Quality.Medium;
     [Range(0.1f, 1.0f)]
     public float m_resolution_scale = 0.5f;
@@ -31,9 +26,9 @@ public class ScreenSpaceReflections : MonoBehaviour
     [Range(0.0f, 1.0f)]
     public float m_ray_diffusion = 0.01f;
 
-    public float m_raymarch_distance = 5.0f;
-    public float m_falloff_distance = 5.0f;
-    public float m_object_thickness = 0.4f;
+    public float m_raymarch_distance = 2.5f;
+    public float m_falloff_distance = 2.5f;
+    public float m_ray_hit_radius = 0.15f;
     public float m_max_accumulation = 25.0f;
     public Shader m_shader;
 
@@ -48,6 +43,8 @@ public class ScreenSpaceReflections : MonoBehaviour
     void Reset()
     {
         m_shader = AssetDatabase.LoadAssetAtPath("Assets/ScreenSpaceReflections/Shaders/ScreenSpaceReflections.shader", typeof(Shader)) as Shader;
+        GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
+        GetComponent<GBufferUtils>().m_enable_prev_gbuffer = true;
     }
 #endif // UNITY_EDITOR
 
@@ -106,35 +103,21 @@ public class ScreenSpaceReflections : MonoBehaviour
             m_material = new Material(m_shader);
             m_material.hideFlags = HideFlags.DontSave;
 
-            m_quad = FrameBufferUtils.GenerateQuad();
+            m_quad = GBufferUtils.GenerateQuad();
         }
         UpdateRenderTargets();
         
-        switch (m_algorithm)
-        {
-            case Algorithm.SinglePass:
-                m_material.EnableKeyword("ALGORITHM_SIMGLE_PASS");
-                break;
-            case Algorithm.Temporal:
-                m_material.EnableKeyword("ALGORITHM_TEMPORAL");
-                break;
-        }
         switch (m_quality)
         {
-            case Quality.Low:
-                m_material.EnableKeyword("QUALITY_LOW");
-                break;
-            case Quality.Medium:
-                m_material.EnableKeyword("QUALITY_MEDIUM");
-                break;
-            case Quality.High:
-                m_material.EnableKeyword("QUALITY_HIGH");
-                break;
+            case Quality.Fast:      m_material.EnableKeyword("QUALITY_FAST");   break;
+            case Quality.Medium:    m_material.EnableKeyword("QUALITY_MEDIUM"); break;
+            case Quality.High:      m_material.EnableKeyword("QUALITY_HIGH");   break;
+            case Quality.VeryHigh:  m_material.EnableKeyword("QUALITY_ULTRA");  break;
         }
 
         m_reflection_buffers[1].filterMode = FilterMode.Point;
         m_material.SetVector("_Params0", new Vector4(m_intensity, m_raymarch_distance, m_ray_diffusion, m_falloff_distance));
-        m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_object_thickness, 0.0f, 0.0f));
+        m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, 0.0f, 0.0f));
         m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[1]);
         m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[1]);
         m_material.SetTexture("_FrameBuffer1", src);
