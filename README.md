@@ -5,7 +5,7 @@ Unity5 用に書いたエフェクト置き場。現在あるもの：
 
 ### Temporal Screen Space Reflections
 ![alt text](doc/ScreenSpaceReflections.png)  
-[パッケージ](Packages/ScreenSpaceReflections.unitypackage)  
+[パッケージ](raw/master/Packages/ScreenSpaceReflections.unitypackage)  
 スクリーンスペース反射です。  
 kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公開していますが、そちらとはアルゴリズムが違い、
 若干残像が出てしまう欠点があるものの、圧倒的に高速でクオリティも引けを取りません。  
@@ -14,7 +14,7 @@ kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公�
 
 #### モザイク
 ![alt text](doc/mosaic.gif)  
-[パッケージ](Packages/Mosaic.unitypackage)  
+[パッケージ](raw/master/Packages/Mosaic.unitypackage)  
 指定オブジェクトをモザイク領域化するシェーダです。
 
 
