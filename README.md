@@ -13,7 +13,7 @@ kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公�
 実装の詳細に興味があれば[こちらの記事](http://i-saint.hatenablog.com/entry/2014/12/05/174706)もどうぞ。
 また、上記スクリーンショットの背景は[こちら](https://github.com/i-saint/RaymarchingOnUnity5)の Raymarcher によるものです。
 
-#### モザイク
+#### Mosaic
 ![alt text](doc/mosaic.gif)  
 [Mosaic.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/Mosaic.unitypackage)  
 
