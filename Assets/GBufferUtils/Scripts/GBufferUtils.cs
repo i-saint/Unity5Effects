@@ -20,14 +20,20 @@ public class GBufferUtils : MonoBehaviour
     Matrix4x4 m_prev_vp;
     Matrix4x4 m_prev_inv_vp;
     CommandBuffer m_cb_framebuffer;
-    public RenderTexture[] m_gbuffer_rt = new RenderTexture[5];
+    RenderTexture[] m_gbuffer_rt = new RenderTexture[5];
     RenderBuffer[] m_gbuffer_rb = new RenderBuffer[4];
 
 
-    public Matrix4x4 vp { get { return m_vp; } }
-    public Matrix4x4 inv_vp { get { return m_inv_vp; } }
-    public Matrix4x4 prev_vp { get { return m_prev_vp; } }
-    public Matrix4x4 prev_inv_vp { get { return m_prev_inv_vp; } }
+    public Matrix4x4 matrix_vp          { get { return m_vp; } }
+    public Matrix4x4 matrix_inv_vp      { get { return m_inv_vp; } }
+    public Matrix4x4 matrix_prev_vp     { get { return m_prev_vp; } }
+    public Matrix4x4 matrix_prev_inv_vp { get { return m_prev_inv_vp; } }
+
+    public RenderTexture gbuffer_prev_albedo    { get { return m_gbuffer_rt[0]; } }
+    public RenderTexture gbuffer_prev_specular  { get { return m_gbuffer_rt[1]; } }
+    public RenderTexture gbuffer_prev_normal    { get { return m_gbuffer_rt[2]; } }
+    public RenderTexture gbuffer_prev_emission  { get { return m_gbuffer_rt[3]; } }
+    public RenderTexture gbuffer_prev_depth     { get { return m_gbuffer_rt[4]; } }
 
 
 
@@ -75,7 +81,7 @@ public class GBufferUtils : MonoBehaviour
             Matrix4x4 view = cam.worldToCameraMatrix;
             Matrix4x4 proj = cam.projectionMatrix;
             // Unity internally modify projection matrix like this.
-            // (GL.GetGPUProjectionMatrix() maybe better solution)
+            // GL.GetGPUProjectionMatrix() seems doing similar things, but it is different on some (OpenGL etc) platforms. 
             proj[2, 0] = proj[2, 0] * 0.5f + proj[3, 0] * 0.5f;
             proj[2, 1] = proj[2, 1] * 0.5f + proj[3, 1] * 0.5f;
             proj[2, 2] = proj[2, 2] * 0.5f + proj[3, 2] * 0.5f;
@@ -87,6 +93,18 @@ public class GBufferUtils : MonoBehaviour
             Shader.SetGlobalMatrix("_InvViewProj", m_inv_vp);
             Shader.SetGlobalMatrix("_PrevViewProj", m_prev_vp);
             Shader.SetGlobalMatrix("_PrevInvViewProj", m_prev_inv_vp);
+        }
+
+        if (m_enable_prev_gbuffer)
+        {
+            if (m_gbuffer_rt[0] != null)
+            {
+                Shader.SetGlobalTexture("_PrevCameraGBufferTexture0", m_gbuffer_rt[0]);
+                Shader.SetGlobalTexture("_PrevCameraGBufferTexture1", m_gbuffer_rt[1]);
+                Shader.SetGlobalTexture("_PrevCameraGBufferTexture2", m_gbuffer_rt[2]);
+                Shader.SetGlobalTexture("_PrevCameraGBufferTexture3", m_gbuffer_rt[3]);
+                Shader.SetGlobalTexture("_PrevCameraDepthTexture", m_gbuffer_rt[4]);
+            }
         }
     }
 

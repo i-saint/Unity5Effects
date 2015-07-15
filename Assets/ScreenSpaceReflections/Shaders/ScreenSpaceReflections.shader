@@ -1,4 +1,4 @@
-Shader "ScreenSpaceReflections/ScreenSpaceReflections" {
+Shader "Hidden/ScreenSpaceReflections" {
 Properties {
 }
 SubShader {
