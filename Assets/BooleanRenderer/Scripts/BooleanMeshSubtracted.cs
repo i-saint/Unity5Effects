@@ -19,6 +19,10 @@ public class BooleanMeshSubtracted : IBooleanSubtracted
 #if UNITY_EDITOR
     void Reset()
     {
+        m_materials = new Material[] {
+            AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat"),
+        };
+        m_material_backdepth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/BackDepth.mat");
     }
 #endif // UNITY_EDITOR
 
@@ -39,5 +43,10 @@ public class BooleanMeshSubtracted : IBooleanSubtracted
         {
             cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, material);
         }
+    }
+
+    void OnDrawGizmos()
+    {
+        // todo
     }
 }

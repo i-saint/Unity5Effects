@@ -29,5 +29,5 @@ public abstract class IBooleanSubtractor : MonoBehaviour
         instances.Remove(this);
     }
 
-    public abstract void IssueDrawCall_GBufferWithMask(CommandBuffer cb);
+    public abstract void IssueDrawCall_GBuffer(CommandBuffer cb);
 }

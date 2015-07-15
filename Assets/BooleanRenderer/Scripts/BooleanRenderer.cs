@@ -6,8 +6,10 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
+
+[AddComponentMenu("BooleanRenderer/Renderer")]
 [RequireComponent(typeof(Camera))]
-public class BooleanSubtractRenderer : MonoBehaviour
+public class BooleanRenderer : MonoBehaviour
 {
     CommandBuffer m_cb_backdepth;
     CommandBuffer m_cb_gbuffer;
@@ -25,15 +27,15 @@ public class BooleanSubtractRenderer : MonoBehaviour
         }
 
         var cam = GetComponent<Camera>();
-        cam.AddCommandBuffer(CameraEvent.BeforeGBuffer, m_cb_backdepth);
-        cam.AddCommandBuffer(CameraEvent.BeforeGBuffer, m_cb_gbuffer);
+        cam.AddCommandBuffer(CameraEvent.AfterGBuffer, m_cb_backdepth);
+        cam.AddCommandBuffer(CameraEvent.AfterGBuffer, m_cb_gbuffer);
     }
 
     void OnDisable()
     {
         var cam = GetComponent<Camera>();
-        cam.RemoveCommandBuffer(CameraEvent.BeforeGBuffer, m_cb_backdepth);
-        cam.RemoveCommandBuffer(CameraEvent.BeforeGBuffer, m_cb_gbuffer);
+        cam.RemoveCommandBuffer(CameraEvent.AfterGBuffer, m_cb_backdepth);
+        cam.RemoveCommandBuffer(CameraEvent.AfterGBuffer, m_cb_gbuffer);
     }
 
     void OnPreRender()
@@ -45,7 +47,7 @@ public class BooleanSubtractRenderer : MonoBehaviour
         m_cb_backdepth.Clear();
         m_cb_backdepth.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.RHalf);
         m_cb_backdepth.SetRenderTarget(id_backdepth);
-        m_cb_backdepth.ClearRenderTarget(true, true, Color.black);
+        m_cb_backdepth.ClearRenderTarget(true, true, Color.black, 0.0f);
         for (int i = 0; i < num_subtracted; ++i)
         {
             IBooleanSubtracted.instances[i].IssueDrawCall_BackDepth(m_cb_backdepth);
@@ -59,7 +61,7 @@ public class BooleanSubtractRenderer : MonoBehaviour
         }
         for (int i = 0; i < num_subtractor; ++i)
         {
-            IBooleanSubtractor.instances[i].IssueDrawCall_GBufferWithMask(m_cb_gbuffer);
+            IBooleanSubtractor.instances[i].IssueDrawCall_GBuffer(m_cb_gbuffer);
         }
     }
 }
