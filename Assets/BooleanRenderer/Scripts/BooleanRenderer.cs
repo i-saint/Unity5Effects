@@ -29,15 +29,13 @@ public class BooleanRenderer : MonoBehaviour
         }
 
         var cam = GetComponent<Camera>();
-        cam.AddCommandBuffer(CameraEvent.AfterGBuffer, m_cb_backdepth);
-        cam.AddCommandBuffer(CameraEvent.AfterGBuffer, m_cb_gbuffer);
+        cam.AddCommandBuffer(CameraEvent.BeforeGBuffer, m_cb_backdepth);
     }
 
     void OnDisable()
     {
         var cam = GetComponent<Camera>();
-        cam.RemoveCommandBuffer(CameraEvent.AfterGBuffer, m_cb_backdepth);
-        cam.RemoveCommandBuffer(CameraEvent.AfterGBuffer, m_cb_gbuffer);
+        cam.RemoveCommandBuffer(CameraEvent.BeforeGBuffer, m_cb_backdepth);
     }
 
     void OnPreRender()

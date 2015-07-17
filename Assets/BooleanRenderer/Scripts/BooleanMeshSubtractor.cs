@@ -9,20 +9,17 @@ using UnityEditor;
 
 [AddComponentMenu("BooleanRenderer/MeshSubtractor")]
 [RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))]
 public class BooleanMeshSubtractor : IBooleanSubtractor
 {
-    public Material[] m_materials;
-    public Material m_material_stencil;
     Transform m_trans;
     MeshFilter m_mesh;
 
 #if UNITY_EDITOR
     void Reset()
     {
-        m_materials = new Material[] {
-            AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat"),
-        };
-        m_material_stencil = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/StencilMask.mat");
+        var renderer = GetComponent<MeshRenderer>();
+        renderer.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
     }
 #endif // UNITY_EDITOR
 
@@ -30,28 +27,18 @@ public class BooleanMeshSubtractor : IBooleanSubtractor
     {
         m_trans = GetComponent<Transform>();
         m_mesh = GetComponent<MeshFilter>();
+        //GetComponent<MeshRenderer>().enabled = false;
+    }
+
+    void Update()
+    {
+        //var renderer = GetComponent<MeshRenderer>();
+        //Graphics.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, renderer.material, 0);
     }
 
     public override void IssueDrawCall_GBuffer(CommandBuffer cb)
     {
-        Mesh mesh = m_mesh.sharedMesh;
-        Matrix4x4 trans = m_trans.localToWorldMatrix;
-
-        cb.DrawMesh(mesh, trans, m_material_stencil, 0, 0);
-        foreach (var material in m_materials)
-        {
-            cb.DrawMesh(mesh, trans, material);
-        }
-        cb.DrawMesh(mesh, trans, m_material_stencil, 0, 1);
-    }
-
-    void OnDrawGizmos()
-    {
-        var mesh = GetComponent<MeshFilter>().sharedMesh;
-        if (mesh != null)
-        {
-            Gizmos.matrix = GetComponent<Transform>().localToWorldMatrix;
-            Gizmos.DrawMesh(mesh);
-        }
+        // do nothing in here.
+        // MeshRenderer do the job.
     }
 }

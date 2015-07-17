@@ -47,14 +47,15 @@ Shader "BooleanRenderer/Standard Subtracted"
     {
         Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-500"  }
 
-        /*
         // ------------------------------------------------------------------
         //  Shadow rendering pass
         Pass {
             Name "ShadowCaster"
             Tags { "LightMode" = "ShadowCaster" }
-            
-            ZWrite On ZTest LEqual
+
+            Cull Front
+            ZWrite On
+            ZTest LEqual
 
             CGPROGRAM
             #pragma target 3.0
@@ -74,7 +75,6 @@ Shader "BooleanRenderer/Standard Subtracted"
 
             ENDCG
         }
-        */
 
         // ------------------------------------------------------------------
         //  Deferred pass

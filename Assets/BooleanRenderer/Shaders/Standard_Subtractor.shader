@@ -45,26 +45,26 @@ Shader "BooleanRenderer/Standard Subtractor"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-480" }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-490" }
 
-        /*
         // ------------------------------------------------------------------
         //  Shadow rendering pass
         Pass {
             Name "ShadowCaster"
             Tags { "LightMode" = "ShadowCaster" }
-            
-            ZWrite On ZTest LEqual
+
+            Cull Front
+            ZWrite On
+            ZTest Greater
 
             CGPROGRAM
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
             #pragma exclude_renderers gles
-            
+
             // -------------------------------------
 
 
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
             #pragma multi_compile_shadowcaster
 
             #pragma vertex vertShadowCaster
@@ -74,21 +74,42 @@ Shader "BooleanRenderer/Standard Subtractor"
 
             ENDCG
         }
-        */
+
+
 
         // ------------------------------------------------------------------
-        //  Deferred pass
+        //  Deferred passes
+
+        Pass {
+            Tags { "LightMode"="Deferred" }
+            Stencil {
+                Ref 1
+                ReadMask 1
+                WriteMask 1
+                Comp Always
+                Pass Replace
+            }
+            Cull Back
+            ZTest Less
+            ZWrite Off
+            ColorMask 0
+
+            CGPROGRAM
+            #include "StencilMask.cginc"
+            #pragma vertex vert
+            #pragma fragment frag
+            ENDCG
+        }
+
         Pass
         {
             Name "DEFERRED"
-            Tags { "LightMode" = "Deferred" }
-
+            Tags { "LightMode"="Deferred" }
             Stencil {
                 Ref 1
                 ReadMask 1
                 WriteMask 1
                 Comp Equal
-                Pass Replace
             }
             Cull Front
             ZWrite On
@@ -113,6 +134,8 @@ Shader "BooleanRenderer/Standard Subtractor"
             #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
             #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED DIRLIGHTMAP_SEPARATE
             #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
+
+            #pragma multi_compile ___ BOOLEAN_PEARCING
             
             #pragma vertex vertDeferred2
             #pragma fragment fragDeferred
@@ -124,6 +147,27 @@ Shader "BooleanRenderer/Standard Subtractor"
                 v.normal *= -1.0;
                 return vertDeferred(v);
             }
+            ENDCG
+        }
+
+        Pass {
+            Tags { "LightMode"="Deferred" }
+            Stencil {
+                Ref 0
+                ReadMask 1
+                WriteMask 1
+                Comp Always
+                Pass Replace
+            }
+            Cull Back
+            ZTest Less
+            ZWrite Off
+            ColorMask 0
+
+            CGPROGRAM
+            #include "StencilMask.cginc"
+            #pragma vertex vert
+            #pragma fragment frag
             ENDCG
         }
     }
