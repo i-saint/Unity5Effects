@@ -39,10 +39,10 @@ public class BooleanMeshSubtracted : IBooleanSubtracted
 
     public override void IssueDrawCall_GBuffer(CommandBuffer cb)
     {
-        foreach (var material in m_materials)
-        {
-            cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, material);
-        }
+        //foreach (var material in m_materials)
+        //{
+        //    cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, material);
+        //}
     }
 
     void OnDrawGizmos()

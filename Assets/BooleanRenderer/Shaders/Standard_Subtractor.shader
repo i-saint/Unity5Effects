@@ -45,7 +45,7 @@ Shader "BooleanRenderer/Standard Subtractor"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-480" }
 
         /*
         // ------------------------------------------------------------------
@@ -82,6 +82,14 @@ Shader "BooleanRenderer/Standard Subtractor"
         {
             Name "DEFERRED"
             Tags { "LightMode" = "Deferred" }
+
+            Stencil {
+                Ref 1
+                ReadMask 1
+                WriteMask 1
+                Comp Equal
+                Pass Replace
+            }
             Cull Front
             ZWrite On
             ZTest Greater

@@ -35,7 +35,9 @@ vs_out vert(ia_out v)
     vs_out o;
     o.vertex = v.vertex;
     o.screen_pos = v.vertex;
-    o.screen_pos.y *= _ProjectionParams.x;
+#if UNITY_UV_STARTS_AT_TOP
+    o.screen_pos.y *= -1.0;
+#endif
     return o;
 }
 

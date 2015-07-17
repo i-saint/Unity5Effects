@@ -2,6 +2,8 @@ Shader "BooleanRenderer/StencilMask"
 {
 SubShader
 {
+    Tags { "RenderType"="Opaque" "Queue"="Geometry-490" }
+
 CGINCLUDE
 struct ia_out
 {
@@ -35,8 +37,11 @@ ps_out frag(vs_out i)
 ENDCG
 
     Pass {
+        Tags { "RenderType"="Opaque" }
         Stencil {
             Ref 1
+            ReadMask 1
+            WriteMask 1
             Comp Always
             Pass Replace
         }
@@ -51,15 +56,18 @@ ENDCG
         ENDCG
     }
     Pass {
+        Tags { "RenderType"="Opaque" }
         Stencil {
             Ref 0
+            ReadMask 1
+            WriteMask 1
             Comp Always
             Pass Replace
         }
         ColorMask 0
         ZWrite Off
-        ZTest Always
-        Cull Front
+        ZTest Less
+        Cull Back
 
         CGPROGRAM
         #pragma vertex vert

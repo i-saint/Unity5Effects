@@ -11,6 +11,8 @@ using UnityEditor;
 [RequireComponent(typeof(Camera))]
 public class BooleanRenderer : MonoBehaviour
 {
+    public bool m_enable_piercing = true;
+
     CommandBuffer m_cb_backdepth;
     CommandBuffer m_cb_gbuffer;
 
@@ -45,16 +47,16 @@ public class BooleanRenderer : MonoBehaviour
         int id_backdepth = Shader.PropertyToID("BooleanRenderer_BackDepth");
 
         m_cb_backdepth.Clear();
-        m_cb_backdepth.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.RHalf);
+        m_cb_backdepth.GetTemporaryRT(id_backdepth, -1, -1, 32, FilterMode.Point, RenderTextureFormat.RHalf);
         m_cb_backdepth.SetRenderTarget(id_backdepth);
         m_cb_backdepth.ClearRenderTarget(true, true, Color.black, 0.0f);
+        m_cb_backdepth.SetGlobalTexture("_BackDepth", id_backdepth);
         for (int i = 0; i < num_subtracted; ++i)
         {
             IBooleanSubtracted.instances[i].IssueDrawCall_BackDepth(m_cb_backdepth);
         }
 
         m_cb_gbuffer.Clear();
-        m_cb_gbuffer.SetGlobalTexture("_BackDepth", id_backdepth);
         for (int i = 0; i < num_subtracted; ++i)
         {
             IBooleanSubtracted.instances[i].IssueDrawCall_GBuffer(m_cb_gbuffer);

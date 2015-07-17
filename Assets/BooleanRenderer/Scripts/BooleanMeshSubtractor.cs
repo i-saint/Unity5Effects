@@ -34,12 +34,15 @@ public class BooleanMeshSubtractor : IBooleanSubtractor
 
     public override void IssueDrawCall_GBuffer(CommandBuffer cb)
     {
-        //cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, m_material_stencil, 0, 0);
+        Mesh mesh = m_mesh.sharedMesh;
+        Matrix4x4 trans = m_trans.localToWorldMatrix;
+
+        cb.DrawMesh(mesh, trans, m_material_stencil, 0, 0);
         foreach (var material in m_materials)
         {
-            cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, material);
+            cb.DrawMesh(mesh, trans, material);
         }
-        //cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, m_material_stencil, 0, 1);
+        cb.DrawMesh(mesh, trans, m_material_stencil, 0, 1);
     }
 
     void OnDrawGizmos()
@@ -47,6 +50,7 @@ public class BooleanMeshSubtractor : IBooleanSubtractor
         var mesh = GetComponent<MeshFilter>().sharedMesh;
         if (mesh != null)
         {
+            Gizmos.matrix = GetComponent<Transform>().localToWorldMatrix;
             Gizmos.DrawMesh(mesh);
         }
     }

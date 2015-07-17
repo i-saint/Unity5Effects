@@ -55,7 +55,7 @@ public class ScreenSpaceReflections : MonoBehaviour
     {
         m_shader = AssetDatabase.LoadAssetAtPath("Assets/ScreenSpaceReflections/Shaders/ScreenSpaceReflections.shader", typeof(Shader)) as Shader;
         GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
-        GetComponent<GBufferUtils>().m_enable_prev_gbuffer = true;
+        GetComponent<GBufferUtils>().m_enable_prev_depth = true;
     }
 #endif // UNITY_EDITOR
 

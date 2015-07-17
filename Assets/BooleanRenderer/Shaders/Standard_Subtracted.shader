@@ -45,7 +45,7 @@ Shader "BooleanRenderer/Standard Subtracted"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-500"  }
 
         /*
         // ------------------------------------------------------------------
