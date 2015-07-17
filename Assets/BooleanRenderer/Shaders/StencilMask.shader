@@ -5,6 +5,8 @@ SubShader
     Tags { "RenderType"="Opaque" "Queue"="Geometry-490" }
 
 CGINCLUDE
+sampler2D _BackDepth;
+
 struct ia_out
 {
     float4 vertex : POSITION;
@@ -26,6 +28,24 @@ vs_out vert(ia_out v)
 half4 frag(vs_out i) : SV_Target
 {
     return 0.0;
+}
+
+struct depth_out
+{
+    half4 color : SV_Target;
+    float depth : SV_Depth;
+};
+
+depth_out frag_depth(vs_out i)
+{
+    float2 t = i.vertex.xy * (_ScreenParams.zw-1.0);
+    float target_depth = tex2D(_BackDepth, t);
+    float frag_depth = i.vertex.z;
+
+    depth_out o;
+    o.color = 0.0;
+    o.depth = frag_depth > target_depth ? 1.0 : frag_depth;
+    return o;
 }
 ENDCG
 
@@ -64,7 +84,7 @@ ENDCG
 
         CGPROGRAM
         #pragma vertex vert
-        #pragma fragment frag
+        #pragma fragment frag_depth
         ENDCG
     }
 
@@ -78,7 +98,7 @@ ENDCG
             Pass Replace
         }
         Cull Back
-        ZTest Less
+        ZTest Equal
         ZWrite Off
         ColorMask 0
 

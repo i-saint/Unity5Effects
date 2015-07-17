@@ -79,7 +79,7 @@ public class BooleanRenderer : MonoBehaviour
         m_commands.Clear();
         if (m_enable_piercing)
         {
-            m_commands.GetTemporaryRT(id_backdepth, -1, -1, 32, FilterMode.Point, RenderTextureFormat.RHalf);
+            m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.RHalf);
             m_commands.SetRenderTarget(id_backdepth);
             m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
             for (int i = 0; i < num_subtracted; ++i)

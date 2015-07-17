@@ -52,7 +52,7 @@ ENDCG
     // front
     Pass {
         Cull Back
-        ZTest LEqual
+        ZTest Less
         ZWrite On
         ColorMask 0
 
@@ -81,7 +81,7 @@ ENDCG
     // front
     Pass {
         Cull Back
-        ZTest LEqual
+        ZTest Less
         ZWrite On
 
         CGPROGRAM
