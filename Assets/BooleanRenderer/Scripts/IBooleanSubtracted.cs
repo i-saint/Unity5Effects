@@ -29,5 +29,5 @@ public abstract class IBooleanSubtracted : MonoBehaviour
     }
 
     public abstract void IssueDrawCall_BackDepth(CommandBuffer cb);
-    public abstract void IssueDrawCall_GBuffer(CommandBuffer cb);
+    public abstract void IssueDrawCall_DepthMask(CommandBuffer cb);
 }

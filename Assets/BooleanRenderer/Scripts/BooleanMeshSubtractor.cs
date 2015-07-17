@@ -10,8 +10,10 @@ using UnityEditor;
 [AddComponentMenu("BooleanRenderer/MeshSubtractor")]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
+[ExecuteInEditMode]
 public class BooleanMeshSubtractor : IBooleanSubtractor
 {
+    public Material m_mat_mask;
     Transform m_trans;
     MeshFilter m_mesh;
 
@@ -20,6 +22,7 @@ public class BooleanMeshSubtractor : IBooleanSubtractor
     {
         var renderer = GetComponent<MeshRenderer>();
         renderer.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
+        m_mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/StencilMask.mat");
     }
 #endif // UNITY_EDITOR
 
@@ -27,18 +30,14 @@ public class BooleanMeshSubtractor : IBooleanSubtractor
     {
         m_trans = GetComponent<Transform>();
         m_mesh = GetComponent<MeshFilter>();
-        //GetComponent<MeshRenderer>().enabled = false;
     }
 
-    void Update()
+    public override void IssueDrawCall_DepthMask(CommandBuffer cb)
     {
-        //var renderer = GetComponent<MeshRenderer>();
-        //Graphics.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, renderer.material, 0);
-    }
-
-    public override void IssueDrawCall_GBuffer(CommandBuffer cb)
-    {
-        // do nothing in here.
-        // MeshRenderer do the job.
+        Mesh mesh = m_mesh.sharedMesh;
+        Matrix4x4 trans = m_trans.localToWorldMatrix;
+        cb.DrawMesh(mesh, trans, m_mat_mask, 0, 0);
+        cb.DrawMesh(mesh, trans, m_mat_mask, 0, 1);
+        cb.DrawMesh(mesh, trans, m_mat_mask, 0, 2);
     }
 }

@@ -45,7 +45,7 @@ Shader "BooleanRenderer/Standard Subtracted"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-500"  }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-500" "DisableBatching"="True" }
 
         // ------------------------------------------------------------------
         //  Shadow rendering pass
@@ -83,6 +83,10 @@ Shader "BooleanRenderer/Standard Subtracted"
             Name "DEFERRED"
             Tags { "LightMode" = "Deferred" }
 
+            Cull Back
+            ZWrite Off
+            ZTest Equal
+
             CGPROGRAM
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
@@ -112,6 +116,6 @@ Shader "BooleanRenderer/Standard Subtracted"
         }
     }
 
-    //FallBack "VertexLit"
+    FallBack "VertexLit"
     CustomEditor "StandardShaderGUI"
 }

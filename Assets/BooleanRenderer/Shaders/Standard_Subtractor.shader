@@ -45,7 +45,7 @@ Shader "BooleanRenderer/Standard Subtractor"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-490" }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-490" "DisableBatching"="True" }
 
         // ------------------------------------------------------------------
         //  Shadow rendering pass
@@ -76,50 +76,21 @@ Shader "BooleanRenderer/Standard Subtractor"
         }
 
 
-
         // ------------------------------------------------------------------
         //  Deferred passes
-
-        Pass {
-            Tags { "LightMode"="Deferred" }
-            Stencil {
-                Ref 1
-                ReadMask 1
-                WriteMask 1
-                Comp Always
-                Pass Replace
-            }
-            Cull Back
-            ZTest Less
-            ZWrite Off
-            ColorMask 0
-
-            CGPROGRAM
-            #include "StencilMask.cginc"
-            #pragma vertex vert
-            #pragma fragment frag
-            ENDCG
-        }
 
         Pass
         {
             Name "DEFERRED"
             Tags { "LightMode"="Deferred" }
-            Stencil {
-                Ref 1
-                ReadMask 1
-                WriteMask 1
-                Comp Equal
-            }
             Cull Front
-            ZWrite On
-            ZTest Greater
+            ZWrite Off
+            ZTest Equal
 
             CGPROGRAM
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
             #pragma exclude_renderers nomrt gles
-            
 
             // -------------------------------------
 
@@ -134,8 +105,6 @@ Shader "BooleanRenderer/Standard Subtractor"
             #pragma multi_compile LIGHTMAP_OFF LIGHTMAP_ON
             #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED DIRLIGHTMAP_SEPARATE
             #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
-
-            #pragma multi_compile ___ BOOLEAN_PEARCING
             
             #pragma vertex vertDeferred2
             #pragma fragment fragDeferred
@@ -147,27 +116,6 @@ Shader "BooleanRenderer/Standard Subtractor"
                 v.normal *= -1.0;
                 return vertDeferred(v);
             }
-            ENDCG
-        }
-
-        Pass {
-            Tags { "LightMode"="Deferred" }
-            Stencil {
-                Ref 0
-                ReadMask 1
-                WriteMask 1
-                Comp Always
-                Pass Replace
-            }
-            Cull Back
-            ZTest Less
-            ZWrite Off
-            ColorMask 0
-
-            CGPROGRAM
-            #include "StencilMask.cginc"
-            #pragma vertex vert
-            #pragma fragment frag
             ENDCG
         }
     }

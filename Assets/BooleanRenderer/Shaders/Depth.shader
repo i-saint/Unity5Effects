@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/BackDepth"
+Shader "BooleanRenderer/Depth"
 {
 
 SubShader
@@ -47,11 +47,54 @@ ps_out frag(vs_out i)
 }
 ENDCG
 
+    // depth only passes
+
+    // front
     Pass {
-        Tags { "RenderType"="Opaque" }
+        Cull Back
+        ZTest LEqual
+        ZWrite On
+        ColorMask 0
+
+        CGPROGRAM
+        #pragma vertex vert
+        #pragma fragment frag
+        ENDCG
+    }
+
+    // back
+    Pass {
+        Cull Front
         ZTest Greater
         ZWrite On
+        ColorMask 0
+
+        CGPROGRAM
+        #pragma vertex vert
+        #pragma fragment frag
+        ENDCG
+    }
+
+
+    // color output passes
+
+    // front
+    Pass {
+        Cull Back
+        ZTest LEqual
+        ZWrite On
+
+        CGPROGRAM
+        #pragma vertex vert
+        #pragma fragment frag
+        ENDCG
+    }
+
+    // back
+    Pass {
         Cull Front
+        ZTest Greater
+        ZWrite On
 
         CGPROGRAM
         #pragma vertex vert

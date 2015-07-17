@@ -10,9 +10,10 @@ using UnityEditor;
 [AddComponentMenu("BooleanRenderer/MeshSubtracted")]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
+[ExecuteInEditMode]
 public class BooleanMeshSubtracted : IBooleanSubtracted
 {
-    public Material m_material_backdepth;
+    public Material m_mat_depth;
     Transform m_trans;
     MeshFilter m_mesh;
 
@@ -21,7 +22,7 @@ public class BooleanMeshSubtracted : IBooleanSubtracted
     {
         var renderer = GetComponent<MeshRenderer>();
         renderer.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
-        m_material_backdepth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/BackDepth.mat");
+        m_mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
     }
 #endif // UNITY_EDITOR
 
@@ -29,23 +30,15 @@ public class BooleanMeshSubtracted : IBooleanSubtracted
     {
         m_trans = GetComponent<Transform>();
         m_mesh = GetComponent<MeshFilter>();
-        //GetComponent<MeshRenderer>().enabled = false;
-    }
-
-    void Update()
-    {
-        //var renderer = GetComponent<MeshRenderer>();
-        //Graphics.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, renderer.material, 0);
     }
 
     public override void IssueDrawCall_BackDepth(CommandBuffer cb)
     {
-        cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, m_material_backdepth);
+        cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, m_mat_depth, 0, 3);
     }
 
-    public override void IssueDrawCall_GBuffer(CommandBuffer cb)
+    public override void IssueDrawCall_DepthMask(CommandBuffer cb)
     {
-        // do nothing in here.
-        // MeshRenderer do the job.
+        cb.DrawMesh(m_mesh.sharedMesh, m_trans.localToWorldMatrix, m_mat_depth, 0, 0);
     }
 }
