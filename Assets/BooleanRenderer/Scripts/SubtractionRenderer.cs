@@ -7,15 +7,47 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/Renderer")]
+[AddComponentMenu("BooleanRenderer/SubtractionRenderer")]
 [ExecuteInEditMode]
-public class BooleanRenderer : MonoBehaviour
+public class SubtractionRenderer : MonoBehaviour
 {
+    static private List<SubtractionRenderer> s_instances;
+    static public List<SubtractionRenderer> instances
+    {
+        get
+        {
+            if (s_instances == null) { s_instances = new List<SubtractionRenderer>(); }
+            return s_instances;
+        }
+    }
+
+
+    public bool m_enable_masking = true;
     public bool m_enable_piercing = true;
+
+    List<ISubtracted> m_subtracted = new List<ISubtracted>();
+    List<ISubtractor> m_subtractor = new List<ISubtractor>();
     CommandBuffer m_commands;
     RenderTargetIdentifier[] m_gbuffer_rt;
     List<Camera> m_cameras = new List<Camera>();
     bool m_dirty = true;
+
+
+    public void AddSubtracted(ISubtracted v) { m_subtracted.Add(v); }
+    public void AddSubtractor(ISubtractor v) { m_subtractor.Add(v); }
+    public void RemoveSubtracted(ISubtracted v) { m_subtracted.Remove(v); }
+    public void RemoveSubtractor(ISubtractor v) { m_subtractor.Remove(v); }
+
+
+    void Awake()
+    {
+        instances.Add(this);
+    }
+
+    void OnDestroy()
+    {
+        instances.Remove(this);
+    }
 
     void OnDisable()
     {
@@ -59,9 +91,9 @@ public class BooleanRenderer : MonoBehaviour
         if (!m_dirty) { return; }
         m_dirty = false;
 
-        int num_subtractor = IBooleanSubtractor.instances.Count;
-        int num_subtracted = IBooleanSubtracted.instances.Count;
-        int id_backdepth = Shader.PropertyToID("BooleanRenderer_BackDepth");
+        int num_subtractor = m_subtractor.Count;
+        int num_subtracted = m_subtracted.Count;
+        int id_backdepth = Shader.PropertyToID("BackDepth");
 
         if (m_commands == null)
         {
@@ -81,10 +113,14 @@ public class BooleanRenderer : MonoBehaviour
         {
             m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.RHalf);
             m_commands.SetRenderTarget(id_backdepth);
+            m_commands.SetGlobalTexture("_PrevDepth", BuiltinRenderTextureType.CameraTarget);
             m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
             for (int i = 0; i < num_subtracted; ++i)
             {
-                IBooleanSubtracted.instances[i].IssueDrawCall_BackDepth(m_commands);
+                if (m_subtracted[i] != null)
+                {
+                    m_subtracted[i].IssueDrawCall_BackDepth(this, m_commands);
+                }
             }
             m_commands.SetGlobalTexture("_BackDepth", id_backdepth);
             m_commands.SetRenderTarget(m_gbuffer_rt, BuiltinRenderTextureType.CameraTarget);
@@ -92,11 +128,17 @@ public class BooleanRenderer : MonoBehaviour
 
         for (int i = 0; i < num_subtracted; ++i)
         {
-            IBooleanSubtracted.instances[i].IssueDrawCall_DepthMask(m_commands);
+            if (m_subtracted[i] != null)
+            {
+                m_subtracted[i].IssueDrawCall_DepthMask(this, m_commands);
+            }
         }
         for (int i = 0; i < num_subtractor; ++i)
         {
-            IBooleanSubtractor.instances[i].IssueDrawCall_DepthMask(m_commands);
+            if (m_subtractor[i] != null)
+            {
+                m_subtractor[i].IssueDrawCall_DepthMask(this, m_commands);
+            }
         }
     }
 }
