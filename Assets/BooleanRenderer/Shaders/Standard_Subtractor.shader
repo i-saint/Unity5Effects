@@ -77,7 +77,7 @@ Shader "BooleanRenderer/Standard Subtractor"
 
 
         // ------------------------------------------------------------------
-        //  Deferred passes
+        //  Deferred pass
 
         Pass
         {

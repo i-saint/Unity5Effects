@@ -64,7 +64,6 @@ ENDCG
         Cull Back
         ZTest Less
         ZWrite On
-        ColorMask 0
 
         CGPROGRAM
         #pragma vertex vert

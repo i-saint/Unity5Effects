@@ -18,6 +18,7 @@ public class SubtractorMesh : ISubtractor
 #if UNITY_EDITOR
     void Reset()
     {
+        base.Reset();
         var renderer = GetComponent<MeshRenderer>();
         renderer.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
         m_mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/StencilMask.mat");

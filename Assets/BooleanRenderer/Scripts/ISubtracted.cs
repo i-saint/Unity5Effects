@@ -10,6 +10,17 @@ public abstract class ISubtracted : MonoBehaviour
 {
     public SubtractionRenderer[] m_renderer;
 
+#if UNITY_EDITOR
+    public virtual void Reset()
+    {
+        if (m_renderer == null || m_renderer.Length == 0)
+        {
+            m_renderer = SubtractionRenderer.instances.ToArray();
+            foreach (var r in m_renderer) { r.AddSubtracted(this); }
+        }
+    }
+#endif
+
     public virtual void OnEnable()
     {
         foreach (var r in m_renderer) { r.AddSubtracted(this); }
@@ -18,15 +29,6 @@ public abstract class ISubtracted : MonoBehaviour
     public virtual void OnDisable()
     {
         foreach (var r in m_renderer) { r.RemoveSubtracted(this); }
-    }
-
-    public virtual void Update()
-    {
-        if (m_renderer == null || m_renderer.Length == 0)
-        {
-            m_renderer = SubtractionRenderer.instances.ToArray();
-            foreach (var r in m_renderer) { r.AddSubtracted(this); }
-        }
     }
 
     public abstract void IssueDrawCall_BackDepth(SubtractionRenderer br, CommandBuffer cb);

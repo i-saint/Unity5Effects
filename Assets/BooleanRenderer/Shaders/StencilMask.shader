@@ -6,7 +6,7 @@ SubShader
 
 CGINCLUDE
 sampler2D _BackDepth;
-sampler2D _PrevDepth;
+
 
 struct ia_out
 {
@@ -28,7 +28,7 @@ vs_out vert(ia_out v)
 
 half4 frag(vs_out i) : SV_Target
 {
-    return 0.0;
+    return i.vertex.z;
 }
 
 struct depth_out
@@ -42,14 +42,12 @@ depth_out frag_depth(vs_out i)
     float frag_depth = i.vertex.z;
 
     depth_out o;
-    o.color = 0.0;
-
 #if ENABLE_PIERCING
     float2 t = i.vertex.xy * (_ScreenParams.zw-1.0);
     float target_depth = tex2D(_BackDepth, t);
-    o.depth = target_depth > 0.0 && frag_depth > target_depth ? 1.0 : frag_depth;
+    o.color = o.depth = target_depth > 0.0 && frag_depth > target_depth ? 1.0 : frag_depth;
 #else
-    o.depth = frag_depth;
+    o.color = o.depth = frag_depth;
 #endif
     return o;
 }
@@ -86,7 +84,6 @@ ENDCG
         Cull Front
         ZTest GEqual
         ZWrite On
-        ColorMask 0
 
         CGPROGRAM
         #pragma multi_compile ___ ENABLE_PIERCING

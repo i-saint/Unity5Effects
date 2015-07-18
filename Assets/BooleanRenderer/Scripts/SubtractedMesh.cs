@@ -18,6 +18,7 @@ public class SubtractedMesh : ISubtracted
 #if UNITY_EDITOR
     void Reset()
     {
+        base.Reset();
         var renderer = GetComponent<MeshRenderer>();
         renderer.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
         m_mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
