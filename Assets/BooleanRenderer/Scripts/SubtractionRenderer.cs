@@ -105,19 +105,19 @@ public class SubtractionRenderer : MonoBehaviour
         }
 
         m_commands.Clear();
-        int id_backdepth = Shader.PropertyToID("BackDepth");
-        int id_tmpdepth = Shader.PropertyToID("TmpDepth");
         var gsubtracted = ISubtracted.GetGroups();
         var gsubtractor = ISubtractor.GetGroups();
         foreach (var v in gsubtracted)
         {
             var subtractor = gsubtractor.ContainsKey(v.Key) ? gsubtractor[v.Key] : null;
-            IssueDrawcalls(id_backdepth, id_tmpdepth, v.Value, subtractor);
+            IssueDrawcalls(v.Value, subtractor);
         }
     }
 
-    void IssueDrawcalls(int id_backdepth, int id_tmpdepth, List<ISubtracted> subtracted, List<ISubtractor> subtractor)
+    void IssueDrawcalls(List<ISubtracted> subtracted, List<ISubtractor> subtractor)
     {
+        int id_backdepth = Shader.PropertyToID("BackDepth");
+        int id_tmpdepth = Shader.PropertyToID("TmpDepth");
         int num_subtractor = subtractor.Count;
         int num_subtracted = subtractor==null ? 0 : subtracted.Count;
 
