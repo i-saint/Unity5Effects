@@ -36,13 +36,13 @@ float4 _Params1;
         #define MAX_TRACEBACK_MARCH 4
         #define NUM_RAYS 1
     #elif QUALITY_HIGH
-        #define MAX_MARCH 24
+        #define MAX_MARCH 32
         #define MAX_TRACEBACK_MARCH 8
-        #define NUM_RAYS 2
+        //#define NUM_RAYS 2
     #elif QUALITY_ULTRA
-        #define MAX_MARCH 24
+        #define MAX_MARCH 64
         #define MAX_TRACEBACK_MARCH 8
-        #define NUM_RAYS 4
+        //#define NUM_RAYS 4
     #else // QUALITY_MEDIUM
         #define MAX_MARCH 16
         #define MAX_TRACEBACK_MARCH 8
@@ -121,9 +121,6 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
             hit = 1.0;
             break;
         }
-        if(ray_coord.x>1.0 || ray_coord.x<0.0 || ray_coord.y>1.0 || ray_coord.y<0.0) {
-            break;
-        }
     }
 
 #ifdef ENABLE_RAY_TRACEBACK
@@ -150,7 +147,9 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
         hit = 0.0;
     }
     hit_coord = lerp(hit_coord, ray_coord, hit);
-    blend_color.a += max(1.0 - (adv / _FalloffDistance), 0.0) * smoothness * hit;
+    float2 edge = abs(hit_coord * 2.0 - 1.0);
+    float edge_attr = pow(1.0 - max(edge.x,edge.y), 0.5);
+    blend_color.a += max(1.0 - (adv / _FalloffDistance), 0.0) * edge_attr * smoothness * hit;
 
     blend_color.rgb += tex2D(_FrameBuffer1, hit_coord).rgb;
     accumulation += 1.0;
@@ -185,7 +184,7 @@ ps_out frag_reflections(vs_out i)
     }
 
     float diff = length(p.xyz-prev_pos.xyz);
-    accumulation *= max(1.0-(0.05+diff*15.0), 0.0);
+    accumulation *= max(1.0-(0.05+diff*20.0), 0.0);
     float4 blend_color = prev_result * accumulation;
     float march_step = _RayMarchDistance / MAX_MARCH;
     float hit_radius = _RayHitRadius;

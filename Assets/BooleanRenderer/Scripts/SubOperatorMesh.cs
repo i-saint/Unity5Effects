@@ -21,7 +21,7 @@ public class SubOperatorMesh : ISubOperator
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_SubOperator.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {
