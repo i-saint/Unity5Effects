@@ -119,7 +119,7 @@ ENDCG
             Pass Replace
         }
         Cull Back
-        ZTest Equal
+        ZTest Always
         ZWrite Off
         ColorMask 0
 
