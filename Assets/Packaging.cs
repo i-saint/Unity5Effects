@@ -11,20 +11,20 @@ public class Packaging
     [MenuItem("Assets/Unity5Effects/MakePackages")]
     public static void MakePackages()
     {
-        MakePackage_Mosaic();
+        MakePackage_MosaicField();
         MakePackage_WaterSurface();
-        MakePackage_BooleanRenderer();
+        MakePackage_ScreenSpaceBoolean();
         MakePackage_ScreenSpaceReflections();
     }
 
 
-    public static void MakePackage_Mosaic()
+    public static void MakePackage_MosaicField()
     {
         string[] files = new string[]
         {
-"Assets/Mosaic",
+"Assets/MosaicField",
         };
-        AssetDatabase.ExportPackage(files, "Mosaic.unitypackage", ExportPackageOptions.Recurse);
+        AssetDatabase.ExportPackage(files, "MosaicField.unitypackage", ExportPackageOptions.Recurse);
     }
 
 
@@ -39,14 +39,14 @@ public class Packaging
     }
 
 
-    public static void MakePackage_BooleanRenderer()
+    public static void MakePackage_ScreenSpaceBoolean()
     {
         string[] files = new string[]
         {
 "Assets/GBufferUtils",
-"Assets/BooleanRenderer",
+"Assets/ScreenSpaceBoolean",
         };
-        AssetDatabase.ExportPackage(files, "BooleanRenderer.unitypackage", ExportPackageOptions.Recurse);
+        AssetDatabase.ExportPackage(files, "ScreenSpaceBoolean.unitypackage", ExportPackageOptions.Recurse);
     }
 
 
@@ -58,6 +58,17 @@ public class Packaging
 "Assets/ScreenSpaceReflections",
         };
         AssetDatabase.ExportPackage(files, "ScreenSpaceReflections.unitypackage", ExportPackageOptions.Recurse);
+    }
+
+
+    public static void MakePackage_ScreenSpaceShadows()
+    {
+        string[] files = new string[]
+        {
+"Assets/GBufferUtils",
+"Assets/ScreenSpaceShadows",
+        };
+        AssetDatabase.ExportPackage(files, "ScreenSpaceShadows.unitypackage", ExportPackageOptions.Recurse);
     }
 }
 #endif

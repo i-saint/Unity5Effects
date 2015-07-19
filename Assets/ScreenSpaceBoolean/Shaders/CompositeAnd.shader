@@ -22,7 +22,7 @@ struct vs_out
 
 struct ps_out
 {
-    float4 color : SV_Target;
+    half4 color : SV_Target;
     float depth : SV_Depth;
 };
 
@@ -46,8 +46,7 @@ ps_out frag(vs_out i)
     if(bd2 < fd1 || bd1 < fd2) { discard; }
 
     ps_out r;
-    r.color = 0.0;
-    r.depth = max(fd1, fd2);
+    r.color = r.depth = max(fd1, fd2);
     return r;
 }
 ENDCG

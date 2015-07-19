@@ -20,7 +20,7 @@ struct vs_out
 
 struct ps_out
 {
-    float4 color : SV_Target;
+    half4 color : SV_Target;
     float depth : SV_Depth;
 };
 
@@ -37,8 +37,7 @@ ps_out frag(vs_out i)
 {
     float2 coord = i.screen_pos.xy * 0.5 + 0.5;
     ps_out r;
-    r.color = 0.0;
-    r.depth = tex2D(_TmpDepth, coord).x;
+    r.color = r.depth = tex2D(_TmpDepth, coord).x;
     if(r.depth==0.0) { discard; }
     return r;
 }
