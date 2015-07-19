@@ -30,14 +30,14 @@ public class AndOperatorSkinnedMesh : IAndOperator
         var renderer = GetComponent<SkinnedMeshRenderer>();
         renderer.sharedMaterials = new Material[0];
 
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_And.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Default_And.mat");
         m_materials = new Material[renderer.sharedMesh.subMeshCount];
         for (int i = 0; i < m_materials.Length; ++i)
         {
             m_materials[i] = mat;
         }
 
-        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Depth.mat");
         m_depth_materials = new Material[m_materials.Length];
         for (int i = 0; i < m_depth_materials.Length; ++i)
         {

@@ -21,7 +21,7 @@ public class SubOperatorMesh : ISubOperator
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_SubOperator.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Default_SubOperator.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {
@@ -29,7 +29,7 @@ public class SubOperatorMesh : ISubOperator
         }
         renderer.sharedMaterials = materials;
 
-        var mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/StencilMask.mat");
+        var mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/StencilMask.mat");
         m_mask_materials = new Material[materials.Length];
         for (int i = 0; i < m_mask_materials.Length; ++i)
         {

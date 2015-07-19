@@ -7,11 +7,11 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/AndReceiverMesh")]
+[AddComponentMenu("BooleanRenderer/AndOperatorMesh")]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
-public class AndReceiverMesh : IAndReceiver
+public class AndOperatorMesh : IAndOperator
 {
     public Material[] m_materials;
     public Material[] m_depth_materials;
@@ -21,7 +21,7 @@ public class AndReceiverMesh : IAndReceiver
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_And.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Default_And.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {
@@ -29,7 +29,7 @@ public class AndReceiverMesh : IAndReceiver
         }
         renderer.sharedMaterials = materials;
 
-        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Depth.mat");
         m_depth_materials = new Material[materials.Length];
         for (int i = 0; i < m_depth_materials.Length; ++i)
         {

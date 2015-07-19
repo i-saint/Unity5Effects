@@ -21,7 +21,7 @@ public class SubReceiverMesh : ISubReceiver
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_SubReceiver.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Default_SubReceiver.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {
@@ -29,7 +29,7 @@ public class SubReceiverMesh : ISubReceiver
         }
         renderer.sharedMaterials = materials;
 
-        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/ScreenSpaceBoolean/Materials/Depth.mat");
         m_depth_materials = new Material[materials.Length];
         for (int i = 0; i < m_depth_materials.Length; ++i)
         {
