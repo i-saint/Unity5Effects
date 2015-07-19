@@ -9,7 +9,7 @@ using UnityEditor;
 
 [AddComponentMenu("BooleanRenderer/SubtractionRenderer")]
 [ExecuteInEditMode]
-public class SubtractionRenderer : MonoBehaviour
+public class SubRenderer : MonoBehaviour
 {
     #region fields
     public bool m_enable_masking = true;
@@ -105,32 +105,33 @@ public class SubtractionRenderer : MonoBehaviour
         }
 
         m_commands.Clear();
-        var gsubtracted = ISubtracted.GetGroups();
-        var gsubtractor = ISubtractor.GetGroups();
-        foreach (var v in gsubtracted)
+        var greceivers = ISubReceiver.GetGroups();
+        var goperators = ISubOperator.GetGroups();
+        foreach (var v in greceivers)
         {
-            var subtractor = gsubtractor.ContainsKey(v.Key) ? gsubtractor[v.Key] : null;
-            IssueDrawcalls(v.Value, subtractor);
+            var operators = goperators.ContainsKey(v.Key) ? goperators[v.Key] : null;
+            IssueDrawcalls(v.Value, operators);
         }
     }
 
-    void IssueDrawcalls(List<ISubtracted> subtracted, List<ISubtractor> subtractor)
+    void IssueDrawcalls(List<ISubReceiver> receivers, List<ISubOperator> operaors)
     {
+        int num_receivers = receivers.Count;
+        int num_operators = operaors == null ? 0 : operaors.Count;
+
         int id_backdepth = Shader.PropertyToID("BackDepth");
         int id_tmpdepth = Shader.PropertyToID("TmpDepth");
-        int num_subtractor = subtractor.Count;
-        int num_subtracted = subtractor==null ? 0 : subtracted.Count;
 
         if (m_enable_piercing)
         {
             m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
             m_commands.SetRenderTarget(id_backdepth);
             m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
-            for (int i = 0; i < num_subtracted; ++i)
+            for (int i = 0; i < num_receivers; ++i)
             {
-                if (subtracted[i] != null)
+                if (receivers[i] != null)
                 {
-                    subtracted[i].IssueDrawCall_BackDepth(this, m_commands);
+                    receivers[i].IssueDrawCall_BackDepth(this, m_commands);
                 }
             }
             m_commands.SetGlobalTexture("_BackDepth", id_backdepth);
@@ -139,18 +140,18 @@ public class SubtractionRenderer : MonoBehaviour
         m_commands.GetTemporaryRT(id_tmpdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_tmpdepth);
         m_commands.ClearRenderTarget(true, true, Color.black, 1.0f);
-        for (int i = 0; i < num_subtracted; ++i)
+        for (int i = 0; i < num_receivers; ++i)
         {
-            if (subtracted[i] != null)
+            if (receivers[i] != null)
             {
-                subtracted[i].IssueDrawCall_DepthMask(this, m_commands);
+                receivers[i].IssueDrawCall_DepthMask(this, m_commands);
             }
         }
-        for (int i = 0; i < num_subtractor; ++i)
+        for (int i = 0; i < num_operators; ++i)
         {
-            if (subtractor[i] != null)
+            if (operaors[i] != null)
             {
-                subtractor[i].IssueDrawCall_DepthMask(this, m_commands);
+                operaors[i].IssueDrawCall_DepthMask(this, m_commands);
             }
         }
 

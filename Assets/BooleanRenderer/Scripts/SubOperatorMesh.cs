@@ -11,7 +11,7 @@ using UnityEditor;
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
-public class SubtractorMesh : ISubtractor
+public class SubOperatorMesh : ISubOperator
 {
     public Material[] m_mask_materials;
 
@@ -40,7 +40,7 @@ public class SubtractorMesh : ISubtractor
     Mesh GetMesh() { return GetComponent<MeshFilter>().sharedMesh; }
     Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
-    public override void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
     {
         if (br.m_enable_piercing)
         {

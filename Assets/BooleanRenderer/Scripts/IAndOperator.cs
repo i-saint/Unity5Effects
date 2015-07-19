@@ -7,22 +7,22 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
-public abstract class IAnded : MonoBehaviour
+public abstract class IAndOperator : MonoBehaviour
 {
     #region static
-    static private List<IAnded> s_instances;
-    static private Dictionary<int, List<IAnded>> s_groups;
+    static private List<IAndOperator> s_instances;
+    static private Dictionary<int, List<IAndOperator>> s_groups;
     static private bool s_dirty = true;
 
-    static public List<IAnded> GetInstances()
+    static public List<IAndOperator> GetInstances()
     {
-        if (s_instances == null) { s_instances = new List<IAnded>(); }
+        if (s_instances == null) { s_instances = new List<IAndOperator>(); }
         return s_instances;
     }
 
-    static public Dictionary<int, List<IAnded>> GetGroups()
+    static public Dictionary<int, List<IAndOperator>> GetGroups()
     {
-        if (s_groups == null) { s_groups = new Dictionary<int, List<IAnded>>(); }
+        if (s_groups == null) { s_groups = new Dictionary<int, List<IAndOperator>>(); }
         if (s_dirty)
         {
             s_dirty = false;
@@ -35,7 +35,7 @@ public abstract class IAnded : MonoBehaviour
                     int k = instance.m_groups[j];
                     if (!s_groups.ContainsKey(k))
                     {
-                        s_groups.Add(k, new List<IAnded>());
+                        s_groups.Add(k, new List<IAndOperator>());
                     }
                     s_groups[k].Add(instance);
                 }

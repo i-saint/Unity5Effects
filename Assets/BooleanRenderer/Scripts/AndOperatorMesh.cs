@@ -7,11 +7,11 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/AndedMesh")]
+[AddComponentMenu("BooleanRenderer/AnderMesh")]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
-public class AndedMesh : IAnded
+public class AndOperatorMesh : IAndOperator
 {
     public Material[] m_depth_materials;
 
@@ -20,7 +20,7 @@ public class AndedMesh : IAnded
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {

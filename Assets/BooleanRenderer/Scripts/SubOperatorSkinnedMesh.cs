@@ -10,7 +10,7 @@ using UnityEditor;
 [AddComponentMenu("BooleanRenderer/SubtractorSkinnedMesh")]
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 [ExecuteInEditMode]
-public class SubtractorSkinnedMesh : ISubtractor
+public class SubOperatorSkinnedMesh : ISubOperator
 {
     public Material[] m_materials;
     public Material[] m_mask_materials;
@@ -56,7 +56,7 @@ public class SubtractorSkinnedMesh : ISubtractor
         }
     }
 
-    public override void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
     {
         if (br.m_enable_piercing)
         {

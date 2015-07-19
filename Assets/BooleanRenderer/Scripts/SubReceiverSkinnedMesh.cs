@@ -10,7 +10,7 @@ using UnityEditor;
 [AddComponentMenu("BooleanRenderer/SubtractedSkinnedMesh")]
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 [ExecuteInEditMode]
-public class SubtractedSkinnedMesh : ISubtracted
+public class SubReceiverSkinnedMesh : ISubReceiver
 {
     public Material m_mat_depth;
     Mesh m_mesh;
@@ -42,12 +42,12 @@ public class SubtractedSkinnedMesh : ISubtracted
     }
     Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
-    public override void IssueDrawCall_BackDepth(SubtractionRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb)
     {
         cb.DrawMesh(GetMesh(), GetTRS(), m_mat_depth, 0, 0);
     }
 
-    public override void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
     {
         cb.DrawMesh(GetMesh(), GetTRS(), m_mat_depth, 0, 1);
     }

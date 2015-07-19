@@ -7,22 +7,22 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
-public abstract class IAnder : MonoBehaviour
+public abstract class ISubReceiver : MonoBehaviour
 {
     #region static
-    static private List<IAnder> s_instances;
-    static private Dictionary<int, List<IAnder>> s_groups;
+    static private List<ISubReceiver> s_instances;
+    static private Dictionary<int, List<ISubReceiver>> s_groups;
     static private bool s_dirty = true;
 
-    static public List<IAnder> GetInstances()
+    static public List<ISubReceiver> GetInstances()
     {
-        if (s_instances == null) { s_instances = new List<IAnder>(); }
+        if (s_instances == null) { s_instances = new List<ISubReceiver>(); }
         return s_instances;
     }
 
-    static public Dictionary<int, List<IAnder>> GetGroups()
+    static public Dictionary<int, List<ISubReceiver>> GetGroups()
     {
-        if (s_groups == null) { s_groups = new Dictionary<int, List<IAnder>>(); }
+        if (s_groups == null) { s_groups = new Dictionary<int, List<ISubReceiver>>(); }
         if (s_dirty)
         {
             s_dirty = false;
@@ -35,7 +35,7 @@ public abstract class IAnder : MonoBehaviour
                     int k = instance.m_groups[j];
                     if (!s_groups.ContainsKey(k))
                     {
-                        s_groups.Add(k, new List<IAnder>());
+                        s_groups.Add(k, new List<ISubReceiver>());
                     }
                     s_groups[k].Add(instance);
                 }
@@ -81,6 +81,6 @@ public abstract class IAnder : MonoBehaviour
         GetInstances().Remove(this);
     }
 
-    public abstract void IssueDrawCall_FrontDepth(AndRenderer br, CommandBuffer cb);
-    public abstract void IssueDrawCall_BackDepth(AndRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb);
 }

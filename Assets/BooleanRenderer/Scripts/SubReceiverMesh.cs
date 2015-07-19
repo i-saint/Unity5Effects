@@ -11,7 +11,7 @@ using UnityEditor;
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
-public class SubtractedMesh : ISubtracted
+public class SubReceiverMesh : ISubReceiver
 {
     public Material[] m_depth_materials;
 
@@ -40,7 +40,7 @@ public class SubtractedMesh : ISubtracted
     Mesh GetMesh() { return GetComponent<MeshFilter>().sharedMesh; }
     Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
-    public override void IssueDrawCall_BackDepth(SubtractionRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb)
     {
         var m = GetMesh();
         var n = m_depth_materials.Length;
@@ -51,7 +51,7 @@ public class SubtractedMesh : ISubtracted
         }
     }
 
-    public override void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
     {
         var m = GetMesh();
         int n = m_depth_materials.Length;

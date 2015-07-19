@@ -7,35 +7,37 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
-public abstract class ISubtracted : MonoBehaviour
+
+public abstract class ISubOperator : MonoBehaviour
 {
     #region static
-    static private List<ISubtracted> s_instances;
-    static private Dictionary<int, List<ISubtracted>> s_groups;
+    static private List<ISubOperator> s_instances;
+    static private Dictionary<int, List<ISubOperator>> s_groups;
     static private bool s_dirty = true;
 
-    static public List<ISubtracted> GetInstances()
+    static public List<ISubOperator> GetInstances()
     {
-        if (s_instances == null) { s_instances = new List<ISubtracted>(); }
+        if (s_instances == null) { s_instances = new List<ISubOperator>(); }
         return s_instances;
     }
 
-    static public Dictionary<int, List<ISubtracted>> GetGroups()
+    static public Dictionary<int, List<ISubOperator>> GetGroups()
     {
-        if (s_groups == null) { s_groups = new Dictionary<int, List<ISubtracted>>(); }
+        if (s_groups == null) { s_groups = new Dictionary<int, List<ISubOperator>>(); }
         if (s_dirty)
         {
             s_dirty = false;
             s_groups.Clear();
             var instances = GetInstances();
-            for (int i = 0; i < instances.Count; ++i )
+            for (int i = 0; i < instances.Count; ++i)
             {
                 var instance = instances[i];
-                for(int j=0; j<instance.m_groups.Length; ++j) {
+                for (int j = 0; j < instance.m_groups.Length; ++j)
+                {
                     int k = instance.m_groups[j];
                     if (!s_groups.ContainsKey(k))
                     {
-                        s_groups.Add(k, new List<ISubtracted>());
+                        s_groups.Add(k, new List<ISubOperator>());
                     }
                     s_groups[k].Add(instance);
                 }
@@ -45,11 +47,9 @@ public abstract class ISubtracted : MonoBehaviour
     }
     #endregion
 
-
     #region fields
     public int[] m_groups = new int[] { 0 };
     #endregion
-
 
     public int[] groups
     {
@@ -65,22 +65,18 @@ public abstract class ISubtracted : MonoBehaviour
     public virtual void OnValidate()
     {
         m_groups = m_groups.Distinct().ToArray();
-        s_dirty = true;
     }
 #endif
 
     public virtual void OnEnable()
     {
-        s_dirty = true;
         GetInstances().Add(this);
     }
 
     public virtual void OnDisable()
     {
-        s_dirty = true;
         GetInstances().Remove(this);
     }
 
-    public abstract void IssueDrawCall_BackDepth(SubtractionRenderer br, CommandBuffer cb);
-    public abstract void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb);
 }

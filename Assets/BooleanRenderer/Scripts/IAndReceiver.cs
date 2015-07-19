@@ -7,37 +7,35 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
-
-public abstract class ISubtractor : MonoBehaviour
+public abstract class IAndReceiver : MonoBehaviour
 {
     #region static
-    static private List<ISubtractor> s_instances;
-    static private Dictionary<int, List<ISubtractor>> s_groups;
+    static private List<IAndReceiver> s_instances;
+    static private Dictionary<int, List<IAndReceiver>> s_groups;
     static private bool s_dirty = true;
 
-    static public List<ISubtractor> GetInstances()
+    static public List<IAndReceiver> GetInstances()
     {
-        if (s_instances == null) { s_instances = new List<ISubtractor>(); }
+        if (s_instances == null) { s_instances = new List<IAndReceiver>(); }
         return s_instances;
     }
 
-    static public Dictionary<int, List<ISubtractor>> GetGroups()
+    static public Dictionary<int, List<IAndReceiver>> GetGroups()
     {
-        if (s_groups == null) { s_groups = new Dictionary<int, List<ISubtractor>>(); }
+        if (s_groups == null) { s_groups = new Dictionary<int, List<IAndReceiver>>(); }
         if (s_dirty)
         {
             s_dirty = false;
             s_groups.Clear();
             var instances = GetInstances();
-            for (int i = 0; i < instances.Count; ++i)
+            for (int i = 0; i < instances.Count; ++i )
             {
                 var instance = instances[i];
-                for (int j = 0; j < instance.m_groups.Length; ++j)
-                {
+                for(int j=0; j<instance.m_groups.Length; ++j) {
                     int k = instance.m_groups[j];
                     if (!s_groups.ContainsKey(k))
                     {
-                        s_groups.Add(k, new List<ISubtractor>());
+                        s_groups.Add(k, new List<IAndReceiver>());
                     }
                     s_groups[k].Add(instance);
                 }
@@ -47,9 +45,11 @@ public abstract class ISubtractor : MonoBehaviour
     }
     #endregion
 
+
     #region fields
     public int[] m_groups = new int[] { 0 };
     #endregion
+
 
     public int[] groups
     {
@@ -65,18 +65,22 @@ public abstract class ISubtractor : MonoBehaviour
     public virtual void OnValidate()
     {
         m_groups = m_groups.Distinct().ToArray();
+        s_dirty = true;
     }
 #endif
 
     public virtual void OnEnable()
     {
+        s_dirty = true;
         GetInstances().Add(this);
     }
 
     public virtual void OnDisable()
     {
+        s_dirty = true;
         GetInstances().Remove(this);
     }
 
-    public abstract void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_FrontDepth(AndRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_BackDepth(AndRenderer br, CommandBuffer cb);
 }

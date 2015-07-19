@@ -103,8 +103,8 @@ public class AndRenderer : MonoBehaviour
         }
 
         m_commands.Clear();
-        var ganded = IAnded.GetGroups();
-        var gander = IAnder.GetGroups();
+        var ganded = IAndReceiver.GetGroups();
+        var gander = IAndOperator.GetGroups();
         foreach (var v in ganded)
         {
             if (gander.ContainsKey(v.Key))
@@ -114,10 +114,10 @@ public class AndRenderer : MonoBehaviour
         }
     }
 
-    void IssueDrawcalls(List<IAnded> anded, List<IAnder> ander)
+    void IssueDrawcalls(List<IAndReceiver> receivers, List<IAndOperator> operators)
     {
-        int num_anded = anded.Count;
-        int num_ander = ander.Count;
+        int num_receivers = receivers.Count;
+        int num_operators = operators.Count;
 
         int id_backdepth = Shader.PropertyToID("BackDepth");
         int id_frontdepth = Shader.PropertyToID("TmpDepth"); // reuse SubtractionRenderer's buffer
@@ -128,11 +128,11 @@ public class AndRenderer : MonoBehaviour
         m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_backdepth);
         m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
-        for (int i = 0; i < num_anded; ++i)
+        for (int i = 0; i < num_receivers; ++i)
         {
-            if (anded[i] != null)
+            if (receivers[i] != null)
             {
-                anded[i].IssueDrawCall_BackDepth(this, m_commands);
+                receivers[i].IssueDrawCall_BackDepth(this, m_commands);
             }
         }
         m_commands.SetGlobalTexture("_BackDepth", id_backdepth);
@@ -141,11 +141,11 @@ public class AndRenderer : MonoBehaviour
         m_commands.GetTemporaryRT(id_backdepth2, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_backdepth2);
         m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
-        for (int i = 0; i < num_ander; ++i)
+        for (int i = 0; i < num_operators; ++i)
         {
-            if (ander[i] != null)
+            if (operators[i] != null)
             {
-                ander[i].IssueDrawCall_BackDepth(this, m_commands);
+                operators[i].IssueDrawCall_BackDepth(this, m_commands);
             }
         }
         m_commands.SetGlobalTexture("_BackDepth2", id_backdepth2);
@@ -155,11 +155,11 @@ public class AndRenderer : MonoBehaviour
         m_commands.GetTemporaryRT(id_frontdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_frontdepth);
         m_commands.ClearRenderTarget(true, true, Color.black, 1.0f);
-        for (int i = 0; i < num_anded; ++i)
+        for (int i = 0; i < num_receivers; ++i)
         {
-            if (anded[i] != null)
+            if (receivers[i] != null)
             {
-                anded[i].IssueDrawCall_FrontDepth(this, m_commands);
+                receivers[i].IssueDrawCall_FrontDepth(this, m_commands);
             }
         }
         m_commands.SetGlobalTexture("_FrontDepth", id_frontdepth);
@@ -168,11 +168,11 @@ public class AndRenderer : MonoBehaviour
         m_commands.GetTemporaryRT(id_frontdepth2, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_frontdepth2);
         m_commands.ClearRenderTarget(true, true, Color.black, 1.0f);
-        for (int i = 0; i < num_ander; ++i)
+        for (int i = 0; i < num_operators; ++i)
         {
-            if (ander[i] != null)
+            if (operators[i] != null)
             {
-                ander[i].IssueDrawCall_FrontDepth(this, m_commands);
+                operators[i].IssueDrawCall_FrontDepth(this, m_commands);
             }
         }
         m_commands.SetGlobalTexture("_FrontDepth2", id_frontdepth2);
