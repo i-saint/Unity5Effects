@@ -13,28 +13,52 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class SubtractedMesh : ISubtracted
 {
-    public Material m_mat_depth;
+    public Material[] m_depth_materials;
 
 #if UNITY_EDITOR
-    void Reset()
+    public override void Reset()
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        renderer.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
-        m_mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
+        var materials = new Material[renderer.sharedMaterials.Length];
+        for (int i = 0; i < materials.Length; ++i)
+        {
+            materials[i] = mat;
+        }
+        renderer.sharedMaterials = materials;
+
+        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+        m_depth_materials = new Material[materials.Length];
+        for (int i = 0; i < m_depth_materials.Length; ++i)
+        {
+            m_depth_materials[i] = mat_depth;
+        }
     }
 #endif // UNITY_EDITOR
 
-    Mesh mesh { get { return GetComponent<MeshFilter>().sharedMesh; } }
-    Matrix4x4 trs { get { return GetComponent<Transform>().localToWorldMatrix; } }
+    Mesh GetMesh() { return GetComponent<MeshFilter>().sharedMesh; }
+    Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
     public override void IssueDrawCall_BackDepth(SubtractionRenderer br, CommandBuffer cb)
     {
-        cb.DrawMesh(mesh, trs, m_mat_depth, 0, 0);
+        var m = GetMesh();
+        var n = m_depth_materials.Length;
+        var t = GetTRS();
+        for (int i = 0; i < n; ++i )
+        {
+            cb.DrawMesh(m, t, m_depth_materials[i], i, 0);
+        }
     }
 
     public override void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb)
     {
-        cb.DrawMesh(mesh, trs, m_mat_depth, 0, 1);
+        var m = GetMesh();
+        int n = m_depth_materials.Length;
+        var t = GetTRS();
+        for (int i = 0; i < n; ++i)
+        {
+            cb.DrawMesh(m, t, m_depth_materials[i], i, 1);
+        }
     }
 }

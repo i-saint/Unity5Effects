@@ -11,36 +11,17 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class SubtractionRenderer : MonoBehaviour
 {
-    static private List<SubtractionRenderer> s_instances;
-    static public List<SubtractionRenderer> instances
-    {
-        get
-        {
-            if (s_instances == null) { s_instances = new List<SubtractionRenderer>(); }
-            return s_instances;
-        }
-    }
-
-
+    #region fields
     public bool m_enable_masking = true;
     public bool m_enable_piercing = true;
 
     public Mesh m_quad;
     public Shader m_sh_composite;
 
-    List<ISubtracted> m_subtracted = new List<ISubtracted>();
-    List<ISubtractor> m_subtractor = new List<ISubtractor>();
     Material m_mat_composite;
     CommandBuffer m_commands;
-    RenderTargetIdentifier[] m_gbuffer_rt;
     List<Camera> m_cameras = new List<Camera>();
-    bool m_dirty = true;
-
-
-    public void AddSubtracted(ISubtracted v) { m_subtracted.Add(v); }
-    public void AddSubtractor(ISubtractor v) { m_subtractor.Add(v); }
-    public void RemoveSubtracted(ISubtracted v) { m_subtracted.Remove(v); }
-    public void RemoveSubtractor(ISubtractor v) { m_subtractor.Remove(v); }
+    #endregion
 
 
     public static Mesh GenerateQuad()
@@ -67,16 +48,6 @@ public class SubtractionRenderer : MonoBehaviour
     }
 #endif // UNITY_EDITOR
 
-    void Awake()
-    {
-        instances.Add(this);
-    }
-
-    void OnDestroy()
-    {
-        instances.Remove(this);
-    }
-
     void OnDisable()
     {
         if (m_commands != null)
@@ -92,10 +63,20 @@ public class SubtractionRenderer : MonoBehaviour
             m_cameras.Clear();
         }
     }
-
-    void LateUpdate()
+    
+    void OnPreRender()
     {
-        m_dirty = true;
+        if (!gameObject.activeInHierarchy && !enabled) { return; }
+
+        var cam = GetComponent<Camera>();
+
+        UpdateCommandBuffer();
+
+        if (!m_cameras.Contains(cam))
+        {
+            cam.AddCommandBuffer(CameraEvent.BeforeGBuffer, m_commands);
+            m_cameras.Add(cam);
+        }
     }
 
     void OnWillRenderObject()
@@ -116,29 +97,30 @@ public class SubtractionRenderer : MonoBehaviour
 
     void UpdateCommandBuffer()
     {
-        if (!m_dirty) { return; }
-        m_dirty = false;
-
-        int num_subtractor = m_subtractor.Count;
-        int num_subtracted = m_subtracted.Count;
-        int id_backdepth = Shader.PropertyToID("BackDepth");
-        int id_tmpdepth = Shader.PropertyToID("TmpDepth");
-
         if (m_commands == null)
         {
             m_commands = new CommandBuffer();
             m_commands.name = "SubtractionRenderer";
-            m_gbuffer_rt = new RenderTargetIdentifier[]
-            {
-                BuiltinRenderTextureType.GBuffer0,
-                BuiltinRenderTextureType.GBuffer1,
-                BuiltinRenderTextureType.GBuffer2,
-                BuiltinRenderTextureType.CameraTarget,
-            };
             m_mat_composite = new Material(m_sh_composite);
         }
 
         m_commands.Clear();
+        int id_backdepth = Shader.PropertyToID("BackDepth");
+        int id_tmpdepth = Shader.PropertyToID("TmpDepth");
+        var gsubtracted = ISubtracted.GetGroups();
+        var gsubtractor = ISubtractor.GetGroups();
+        foreach (var v in gsubtracted)
+        {
+            var subtractor = gsubtractor.ContainsKey(v.Key) ? gsubtractor[v.Key] : null;
+            IssueDrawcalls(id_backdepth, id_tmpdepth, v.Value, subtractor);
+        }
+    }
+
+    void IssueDrawcalls(int id_backdepth, int id_tmpdepth, List<ISubtracted> subtracted, List<ISubtractor> subtractor)
+    {
+        int num_subtractor = subtractor.Count;
+        int num_subtracted = subtractor==null ? 0 : subtracted.Count;
+
         if (m_enable_piercing)
         {
             m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
@@ -146,9 +128,9 @@ public class SubtractionRenderer : MonoBehaviour
             m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
             for (int i = 0; i < num_subtracted; ++i)
             {
-                if (m_subtracted[i] != null)
+                if (subtracted[i] != null)
                 {
-                    m_subtracted[i].IssueDrawCall_BackDepth(this, m_commands);
+                    subtracted[i].IssueDrawCall_BackDepth(this, m_commands);
                 }
             }
             m_commands.SetGlobalTexture("_BackDepth", id_backdepth);
@@ -159,16 +141,16 @@ public class SubtractionRenderer : MonoBehaviour
         m_commands.ClearRenderTarget(true, true, Color.black, 1.0f);
         for (int i = 0; i < num_subtracted; ++i)
         {
-            if (m_subtracted[i] != null)
+            if (subtracted[i] != null)
             {
-                m_subtracted[i].IssueDrawCall_DepthMask(this, m_commands);
+                subtracted[i].IssueDrawCall_DepthMask(this, m_commands);
             }
         }
         for (int i = 0; i < num_subtractor; ++i)
         {
-            if (m_subtractor[i] != null)
+            if (subtractor[i] != null)
             {
-                m_subtractor[i].IssueDrawCall_DepthMask(this, m_commands);
+                subtractor[i].IssueDrawCall_DepthMask(this, m_commands);
             }
         }
 

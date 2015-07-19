@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System.Linq;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -8,27 +9,76 @@ using UnityEditor;
 
 public abstract class ISubtracted : MonoBehaviour
 {
-    public SubtractionRenderer[] m_renderer;
+    #region static
+    static private List<ISubtracted> s_instances;
+    static private Dictionary<int, List<ISubtracted>> s_groups;
+    static private bool s_dirty = true;
+
+    static public List<ISubtracted> GetInstances()
+    {
+        if (s_instances == null) { s_instances = new List<ISubtracted>(); }
+        return s_instances;
+    }
+
+    static public Dictionary<int, List<ISubtracted>> GetGroups()
+    {
+        if (s_groups == null) { s_groups = new Dictionary<int, List<ISubtracted>>(); }
+        if (s_dirty)
+        {
+            s_dirty = false;
+            s_groups.Clear();
+            var instances = GetInstances();
+            for (int i = 0; i < instances.Count; ++i )
+            {
+                var instance = instances[i];
+                for(int j=0; j<instance.m_groups.Length; ++j) {
+                    int k = instance.m_groups[j];
+                    if (!s_groups.ContainsKey(k))
+                    {
+                        s_groups.Add(k, new List<ISubtracted>());
+                    }
+                    s_groups[k].Add(instance);
+                }
+            }
+        }
+        return s_groups;
+    }
+    #endregion
+
+
+    #region fields
+    public int[] m_groups = new int[] { 0 };
+    #endregion
+
+
+    public int[] groups
+    {
+        get { return m_groups; }
+        set { m_groups = value; s_dirty = true; }
+    }
 
 #if UNITY_EDITOR
     public virtual void Reset()
     {
-        if (m_renderer == null || m_renderer.Length == 0)
-        {
-            m_renderer = SubtractionRenderer.instances.ToArray();
-            foreach (var r in m_renderer) { r.AddSubtracted(this); }
-        }
+    }
+
+    public virtual void OnValidate()
+    {
+        m_groups = m_groups.Distinct().ToArray();
+        s_dirty = true;
     }
 #endif
 
     public virtual void OnEnable()
     {
-        foreach (var r in m_renderer) { r.AddSubtracted(this); }
+        s_dirty = true;
+        GetInstances().Add(this);
     }
 
     public virtual void OnDisable()
     {
-        foreach (var r in m_renderer) { r.RemoveSubtracted(this); }
+        s_dirty = true;
+        GetInstances().Remove(this);
     }
 
     public abstract void IssueDrawCall_BackDepth(SubtractionRenderer br, CommandBuffer cb);

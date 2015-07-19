@@ -7,29 +7,37 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/SubtractorMesh")]
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
+[AddComponentMenu("BooleanRenderer/SubtractorSkinnedMesh")]
+[RequireComponent(typeof(SkinnedMeshRenderer))]
 [ExecuteInEditMode]
-public class SubtractorMesh : ISubtractor
+public class SubtractorSkinnedMesh : ISubtractor
 {
+    public Material[] m_materials;
     public Material[] m_mask_materials;
+    Mesh m_mesh;
+
+    Mesh GetMesh()
+    {
+        if (m_mesh == null) { m_mesh = new Mesh(); }
+        return m_mesh;
+    }
+    Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
 #if UNITY_EDITOR
     public override void Reset()
     {
         base.Reset();
-        var renderer = GetComponent<MeshRenderer>();
+        var renderer = GetComponent<SkinnedMeshRenderer>();
         var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
-        var materials = new Material[renderer.sharedMaterials.Length];
-        for (int i = 0; i < materials.Length; ++i)
+        m_materials = new Material[renderer.sharedMesh.subMeshCount];
+        for (int i = 0; i < m_materials.Length; ++i)
         {
-            materials[i] = mat;
+            m_materials[i] = mat;
         }
-        renderer.sharedMaterials = materials;
+        renderer.sharedMaterials = new Material[0];
 
         var mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/StencilMask.mat");
-        m_mask_materials = new Material[materials.Length];
+        m_mask_materials = new Material[m_materials.Length];
         for (int i = 0; i < m_mask_materials.Length; ++i)
         {
             m_mask_materials[i] = mat_mask;
@@ -37,8 +45,16 @@ public class SubtractorMesh : ISubtractor
     }
 #endif // UNITY_EDITOR
 
-    Mesh GetMesh() { return GetComponent<MeshFilter>().sharedMesh; }
-    Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
+    void LateUpdate()
+    {
+        var mesh = GetMesh();
+        Matrix4x4 trs = GetTRS();
+        GetComponent<SkinnedMeshRenderer>().BakeMesh(mesh);
+        for (int i = 0; i < mesh.subMeshCount; ++i )
+        {
+            Graphics.DrawMesh(mesh, trs, m_materials[i], 0, null, i);
+        }
+    }
 
     public override void IssueDrawCall_DepthMask(SubtractionRenderer br, CommandBuffer cb)
     {
@@ -57,23 +73,23 @@ public class SubtractorMesh : ISubtractor
             }
         }
 
-        Mesh m = GetMesh();
-        int n = m.subMeshCount;
-        Matrix4x4 t = GetTRS();
+        Matrix4x4 trs = GetTRS();
+        Mesh mesh = GetMesh();
+        int n = mesh.subMeshCount;
         if (br.m_enable_masking)
         {
             for (int i = 0; i < n; ++i)
             {
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 0);
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 1);
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 2);
+                cb.DrawMesh(mesh, trs, m_mask_materials[i], i, 0);
+                cb.DrawMesh(mesh, trs, m_mask_materials[i], i, 1);
+                cb.DrawMesh(mesh, trs, m_mask_materials[i], i, 2);
             }
         }
         else
         {
             for (int i = 0; i < n; ++i)
             {
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 3);
+                cb.DrawMesh(mesh, trs, m_mask_materials[i], i, 3);
             }
         }
     }
