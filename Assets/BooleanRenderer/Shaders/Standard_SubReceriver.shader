@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/Standard Subtractor"
+Shader "BooleanRenderer/Standard SubReceiver"
 {
     Properties
     {
@@ -45,7 +45,7 @@ Shader "BooleanRenderer/Standard Subtractor"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-490" "DisableBatching"="True" }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-500" "DisableBatching"="True" }
 
         // ------------------------------------------------------------------
         //  Shadow rendering pass
@@ -55,16 +55,17 @@ Shader "BooleanRenderer/Standard Subtractor"
 
             Cull Front
             ZWrite On
-            ZTest Greater
+            ZTest LEqual
 
             CGPROGRAM
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
             #pragma exclude_renderers gles
-
+            
             // -------------------------------------
 
 
+            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
             #pragma multi_compile_shadowcaster
 
             #pragma vertex vertShadowCaster
@@ -75,15 +76,14 @@ Shader "BooleanRenderer/Standard Subtractor"
             ENDCG
         }
 
-
         // ------------------------------------------------------------------
         //  Deferred pass
-
         Pass
         {
             Name "DEFERRED"
-            Tags { "LightMode"="Deferred" }
-            Cull Front
+            Tags { "LightMode" = "Deferred" }
+
+            Cull Back
             ZWrite Off
             ZTest Equal
 
@@ -91,6 +91,7 @@ Shader "BooleanRenderer/Standard Subtractor"
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
             #pragma exclude_renderers nomrt gles
+            
 
             // -------------------------------------
 
@@ -106,20 +107,14 @@ Shader "BooleanRenderer/Standard Subtractor"
             #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED DIRLIGHTMAP_SEPARATE
             #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
             
-            #pragma vertex vertDeferred2
+            #pragma vertex vertDeferred
             #pragma fragment fragDeferred
 
             #include "UnityStandardCore.cginc"
 
-            VertexOutputDeferred vertDeferred2(VertexInput v)
-            {
-                v.normal *= -1.0;
-                return vertDeferred(v);
-            }
             ENDCG
         }
     }
 
-    FallBack "VertexLit"
     CustomEditor "StandardShaderGUI"
 }

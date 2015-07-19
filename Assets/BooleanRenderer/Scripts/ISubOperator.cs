@@ -79,4 +79,5 @@ public abstract class ISubOperator : MonoBehaviour
     }
 
     public abstract void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb);
 }

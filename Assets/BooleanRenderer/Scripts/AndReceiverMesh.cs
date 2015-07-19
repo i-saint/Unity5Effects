@@ -13,6 +13,7 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class AndReceiverMesh : IAndReceiver
 {
+    public Material[] m_materials;
     public Material[] m_depth_materials;
 
 #if UNITY_EDITOR
@@ -20,7 +21,7 @@ public class AndReceiverMesh : IAndReceiver
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_And.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {

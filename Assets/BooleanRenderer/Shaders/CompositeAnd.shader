@@ -1,4 +1,4 @@
-Shader "Hidden/BooleanRenderer_And"
+Shader "Hidden/Boolean_AndComposite"
 {
 
 SubShader

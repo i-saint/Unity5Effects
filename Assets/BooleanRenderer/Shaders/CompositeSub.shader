@@ -1,4 +1,4 @@
-Shader "Hidden/BooleanRenderer_Composite"
+Shader "Hidden/Boolean_SubComposite"
 {
 
 SubShader
@@ -40,7 +40,6 @@ ps_out frag(vs_out i)
     r.color = 0.0;
     r.depth = tex2D(_TmpDepth, coord).x;
     if(r.depth==0.0) { discard; }
-    //r.depth = 0.5;
     return r;
 }
 ENDCG

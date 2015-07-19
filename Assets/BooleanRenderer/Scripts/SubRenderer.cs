@@ -44,7 +44,7 @@ public class SubRenderer : MonoBehaviour
     void Reset()
     {
         m_quad = GenerateQuad();
-        m_sh_composite = AssetDatabase.LoadAssetAtPath<Shader>("Assets/BooleanRenderer/Shaders/Composite.shader");
+        m_sh_composite = AssetDatabase.LoadAssetAtPath<Shader>("Assets/BooleanRenderer/Shaders/CompositeSub.shader");
     }
 #endif // UNITY_EDITOR
 
@@ -110,11 +110,11 @@ public class SubRenderer : MonoBehaviour
         foreach (var v in greceivers)
         {
             var operators = goperators.ContainsKey(v.Key) ? goperators[v.Key] : null;
-            IssueDrawcalls(v.Value, operators);
+            IssueDrawcalls_Depth(v.Value, operators);
         }
     }
 
-    void IssueDrawcalls(List<ISubReceiver> receivers, List<ISubOperator> operaors)
+    void IssueDrawcalls_Depth(List<ISubReceiver> receivers, List<ISubOperator> operaors)
     {
         int num_receivers = receivers.Count;
         int num_operators = operaors == null ? 0 : operaors.Count;
@@ -122,6 +122,7 @@ public class SubRenderer : MonoBehaviour
         int id_backdepth = Shader.PropertyToID("BackDepth");
         int id_tmpdepth = Shader.PropertyToID("TmpDepth");
 
+        // render back depth if piercing enabled
         if (m_enable_piercing)
         {
             m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
@@ -144,7 +145,7 @@ public class SubRenderer : MonoBehaviour
         {
             if (receivers[i] != null)
             {
-                receivers[i].IssueDrawCall_DepthMask(this, m_commands);
+                receivers[i].IssueDrawCall_FrontDepth(this, m_commands);
             }
         }
         for (int i = 0; i < num_operators; ++i)

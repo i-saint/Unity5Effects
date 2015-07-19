@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/Standard Subtracted"
+Shader "BooleanRenderer/Standard SubOperator"
 {
     Properties
     {
@@ -45,7 +45,7 @@ Shader "BooleanRenderer/Standard Subtracted"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-500" "DisableBatching"="True" }
+        Tags { "RenderType"="Opaque" "PerformanceChecks"="False" "Queue"="Geometry-490" "DisableBatching"="True" }
 
         // ------------------------------------------------------------------
         //  Shadow rendering pass
@@ -55,17 +55,16 @@ Shader "BooleanRenderer/Standard Subtracted"
 
             Cull Front
             ZWrite On
-            ZTest LEqual
+            ZTest Greater
 
             CGPROGRAM
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
             #pragma exclude_renderers gles
-            
+
             // -------------------------------------
 
 
-            #pragma shader_feature _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
             #pragma multi_compile_shadowcaster
 
             #pragma vertex vertShadowCaster
@@ -76,14 +75,22 @@ Shader "BooleanRenderer/Standard Subtracted"
             ENDCG
         }
 
+
         // ------------------------------------------------------------------
         //  Deferred pass
+
         Pass
         {
             Name "DEFERRED"
-            Tags { "LightMode" = "Deferred" }
+            Tags { "LightMode"="Deferred" }
 
-            Cull Back
+            Stencil {
+                Ref 1
+                ReadMask 1
+                WriteMask 1
+                Comp Equal
+            }
+            Cull Front
             ZWrite Off
             ZTest Equal
 
@@ -91,7 +98,6 @@ Shader "BooleanRenderer/Standard Subtracted"
             #pragma target 3.0
             // TEMPORARY: GLES2.0 temporarily disabled to prevent errors spam on devices without textureCubeLodEXT
             #pragma exclude_renderers nomrt gles
-            
 
             // -------------------------------------
 
@@ -107,15 +113,19 @@ Shader "BooleanRenderer/Standard Subtracted"
             #pragma multi_compile DIRLIGHTMAP_OFF DIRLIGHTMAP_COMBINED DIRLIGHTMAP_SEPARATE
             #pragma multi_compile DYNAMICLIGHTMAP_OFF DYNAMICLIGHTMAP_ON
             
-            #pragma vertex vertDeferred
+            #pragma vertex vertDeferred2
             #pragma fragment fragDeferred
 
             #include "UnityStandardCore.cginc"
 
+            VertexOutputDeferred vertDeferred2(VertexInput v)
+            {
+                v.normal *= -1.0;
+                return vertDeferred(v);
+            }
             ENDCG
         }
     }
 
-    FallBack "VertexLit"
     CustomEditor "StandardShaderGUI"
 }

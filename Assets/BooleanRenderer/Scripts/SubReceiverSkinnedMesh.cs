@@ -12,8 +12,16 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class SubReceiverSkinnedMesh : ISubReceiver
 {
-    public Material m_mat_depth;
+    public Material[] m_materials;
+    public Material[] m_depth_materials;
     Mesh m_mesh;
+
+    Mesh GetMesh()
+    {
+        if (m_mesh == null) { m_mesh = new Mesh(); }
+        return m_mesh;
+    }
+    Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
 #if UNITY_EDITOR
     public override void Reset()
@@ -27,28 +35,51 @@ public class SubReceiverSkinnedMesh : ISubReceiver
             materials[i] = mat;
         }
         renderer.sharedMaterials = materials;
-        m_mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+
+        var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
+        m_depth_materials = new Material[m_materials.Length];
+        for (int i = 0; i < m_depth_materials.Length; ++i)
+        {
+            m_depth_materials[i] = mat_depth;
+        }
     }
 #endif // UNITY_EDITOR
 
     void LateUpdate()
     {
-        GetComponent<SkinnedMeshRenderer>().BakeMesh(GetMesh());
+        var mesh = GetMesh();
+        Matrix4x4 trs = GetTRS();
+        GetComponent<SkinnedMeshRenderer>().BakeMesh(mesh);
+        for (int i = 0; i < mesh.subMeshCount; ++i)
+        {
+            Graphics.DrawMesh(mesh, trs, m_materials[i], 0, null, i);
+        }
     }
-
-    Mesh GetMesh() {
-        if (m_mesh == null) { m_mesh = new Mesh(); }
-        return m_mesh;
-    }
-    Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
     public override void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb)
     {
-        cb.DrawMesh(GetMesh(), GetTRS(), m_mat_depth, 0, 0);
+        Mesh mesh = GetMesh();
+        Matrix4x4 trs = GetTRS();
+        int n = mesh.subMeshCount;
+        for (int i = 0; i < n; ++i)
+        {
+            cb.DrawMesh(mesh, trs, m_depth_materials[i], i, 0);
+        }
     }
 
-    public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_FrontDepth(SubRenderer br, CommandBuffer cb)
     {
-        cb.DrawMesh(GetMesh(), GetTRS(), m_mat_depth, 0, 1);
+        Mesh mesh = GetMesh();
+        Matrix4x4 trs = GetTRS();
+        int n = mesh.subMeshCount;
+        for (int i = 0; i < n; ++i)
+        {
+            cb.DrawMesh(mesh, trs, m_depth_materials[i], i, 1);
+        }
+    }
+
+    public override void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb)
+    {
+
     }
 }

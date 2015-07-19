@@ -13,6 +13,7 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class SubReceiverMesh : ISubReceiver
 {
+    public Material[] m_materials;
     public Material[] m_depth_materials;
 
 #if UNITY_EDITOR
@@ -51,7 +52,7 @@ public class SubReceiverMesh : ISubReceiver
         }
     }
 
-    public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
+    public override void IssueDrawCall_FrontDepth(SubRenderer br, CommandBuffer cb)
     {
         var m = GetMesh();
         int n = m_depth_materials.Length;
@@ -60,5 +61,10 @@ public class SubReceiverMesh : ISubReceiver
         {
             cb.DrawMesh(m, t, m_depth_materials[i], i, 1);
         }
+    }
+
+    public override void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb)
+    {
+
     }
 }

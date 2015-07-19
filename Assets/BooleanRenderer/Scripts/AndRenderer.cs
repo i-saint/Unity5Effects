@@ -41,7 +41,7 @@ public class AndRenderer : MonoBehaviour
     void Reset()
     {
         m_quad = GenerateQuad();
-        m_sh_and = AssetDatabase.LoadAssetAtPath<Shader>("Assets/BooleanRenderer/Shaders/And.shader");
+        m_sh_and = AssetDatabase.LoadAssetAtPath<Shader>("Assets/BooleanRenderer/Shaders/CompositeAnd.shader");
     }
 #endif // UNITY_EDITOR
 
@@ -87,7 +87,6 @@ public class AndRenderer : MonoBehaviour
 
         if (!m_cameras.Contains(cam))
         {
-            Debug.Log("OnWillRenderObject");
             cam.AddCommandBuffer(CameraEvent.BeforeGBuffer, m_commands);
             m_cameras.Add(cam);
         }
@@ -124,7 +123,7 @@ public class AndRenderer : MonoBehaviour
         int id_backdepth2 = Shader.PropertyToID("BackDepth2");
         int id_frontdepth2 = Shader.PropertyToID("TmpDepth2");
 
-        // back depth 1
+        // back depth - receivers
         m_commands.GetTemporaryRT(id_backdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_backdepth);
         m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
@@ -137,7 +136,7 @@ public class AndRenderer : MonoBehaviour
         }
         m_commands.SetGlobalTexture("_BackDepth", id_backdepth);
 
-        // back depth 2
+        // back depth - operators
         m_commands.GetTemporaryRT(id_backdepth2, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_backdepth2);
         m_commands.ClearRenderTarget(true, true, Color.black, 0.0f);
@@ -151,7 +150,7 @@ public class AndRenderer : MonoBehaviour
         m_commands.SetGlobalTexture("_BackDepth2", id_backdepth2);
 
 
-        // front depth 1
+        // front depth - receivers
         m_commands.GetTemporaryRT(id_frontdepth, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_frontdepth);
         m_commands.ClearRenderTarget(true, true, Color.black, 1.0f);
@@ -164,7 +163,7 @@ public class AndRenderer : MonoBehaviour
         }
         m_commands.SetGlobalTexture("_FrontDepth", id_frontdepth);
 
-        // front depth 2
+        // front depth - operators
         m_commands.GetTemporaryRT(id_frontdepth2, -1, -1, 24, FilterMode.Point, RenderTextureFormat.Depth);
         m_commands.SetRenderTarget(id_frontdepth2);
         m_commands.ClearRenderTarget(true, true, Color.black, 1.0f);
@@ -178,6 +177,7 @@ public class AndRenderer : MonoBehaviour
         m_commands.SetGlobalTexture("_FrontDepth2", id_frontdepth2);
 
 
+        // output depth
         m_commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
         m_commands.DrawMesh(m_quad, Matrix4x4.identity, m_mat_composite);
     }

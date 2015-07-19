@@ -81,6 +81,8 @@ public abstract class ISubReceiver : MonoBehaviour
         GetInstances().Remove(this);
     }
 
+    // for detecting piercing
     public abstract void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb);
-    public abstract void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_FrontDepth(SubRenderer br, CommandBuffer cb);
+    public abstract void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb);
 }

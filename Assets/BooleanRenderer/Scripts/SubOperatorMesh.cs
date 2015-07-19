@@ -13,6 +13,7 @@ using UnityEditor;
 [ExecuteInEditMode]
 public class SubOperatorMesh : ISubOperator
 {
+    public Material[] m_materials;
     public Material[] m_mask_materials;
 
 #if UNITY_EDITOR
@@ -76,5 +77,10 @@ public class SubOperatorMesh : ISubOperator
                 cb.DrawMesh(m, t, m_mask_materials[i], i, 3);
             }
         }
+    }
+
+    public override void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb)
+    {
+
     }
 }

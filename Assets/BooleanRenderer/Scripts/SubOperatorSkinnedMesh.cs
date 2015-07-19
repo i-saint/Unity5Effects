@@ -93,4 +93,9 @@ public class SubOperatorSkinnedMesh : ISubOperator
             }
         }
     }
+
+    public override void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb)
+    {
+
+    }
 }
