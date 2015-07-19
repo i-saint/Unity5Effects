@@ -71,6 +71,11 @@ public class ScreenSpaceReflections : MonoBehaviour
 #endif // UNITY_EDITOR
     }
 
+    void OnDestroy()
+    {
+        Object.DestroyImmediate(m_material);
+    }
+
     void OnDisable()
     {
         ReleaseRenderTargets();

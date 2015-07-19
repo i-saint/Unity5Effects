@@ -48,6 +48,11 @@ public class SubRenderer : MonoBehaviour
     }
 #endif // UNITY_EDITOR
 
+    void OnDestroy()
+    {
+        Object.DestroyImmediate(m_mat_composite);
+    }
+
     void OnDisable()
     {
         if (m_commands != null)
