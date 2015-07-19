@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/SubtractorSkinnedMesh")]
+[AddComponentMenu("BooleanRenderer/SubOperatorSkinnedMesh")]
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 [ExecuteInEditMode]
 public class SubOperatorSkinnedMesh : ISubOperator
@@ -28,13 +28,14 @@ public class SubOperatorSkinnedMesh : ISubOperator
     {
         base.Reset();
         var renderer = GetComponent<SkinnedMeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtractor.mat");
+        renderer.sharedMaterials = new Material[0];
+
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_SubOperator.mat");
         m_materials = new Material[renderer.sharedMesh.subMeshCount];
         for (int i = 0; i < m_materials.Length; ++i)
         {
             m_materials[i] = mat;
         }
-        renderer.sharedMaterials = new Material[0];
 
         var mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/StencilMask.mat");
         m_mask_materials = new Material[m_materials.Length];

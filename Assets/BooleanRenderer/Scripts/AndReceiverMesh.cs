@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/AndedMesh")]
+[AddComponentMenu("BooleanRenderer/AndReceiverMesh")]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]

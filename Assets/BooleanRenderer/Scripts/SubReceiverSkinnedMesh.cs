@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/SubtractedSkinnedMesh")]
+[AddComponentMenu("BooleanRenderer/SubReceiverSkinnedMesh")]
 [RequireComponent(typeof(SkinnedMeshRenderer))]
 [ExecuteInEditMode]
 public class SubReceiverSkinnedMesh : ISubReceiver
@@ -28,13 +28,14 @@ public class SubReceiverSkinnedMesh : ISubReceiver
     {
         base.Reset();
         var renderer = GetComponent<SkinnedMeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
-        var materials = new Material[renderer.sharedMaterials.Length];
-        for (int i = 0; i < renderer.sharedMaterials.Length; ++i)
+        renderer.sharedMaterials = new Material[0];
+
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_SubReceiver.mat");
+        m_materials = new Material[renderer.sharedMesh.subMeshCount];
+        for (int i = 0; i < m_materials.Length; ++i)
         {
-            materials[i] = mat;
+            m_materials[i] = mat;
         }
-        renderer.sharedMaterials = materials;
 
         var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Depth.mat");
         m_depth_materials = new Material[m_materials.Length];

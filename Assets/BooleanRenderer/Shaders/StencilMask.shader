@@ -56,7 +56,8 @@ depth_out frag_depth(vs_out i)
 
     depth_out o;
 #if ENABLE_PIERCING
-    float2 t = i.screen_pos.xy / i.screen_pos.w * 0.5 + 0.5;
+    //float2 t = i.screen_pos.xy / i.screen_pos.w * 0.5 + 0.5;
+    float2 t = i.vertex.xy * (_ScreenParams.zw-1.0);
     float target_depth = tex2D(_BackDepth, t);
     o.color = o.depth = target_depth > 0.0 && d > target_depth ? 1.0 : d;
 #else

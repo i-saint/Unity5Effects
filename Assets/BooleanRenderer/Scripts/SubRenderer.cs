@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/SubtractionRenderer")]
+[AddComponentMenu("BooleanRenderer/SubRenderer")]
 [ExecuteInEditMode]
 public class SubRenderer : MonoBehaviour
 {

@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("BooleanRenderer/SubtractedMesh")]
+[AddComponentMenu("BooleanRenderer/SubReceiverMesh")]
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
@@ -21,7 +21,7 @@ public class SubReceiverMesh : ISubReceiver
     {
         base.Reset();
         var renderer = GetComponent<MeshRenderer>();
-        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_Subtracted.mat");
+        var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/BooleanRenderer/Materials/Default_SubReceiver.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
         {

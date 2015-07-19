@@ -64,7 +64,7 @@ public abstract class ISubOperator : MonoBehaviour
 
     public virtual void OnValidate()
     {
-        m_groups = m_groups.Distinct().ToArray();
+        s_dirty = true;
     }
 #endif
 
