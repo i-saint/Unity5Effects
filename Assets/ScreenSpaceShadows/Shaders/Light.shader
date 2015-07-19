@@ -12,6 +12,7 @@ CGINCLUDE
 #include "UnityCG.cginc"
 #include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
 
+sampler2D _BackDepth;
 float4 _Position;
 float4 _Color;
 float4 _Params;
@@ -129,6 +130,8 @@ ps_out frag_point(vs_out i)
         float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
         float ray_depth = ComputeDepth(ray_pos4);
         float ref_depth = GetDepth(ray_coord);
+#if ENABLE_BACKDEPTH
+#endif
 
         //if(ray_depth > ref_depth) { discard; }
     }
@@ -158,7 +161,8 @@ ENDCG
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
-        //#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
+        //#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        //#pragma multi_compile ___ ENABLE_BACKDEPTH
         #pragma vertex vert_point
         #pragma fragment frag_point
         ENDCG
@@ -175,7 +179,8 @@ ENDCG
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
-        //#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
+        //#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        //#pragma multi_compile ___ ENABLE_BACKDEPTH
         #pragma vertex vert_line
         #pragma fragment frag_line
         ENDCG

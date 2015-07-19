@@ -15,7 +15,14 @@ public class LightWithScreenSpaceShadow : MonoBehaviour
         Point,
         Line,
     }
+    public enum Sample
+    {
+        Fast,
+        Medium,
+        High,
+    }
     public Type m_type;
+    public Sample m_sample;
     public float m_range = 10.0f;
     public Color m_color = Color.white;
     public float m_intensity = 1.0f;
