@@ -180,19 +180,31 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
     
     float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
     float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
-    float3 lightPos1 = lightPos + lightAxisX * _Range;
-    float3 lightPos2 = lightPos - lightAxisX * _Range;
+    float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
+    float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
 
 
     float occlusion = 0.0;
     {
-        float3 diff = wpos.xyz - _Position.xyz;
-        float distance = length(diff);
+        float3 begin_pos = lightPos;
+        float distance;
+        float3 ray_dir;
+        if (_LightType == 0)
+        {
+            float3 diff = wpos.xyz - begin_pos.xyz;
+            distance = length(diff);
+            ray_dir = normalize(diff);
+        }
+        else
+        {
+            distance_point_capsule(wpos, lightPos1, lightPos2, 0.0,
+                begin_pos, ray_dir, distance);
+        }
+
         float march_step = distance / MAX_MARCH;
-        float3 ray_dir = normalize(diff);
         for(int k=1; k<MAX_MARCH; ++k) {
             float adv = march_step * k;
-            float3 ray_pos = _Position.xyz + ray_dir * adv;
+            float3 ray_pos = begin_pos.xyz + ray_dir * adv;
             float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
             ray_pos4.y *= _ProjectionParams.x;
             float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;

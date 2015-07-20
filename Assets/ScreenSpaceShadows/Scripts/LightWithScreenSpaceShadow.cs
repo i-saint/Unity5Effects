@@ -57,7 +57,7 @@ public class LightWithScreenSpaceShadow : MonoBehaviour
     }
     public Vector4 GetParams()
     {
-        return new Vector4(m_inner_radius, m_capsule_length, 0.0f, 0.0f);
+        return new Vector4(m_inner_radius, m_capsule_length, (float)m_type, 0.0f);
     }
     public Matrix4x4 GetTRS()
     {
