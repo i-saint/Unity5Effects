@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 [AddComponentMenu("ScreenSpaceShadow/Renderer")]
-//[ExecuteInEditMode]
+[ExecuteInEditMode]
 public class ScreenSpaceShadowRenderer : MonoBehaviour
 {
     public Shader m_light_shader;
@@ -18,6 +18,11 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
 
 
 #if UNITY_EDITOR
+    void Reset()
+    {
+        m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/ScreenSpaceShadows/Shaders/Light.shader");
+        m_sphere_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/ScreenSpaceShadows/Meshes/sphere.asset");
+    }
 #endif // UNITY_EDITOR
 
     void Awake()

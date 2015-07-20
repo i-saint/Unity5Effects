@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 [AddComponentMenu("ScreenSpaceShadow/Light")]
-//[ExecuteInEditMode]
+[ExecuteInEditMode]
 public class LightWithScreenSpaceShadow : MonoBehaviour
 {
     public enum Type
