@@ -15,6 +15,7 @@ public class Packaging
         MakePackage_WaterSurface();
         MakePackage_ScreenSpaceBoolean();
         MakePackage_ScreenSpaceReflections();
+        MakePackage_ScreenSpaceShadows();
     }
 
 
@@ -49,7 +50,6 @@ public class Packaging
         AssetDatabase.ExportPackage(files, "ScreenSpaceBoolean.unitypackage", ExportPackageOptions.Recurse);
     }
 
-
     public static void MakePackage_ScreenSpaceReflections()
     {
         string[] files = new string[]
@@ -59,7 +59,6 @@ public class Packaging
         };
         AssetDatabase.ExportPackage(files, "ScreenSpaceReflections.unitypackage", ExportPackageOptions.Recurse);
     }
-
 
     public static void MakePackage_ScreenSpaceShadows()
     {

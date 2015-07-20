@@ -12,9 +12,9 @@ CGINCLUDE
 #if QUALITY_FAST
     #define MAX_MARCH 12
 #elif QUALITY_HIGH
-    #define MAX_MARCH 24
-#else // QUALITY_MEDIUM
     #define MAX_MARCH 48
+#else // QUALITY_MEDIUM
+    #define MAX_MARCH 24
 #endif
 
 #define POINT
