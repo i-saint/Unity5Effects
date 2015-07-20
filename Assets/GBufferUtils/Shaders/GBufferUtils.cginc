@@ -4,7 +4,9 @@ sampler2D _CameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
 sampler2D _CameraGBufferTexture1;   // spec color (rgb), smoothness (a)
 sampler2D _CameraGBufferTexture2;   // normal (rgb), --unused, very low precision-- (a) 
 sampler2D _CameraGBufferTexture3;   // emission (rgb), --unused-- (a)
+#ifndef UNITY_DEFERRED_LIBRARY_INCLUDED
 sampler2D_float _CameraDepthTexture;
+#endif // UNITY_DEFERRED_LIBRARY_INCLUDED
 
 // not Unity internals
 sampler2D _PrevCameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)

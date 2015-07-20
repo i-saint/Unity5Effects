@@ -9,7 +9,10 @@ SubShader {
     Cull Off
 
 CGINCLUDE
+#define POINT
 #include "UnityCG.cginc"
+#include "UnityPBSLighting.cginc"
+#include "UnityDeferredLibrary.cginc"
 #include "Assets/GBufferUtils/Shaders/GBufferUtils.cginc"
 
 sampler2D _BackDepth;
@@ -19,9 +22,11 @@ float4 _Params;
 #define _Range          _Position.w
 #define _InnerRadius    _Params.x
 #define _CapsuleLength  _Params.y
+#define _CustomLightInvSqRadius _Params.z
 
 
-#define MAX_MARCH 32
+
+#define MAX_MARCH 64
 
 
 struct ia_out
@@ -42,20 +47,21 @@ struct ps_out
 };
 
 
-vs_out vert_point(ia_out v)
+unity_v2f_deferred vert_point(ia_out v)
 {
-    vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, float4(v.vertex.xyz*_Range, 1.0));
-    o.screen_pos.y *= _ProjectionParams.x;
+    v.vertex.xyz *= _Range;
+
+    unity_v2f_deferred o;
+    o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.uv = ComputeScreenPos(o.pos);
+    o.ray = mul (UNITY_MATRIX_MV, v.vertex).xyz * float3(-1,-1,1);
     return o;
 }
 
-vs_out vert_line(ia_out v)
+
+unity_v2f_deferred vert_line(ia_out v)
 {
-    vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex * _Range);
-    o.screen_pos.y *= _ProjectionParams.x;
-    return o;
+    return vert_point(v);
 }
 
 
@@ -102,13 +108,51 @@ half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 
     return l;
 }
 
+void DeferredCalculateLightParams (
+    unity_v2f_deferred i,
+    out float3 outWorldPos,
+    out float2 outUV,
+    out half3 outLightDir,
+    out float outAtten,
+    out float outFadeDist)
+{
+    i.ray = i.ray * (_ProjectionParams.z / i.ray.z);
+    float2 uv = i.uv.xy / i.uv.w;
+    
+    // read depth and reconstruct world position
+    float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv);
+    depth = Linear01Depth (depth);
+    float4 vpos = float4(i.ray * depth,1);
+    float3 wpos = mul (_CameraToWorld, vpos).xyz;
+    
+    float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
+
+    // Point light
+    float3 tolight = wpos - lightPos;
+    half3 lightDir = -normalize (tolight);
+    
+    float att = dot(tolight, tolight) * _CustomLightInvSqRadius;
+    float atten = tex2D (_LightTextureB0, att.rr).UNITY_ATTEN_CHANNEL;
+
+    outWorldPos = wpos;
+    outUV = uv;
+    outLightDir = lightDir;
+    outAtten = atten;
+    outFadeDist = 0;
+}
 
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
 #define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
 
-ps_out frag_point(vs_out i)
+ps_out frag_point(unity_v2f_deferred i)
 {
-    float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5 + HalfPixelSize;
+    float3 wpos;
+    float2 uv;
+    float atten, fadeDist;
+    UnityLight light = (UnityLight)0;
+    DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
+
+    float2 coord = i.uv.xy / i.uv.w;
 
     ps_out r;
     r.color = 0.0;
@@ -122,29 +166,46 @@ ps_out frag_point(vs_out i)
     float march_step = distance / MAX_MARCH;
     float3 ray_dir = diff / distance;
 
+    float hit = 0.0;
+    float hit_coord;
+    float ray_depth;
+    float ref_depth;
+    float3 ray_pos;
     for(int k=1; k<MAX_MARCH; ++k) {
         float adv = march_step * k;
-        float3 ray_pos = _Position.xyz + ray_dir * adv;
+        ray_pos = _Position.xyz + ray_dir * adv;
         float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos, 1.0));
         ray_pos4.y *= _ProjectionParams.x;
         float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
-        float ray_depth = ComputeDepth(ray_pos4);
-        float ref_depth = GetDepth(ray_coord);
+        ray_depth = ComputeDepth(ray_pos4);
+        ref_depth = GetDepth(ray_coord);
 #if ENABLE_BACKDEPTH
 #endif
 
-        //if(ray_depth > ref_depth) { discard; }
+        if(ray_depth > ref_depth) {
+            hit = 1.0;
+            hit_coord = ray_coord;
+            break;
+        }
     }
 
     // todo
     float4 albedo = GetAlbedo(coord);
     float4 specular = GetSpecular(coord);
     float4 normal = GetNormal(coord);
-    r.color = _Color;
+
+    //half3 CalcSphereLightToLight(p.xyz, float3 lightPos, float3 eyeVec, half3 normal, float sphereRad)
+
+    //UnityLight light = (UnityLight)0;
+    //DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
+    //r.color.rgb += CalcSphereLightToLight(p.xyz, _Position.xyz, cam_dir, normal, ) * (1.0-hit);
+
+    r.color += _Color;
+    r.color.rgb = wpos * 0.2;
     return r;
 }
 
-ps_out frag_line(vs_out i)
+ps_out frag_line(unity_v2f_deferred i)
 {
     return frag_point(i); // todo
 }
@@ -155,7 +216,7 @@ ENDCG
         Fog { Mode Off }
         ZWrite Off
         ZTest Always
-        Blend One One
+        //Blend One One
         Cull Front
 
         CGPROGRAM
