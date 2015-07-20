@@ -10,11 +10,11 @@ SubShader {
 
 CGINCLUDE
 #if QUALITY_FAST
-    #define MAX_MARCH 32
+    #define MAX_MARCH 12
 #elif QUALITY_HIGH
-    #define MAX_MARCH 64
+    #define MAX_MARCH 24
 #else // QUALITY_MEDIUM
-    #define MAX_MARCH 128
+    #define MAX_MARCH 48
 #endif
 
 #define POINT
@@ -27,11 +27,12 @@ sampler2D _BackDepth;
 float4 _Position;
 float4 _Color;
 float4 _Params;
-#define _Range          _Position.w
-#define _RangeInvSq     (1.0/(_Range*_Range))
-#define _InnerRadius    _Params.x
-#define _CapsuleLength  _Params.y
-#define _LightType      _Params.z
+#define _Range              _Position.w
+#define _RangeInvSq         (1.0/(_Range*_Range))
+#define _InnerRadius        _Params.x
+#define _CapsuleLength      _Params.y
+#define _LightType          _Params.z
+#define _OcculusionStrength _Params.w
 
 
 struct ia_out
@@ -146,6 +147,11 @@ void DeferredCalculateLightParams (
     outFadeDist = 0;
 }
 
+float Jitter(float3 p)
+{
+    float v = dot(p,1.0)+_Time.y;
+    return frac(sin(v)*43758.5453);
+}
 
 
 void distance_point_sphere(float3 ppos, float3 center, float radius,
@@ -189,6 +195,7 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
         float3 begin_pos = lightPos;
         float distance;
         float3 ray_dir;
+        float occulusion_par_march = _OcculusionStrength / MAX_MARCH;
         if (_LightType == 0)
         {
             float3 diff = wpos.xyz - begin_pos.xyz;
@@ -202,8 +209,9 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
         }
 
         float march_step = distance / MAX_MARCH;
+        float jitter = Jitter(wpos);
         for(int k=1; k<MAX_MARCH; ++k) {
-            float adv = march_step * k;
+            float adv = march_step * (float(k) + jitter);
             float3 ray_pos = begin_pos.xyz + ray_dir * adv;
             float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
             ray_pos4.y *= _ProjectionParams.x;
@@ -214,7 +222,7 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
 #endif
 
             if(ray_depth > ref_depth) {
-                occlusion += 3.0/MAX_MARCH;
+                occlusion += occulusion_par_march;
             }
         }
     }

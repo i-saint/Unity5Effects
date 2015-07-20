@@ -79,6 +79,18 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
         for (int i = 0; i < n; ++i)
         {
             var light = lights[i];
+            switch (light.m_sample)
+            {
+                case LightWithScreenSpaceShadow.Sample.Fast:
+                    m_light_material.EnableKeyword("QUALITY_FAST");
+                    break;
+                case LightWithScreenSpaceShadow.Sample.Medium:
+                    m_light_material.EnableKeyword("QUALITY_MEDIUM");
+                    break;
+                case LightWithScreenSpaceShadow.Sample.High:
+                    m_light_material.EnableKeyword("QUALITY_HIGH");
+                    break;
+            }
             m_commands.SetGlobalVector(id_pos, light.GetPositionAndRadius());
             m_commands.SetGlobalVector(id_color, light.GetLinearColor());
             m_commands.SetGlobalVector(id_params, light.GetParams());

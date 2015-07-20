@@ -28,6 +28,7 @@ public class LightWithScreenSpaceShadow : MonoBehaviour
     public float m_intensity = 1.0f;
     public float m_inner_radius = 0.0f;
     public float m_capsule_length = 1.0f;
+    public float m_occulusion_strength = 3.0f;
 
 
     #region static
@@ -57,7 +58,7 @@ public class LightWithScreenSpaceShadow : MonoBehaviour
     }
     public Vector4 GetParams()
     {
-        return new Vector4(m_inner_radius, m_capsule_length, (float)m_type, 0.0f);
+        return new Vector4(m_inner_radius, m_capsule_length, (float)m_type, m_occulusion_strength);
     }
     public Matrix4x4 GetTRS()
     {
