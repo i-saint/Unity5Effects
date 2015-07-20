@@ -28,9 +28,10 @@ float4 _Position;
 float4 _Color;
 float4 _Params;
 #define _Range          _Position.w
+#define _RangeInvSq     (1.0/(_Range*_Range))
 #define _InnerRadius    _Params.x
 #define _CapsuleLength  _Params.y
-#define _CustomLightInvSqRadius (1.0/(_Range*_Range))
+#define _LightType      _Params.z
 
 
 struct ia_out
@@ -135,7 +136,7 @@ void DeferredCalculateLightParams (
     float3 tolight = wpos - lightPos;
     half3 lightDir = -normalize (tolight);
     
-    float att = dot(tolight, tolight) * _CustomLightInvSqRadius;
+    float att = dot(tolight, tolight) * _RangeInvSq;
     float atten = tex2D (_LightTextureB0, att.rr).UNITY_ATTEN_CHANNEL;
 
     outWorldPos = wpos;
@@ -145,76 +146,69 @@ void DeferredCalculateLightParams (
     outFadeDist = 0;
 }
 
+
+
+void distance_point_sphere(float3 ppos, float3 center, float radius,
+    out float3 direction, out float distance)
+{
+    float3 diff = ppos - center;
+    distance = length(diff)-radius;
+    direction = normalize(diff);
+}
+
+void distance_point_capsule(float3 ppos, float3 pos1, float3 pos2, float radius,
+    out float3 nearest, out float3 direction, out float distance)
+{
+    float3 d = pos2-pos1;
+    float t = dot(ppos-pos1, pos2-pos1) / dot(d,d);
+    nearest = pos1 + (pos2-pos1) * min(max(t, 0.0), 1.0);
+    float3 diff = ppos-nearest;
+    distance = length(diff) - radius;
+    direction = normalize(diff);
+}
+
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
 #define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
 
 half4 frag_point(unity_v2f_deferred i) : SV_Target
 {
-    float2 coord = i.uv.xy / i.uv.w;
-
-    float depth = GetDepth(coord);
-    float4 p = GetPosition(coord);
-    float3 cam_dir = normalize(p.xyz - _WorldSpaceCameraPos);
-
-
-    float occlusion = 0.0;
-
-    float3 diff = p.xyz - _Position.xyz;
-    float distance = length(diff);
-    float march_step = distance / MAX_MARCH;
-    float3 ray_dir = normalize(diff);
-    for(int k=1; k<MAX_MARCH; ++k) {
-        float adv = march_step * k;
-        float3 ray_pos = _Position.xyz + ray_dir * adv;
-        float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
-        ray_pos4.y *= _ProjectionParams.x;
-        float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
-        float ray_depth = ComputeDepth(ray_pos4);
-        float ref_depth = GetDepth(ray_coord);
-#if ENABLE_BACKDEPTH
-#endif
-
-        if(ray_depth > ref_depth) {
-            occlusion += 3.0/MAX_MARCH;
-        }
-    }
-
-    /*
-    float2 march_begin, march_end, march_step;
-    float depth_begin, depth_end, depth_step;
-    {
-        float4 light_pos4 = mul(UNITY_MATRIX_VP, float4(_Position.xyz, 1.0));
-        march_begin = light_pos4.xy / light_pos4.w;
-        depth_begin = ComputeDepth(light_pos4);
-        march_begin.y *= _ProjectionParams.x;
-        march_end = coord;
-        depth_end = depth;
-        march_step = (march_end - march_begin) / MAX_MARCH;
-        depth_step = (depth_end - depth_begin) / MAX_MARCH;
-    }
-    for(int k=1; k<MAX_MARCH; ++k) {
-        float2 ray_coord = march_begin + march_step*k;
-        float ray_depth = depth_begin + depth_step*k;
-        float ref_depth = GetDepth(ray_coord);
-
-#if ENABLE_BACKDEPTH
-        // todo
-#endif
-        if(ray_depth > ref_depth) {
-            occlusion += 3.0/MAX_MARCH;
-        }
-    }
-    */
-
-    if(occlusion >= 1.0) { discard; }
-
-
-
     float3 wpos;
     float2 uv;
     float atten, fadeDist;
     UnityLight light = (UnityLight)0;
     DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
+    
+    float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
+    float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
+    float3 lightPos1 = lightPos + lightAxisX * _Range;
+    float3 lightPos2 = lightPos - lightAxisX * _Range;
+
+
+    float occlusion = 0.0;
+    {
+        float3 diff = wpos.xyz - _Position.xyz;
+        float distance = length(diff);
+        float march_step = distance / MAX_MARCH;
+        float3 ray_dir = normalize(diff);
+        for(int k=1; k<MAX_MARCH; ++k) {
+            float adv = march_step * k;
+            float3 ray_pos = _Position.xyz + ray_dir * adv;
+            float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
+            ray_pos4.y *= _ProjectionParams.x;
+            float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
+            float ray_depth = ComputeDepth(ray_pos4);
+            float ref_depth = GetDepth(ray_coord);
+#if ENABLE_BACKDEPTH
+#endif
+
+            if(ray_depth > ref_depth) {
+                occlusion += 3.0/MAX_MARCH;
+            }
+        }
+    }
+    if(occlusion >= 1.0) { discard; }
+
+
 
     half4 gbuffer0 = tex2D (_CameraGBufferTexture0, uv);
     half4 gbuffer1 = tex2D (_CameraGBufferTexture1, uv);
@@ -228,23 +222,16 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
     half oneMinusRoughness = gbuffer1.a;
     float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
 
-    // Sphere light
-    float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
-    float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
-    light.dir = CalcSphereLightToLight (wpos, lightPos, eyeVec, normalWorld, _InnerRadius);
-
-    /*
-    if (_CustomLightKind == 1)
+    if (_LightType == 1)
     {
-        float3 lightPos1 = lightPos + lightAxisX * _Range;
-        float3 lightPos2 = lightPos - lightAxisX * _Range;
+        // tube light
         light.dir = CalcTubeLightToLight (wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius);
     }
     else
     {
+        // Sphere light
         light.dir = CalcSphereLightToLight (wpos, lightPos, eyeVec, normalWorld, _InnerRadius);
     }
-    */
 
     half oneMinusReflectivity = 1 - SpecularStrength(specColor.rgb);
     light.ndotl = LambertTerm (normalWorld, light.dir);
