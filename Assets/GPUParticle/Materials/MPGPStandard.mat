@@ -1,0 +1,81 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: MPGPStandard
+  m_Shader: {fileID: 4800000, guid: c330447ee02ec5544b1cdde289be960c, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: -1
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _Scale
+        second: .100000001
+      data:
+        first:
+          name: _Glossiness
+        second: .5
+      data:
+        first:
+          name: _Metallic
+        second: 0
+      data:
+        first:
+          name: _FadeTime
+        second: .5
+      data:
+        first:
+          name: g_size
+        second: .5
+      data:
+        first:
+          name: g_fade_time
+        second: .300000012
+      data:
+        first:
+          name: g_spin
+        second: 1000
+      data:
+        first:
+          name: _HeatThreshold
+        second: 2
+      data:
+        first:
+          name: _HeatIntensity
+        second: 1.5
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _Emission
+        second: {r: .683823526, g: .683823526, b: .683823526, a: 1}
+      data:
+        first:
+          name: _BaseColor
+        second: {r: .5, g: .5, b: .5, a: 10}
+      data:
+        first:
+          name: _GlowColor
+        second: {r: 0, g: 0, b: 0, a: 0}
+      data:
+        first:
+          name: _HeatColor
+        second: {r: .25, g: .0500000007, b: .0250000004, a: 0}

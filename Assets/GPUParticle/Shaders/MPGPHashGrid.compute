@@ -1,0 +1,88 @@
+﻿#pragma kernel ClearCells
+#pragma kernel GenerateSortKeys
+#pragma kernel ReorderParticles
+
+#include "MPGPFoundation.cginc"
+#define BLOCK_SIZE 512
+
+
+struct KIP
+{
+    uint key;
+    uint index;
+};
+
+StructuredBuffer<WorldData>     world_data;
+RWStructuredBuffer<WorldIData>  world_idata;
+StructuredBuffer<KIP>           sort_keys;
+RWStructuredBuffer<KIP>         sort_keys_rw;
+StructuredBuffer<Particle>      particles;
+RWStructuredBuffer<Particle>    particles_rw;
+RWStructuredBuffer<Cell>        cells_rw;
+
+
+[numthreads(BLOCK_SIZE,1,1)]
+void ClearCells(uint3 dtid : SV_DispatchThreadID)
+{
+    uint tid = dtid.x;
+
+    cells_rw[tid].begin = cells_rw[tid].end = 0;
+}
+
+
+[numthreads(BLOCK_SIZE,1,1)]
+void GenerateSortKeys(uint3 dtid : SV_DispatchThreadID)
+{
+    uint tid = dtid.x;
+
+    float3 ppos = particles[tid].position;
+    float3 cellid = (ppos - world_data[0].world_center + world_data[0].world_extents) * world_data[0].rcp_world_cellsize;
+    int3 key3 = min(max((int3)cellid, 0), world_data[0].world_div-1);
+    uint key = dot((uint3)key3, world_data[0].world_div_shift);
+    key |= particles[tid].lifetime==0.0 ? 0x80000000 : 0;
+
+    sort_keys_rw[tid].key = key;
+    sort_keys_rw[tid].index = tid;
+}
+
+
+[numthreads(BLOCK_SIZE,1,1)]
+void ReorderParticles(uint3 dtid : SV_DispatchThreadID)
+{
+    uint tid = dtid.x;
+    uint max_particles = world_data[0].num_max_particles;
+
+    KIP ki = sort_keys[tid];
+    particles_rw[tid] = particles[ki.index];
+
+    uint i = tid;
+    uint iprev = tid-1;
+    uint inext = tid+1;
+    uint k = sort_keys[i].key;
+    uint kprev = (iprev==-1) ? -1 : sort_keys[iprev].key;
+    uint knext = (inext == max_particles) ? -2 : sort_keys[inext].key;
+
+    // update cells
+    if((k & 0x80000000) == 0) {
+        if(k != kprev) {
+            cells_rw[k].begin = i;
+        }
+        if(k != knext) {
+            cells_rw[k].end = i + 1;
+        }
+    }
+
+    // count active particles
+    if(i==0 && (k & 0x80000000)!=0) {
+        world_idata[0].num_active_particles = 0;
+        //world_idata[0].num_vertices = 0;
+    }
+    else if(i==max_particles-1 && (k & 0x80000000)==0) {
+        world_idata[0].num_active_particles = max_particles;
+        //world_idata[0].num_vertices = world_idata[0].num_vertices_par_instance * max_particles;
+    }
+    else if((k & 0x80000000)!=0 && (kprev & 0x80000000)==0) {
+        world_idata[0].num_active_particles = i;
+        //world_idata[0].num_vertices = world_idata[0].num_vertices_par_instance * i;
+    }
+}

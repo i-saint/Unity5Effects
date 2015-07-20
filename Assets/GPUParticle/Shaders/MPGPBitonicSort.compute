@@ -1,0 +1,69 @@
+﻿#pragma kernel BitonicSort
+#pragma kernel MatrixTranspose
+
+#define BITONIC_BLOCK_SIZE 512
+#define TRANSPOSE_BLOCK_SIZE 16
+
+
+struct CB
+{
+    uint level;
+    uint levelMask;
+    uint width;
+    uint height;
+};
+
+struct KIP
+{
+    uint key;
+    uint index;
+};
+
+StructuredBuffer<CB> consts;
+StructuredBuffer<KIP> kip;
+RWStructuredBuffer<KIP> kip_rw;
+
+groupshared KIP shared_data[BITONIC_BLOCK_SIZE];
+
+[numthreads(BITONIC_BLOCK_SIZE, 1, 1)]
+void BitonicSort( uint3 gid : SV_GroupID, 
+                  uint3 dtid : SV_DispatchThreadID, 
+                  uint3 gtid : SV_GroupThreadID, 
+                  uint gi : SV_GroupIndex )
+{
+    shared_data[gi] = kip_rw[dtid.x];
+    GroupMemoryBarrierWithGroupSync();
+    
+    for (uint j = consts[0].level >> 1 ; j > 0 ; j >>= 1)
+    {
+        KIP result;
+        bool c1 = shared_data[gi & ~j].key <= shared_data[gi | j].key;
+        bool c2 = (consts[0].levelMask & dtid.x) != 0;
+        if(c1==c2) {
+            result = shared_data[gi ^ j];
+        }
+        else {
+            result = shared_data[gi];
+        }
+
+        GroupMemoryBarrierWithGroupSync();
+        shared_data[gi] = result;
+        GroupMemoryBarrierWithGroupSync();
+    }
+    kip_rw[dtid.x] = shared_data[gi];
+}
+
+
+groupshared KIP transpose_shared_data[TRANSPOSE_BLOCK_SIZE * TRANSPOSE_BLOCK_SIZE];
+
+[numthreads(TRANSPOSE_BLOCK_SIZE, TRANSPOSE_BLOCK_SIZE, 1)]
+void MatrixTranspose( uint3 gid : SV_GroupID, 
+                      uint3 dtid : SV_DispatchThreadID, 
+                      uint3 gtid : SV_GroupThreadID, 
+                      uint gi : SV_GroupIndex )
+{
+    transpose_shared_data[gi] = kip[dtid.y * consts[0].width + dtid.x];
+    GroupMemoryBarrierWithGroupSync();
+    uint2 XY = dtid.yx - gtid.yx + gtid.xy;
+    kip_rw[XY.y * consts[0].height + XY.x] = transpose_shared_data[gtid.x * TRANSPOSE_BLOCK_SIZE + gtid.y];
+}

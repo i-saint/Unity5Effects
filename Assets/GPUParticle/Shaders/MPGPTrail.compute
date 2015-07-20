@@ -1,0 +1,82 @@
+﻿#pragma kernel Initialize
+#pragma kernel Update
+
+#include "MPGPFoundation.cginc"
+
+#define BLOCK_SIZE 512
+
+StructuredBuffer<WorldData> world_data;
+StructuredBuffer<Particle> particles;
+StructuredBuffer<TrailParams> params;
+RWStructuredBuffer<TrailEntity> entities;
+RWStructuredBuffer<TrailHistory> history;
+RWStructuredBuffer<TrailVertex> vertices;
+
+
+[numthreads(BLOCK_SIZE,1,1)]
+void Initialize(uint3 dtid : SV_DispatchThreadID)
+{
+    uint tid = dtid.x;
+
+    uint max_history = params[0].max_history;
+    entities[tid].id = 0xffffffff;
+    entities[tid].time = 0.0;
+    entities[tid].frame = 0;
+    {
+        for(uint i=0; i<max_history; ++i) {
+            history[tid*max_history + i].position = 0.0;
+        }
+    }
+    {
+        for(uint i=0; i<max_history*2; ++i) {
+            vertices[tid*max_history*2 + i].position = 0.0;
+            vertices[tid*max_history*2 + i].texcoord = 0.0;
+        }
+    }
+}
+
+[numthreads(BLOCK_SIZE,1,1)]
+void Update(uint3 dtid : SV_DispatchThreadID)
+{
+    uint tid = dtid.x;
+    if(particles[tid].lifetime <= 0.0) return;
+    uint eid = particles[tid].id % params[0].max_entities;
+    float3 ppos = particles[tid].position;
+
+    uint max_history = params[0].max_history;
+    uint hi = eid*max_history;
+    if(particles[tid].id != entities[eid].id) {
+        for(uint i=0; i<max_history; ++i) {
+            history[hi + i].position = ppos;
+        }
+        entities[eid].id = particles[tid].id;
+        entities[eid].time = 0.0;
+        entities[eid].frame = 0;
+    }
+
+    entities[eid].time += params[0].delta_time;
+    uint frame = entities[eid].frame;
+    if(entities[eid].time >= params[0].interval) {
+        entities[eid].time -= params[0].interval;
+        entities[eid].frame++;
+    }
+    int f = frame % max_history;
+
+    history[hi + f].position = ppos;
+    f = (f+1) % max_history;
+    float vstep = 1.0/(max_history-1);
+
+    for(uint i=0; i<max_history; ++i) {
+        uint inext = i==max_history-1 ? i : i+1;
+        uint iprev = i==0 ? 0 : i-1;
+        float3 pos = history[hi + (f+i)%max_history].position;
+        float3 pos_next = history[hi + (f+inext)%max_history].position;
+        float3 pos_prev = history[hi + (f+iprev)%max_history].position;
+        float3 tangent = normalize(pos_next - pos_prev);
+        float v = vstep * i;
+
+        vertices[hi + i].position = pos;
+        vertices[hi + i].tangent = tangent;
+        vertices[hi + i].texcoord = float2(0.0f, v);
+    }
+}
