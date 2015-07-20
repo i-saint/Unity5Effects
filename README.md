@@ -16,6 +16,9 @@ kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公�
 ### Screen Space Shadows
 ![alt text](doc/ScreenSpaceShadows.gif)  
 
+G-Buffer をレイマーチすることで影を出せるライトです。点光源の他に線光源も扱えるようになっています。  
+ライティング処理の大部分は<a href="http://blogs.unity3d.com/2015/02/06/extending-unity-5-rendering-pipeline-command-buffers/">公式の CommandBuffer のサンプルプロジェクト</a>から借用しています。
+
 ### Screen Space Boolean
 ![alt text](doc/Boolean.gif)  
 
