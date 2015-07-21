@@ -15,12 +15,14 @@ kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公�
 
 ### Screen Space Shadows
 ![alt text](doc/ScreenSpaceShadows.gif)  
+[ScreenSpaceShadows.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/ScreenSpaceShadows.unitypackage)  
 
 G-Buffer をレイマーチすることで影を出せるライトです。点光源の他に線光源も扱えるようになっています。  
 ライティング処理の大部分は<a href="http://blogs.unity3d.com/2015/02/06/extending-unity-5-rendering-pipeline-command-buffers/">公式の CommandBuffer のサンプルプロジェクト</a>から借用しています。
 
 ### Screen Space Boolean
 ![alt text](doc/Boolean.gif)  
+[ScreenSpaceBoolean.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/ScreenSpaceBoolean.unitypackage)  
 
 G-Buffer 加工によるスクリーンスペースブーリアン演算です。  
 現状 D3D11 でしかまともに動かない、影を正しく処理できない、複雑な立体交差で破綻する、などなど問題が山積みであり、
@@ -29,7 +31,7 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 
 #### Mosaic Field
 ![alt text](doc/mosaic.gif)  
-[Mosaic.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/Mosaic.unitypackage)  
+[MosaicField.unitypackage](https://github.com/i-saint/Unity5Effects/raw/master/Packages/MosaicField.unitypackage)  
 
 指定オブジェクトをモザイク領域化するシェーダです。
 
