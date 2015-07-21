@@ -26,13 +26,13 @@ CGINCLUDE
 sampler2D _BackDepth;
 float4 _Position;
 float4 _Color;
-float4 _Params;
+float4 _Params1;
 #define _Range              _Position.w
 #define _RangeInvSq         (1.0/(_Range*_Range))
-#define _InnerRadius        _Params.x
-#define _CapsuleLength      _Params.y
-#define _LightType          _Params.z
-#define _OcculusionStrength _Params.w
+#define _InnerRadius        _Params1.x
+#define _CapsuleLength      _Params1.y
+#define _LightType          _Params1.z
+#define _OcculusionStrength _Params1.w
 
 
 struct ia_out
@@ -72,18 +72,18 @@ unity_v2f_deferred vert_line(ia_out v)
 
 
 
-half3 CalcSphereLightToLight(float3 pos, float3 lightPos, float3 eyeVec, half3 normal, float sphereRad)
+half3 CalcSphereLightToLight(float3 pos, float3 lightPos, float3 eyeVec, half3 normal, float sphereRad, out float3 closestPoint)
 {
     half3 viewDir = -eyeVec;
     half3 r = reflect (viewDir, normal);
 
     float3 L = lightPos - pos;
     float3 centerToRay = dot (L, r) * r - L;
-    float3 closestPoint = L + centerToRay * saturate(sphereRad / length(centerToRay));
+    closestPoint = L + centerToRay * saturate(sphereRad / length(centerToRay));
     return normalize(closestPoint);
 }
 
-half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 eyeVec, half3 normal, float tubeRad)
+half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 eyeVec, half3 normal, float tubeRad, out float3 closestPoint)
 {
     half3 N = normal;
     half3 viewDir = -eyeVec;
@@ -107,7 +107,7 @@ half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 
     float t			= ( RoL0 * RoLd - L0oLd ) 
                     / ( distLd * distLd - RoLd * RoLd );
     
-    float3 closestPoint	= L0 + Ld * clamp( t, 0.0, 1.0 );
+    closestPoint	= L0 + Ld * clamp( t, 0.0, 1.0 );
     float3 centerToRay	= dot( closestPoint, r ) * r - closestPoint;
     closestPoint		= closestPoint + centerToRay * clamp( tubeRad / length( centerToRay ), 0.0, 1.0 );
     float3 l				= normalize( closestPoint );
@@ -167,7 +167,7 @@ void distance_point_capsule(float3 ppos, float3 pos1, float3 pos2, float radius,
 {
     float3 d = pos2-pos1;
     float t = dot(ppos-pos1, pos2-pos1) / dot(d,d);
-    nearest = pos1 + (pos2-pos1) * min(max(t, 0.0), 1.0);
+    nearest = pos1 + (pos2-pos1) * clamp(t, 0.0, 1.0);
     float3 diff = ppos-nearest;
     distance = length(diff) - radius;
     direction = normalize(diff);
@@ -189,28 +189,49 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
     float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
     float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
 
+    half4 gbuffer0 = tex2D (_CameraGBufferTexture0, uv);
+    half4 gbuffer1 = tex2D (_CameraGBufferTexture1, uv);
+    half4 gbuffer2 = tex2D (_CameraGBufferTexture2, uv);
+    half3 normalWorld = gbuffer2.rgb * 2 - 1;
+    normalWorld = normalize(normalWorld);
+    float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
+    light.ndotl = LambertTerm (normalWorld, light.dir);
+    if(dot(gbuffer2.xyz, 1.0) * light.ndotl <= 0.0) { discard; }
+
+    float3 lightClosestPoint;
+    if (_LightType == 1)
+    {
+        // tube light
+        light.dir = CalcTubeLightToLight (wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
+    }
+    else
+    {
+        // Sphere light
+        light.dir = CalcSphereLightToLight (wpos, lightPos, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
+    }
 
     float occlusion = 0.0;
+#if ENABLE_SHADOW
     {
-        float3 begin_pos = lightPos;
         float distance;
         float3 ray_dir;
         float occulusion_par_march = _OcculusionStrength / MAX_MARCH;
         if (_LightType == 0)
         {
-            float3 diff = wpos.xyz - begin_pos.xyz;
+            float3 diff = wpos.xyz - lightPos.xyz;
             distance = length(diff);
             ray_dir = normalize(diff);
         }
         else
         {
             distance_point_capsule(wpos, lightPos1, lightPos2, 0.0,
-                begin_pos, ray_dir, distance);
+                lightPos, ray_dir, distance);
         }
-
+        distance -= _InnerRadius;
+        float3 begin_pos = lightPos + ray_dir * _InnerRadius;
         float march_step = distance / MAX_MARCH;
         float jitter = Jitter(wpos);
-        for(int k=1; k<MAX_MARCH; ++k) {
+        for(int k=0; k<MAX_MARCH; ++k) {
             float adv = march_step * (float(k) + jitter);
             float3 ray_pos = begin_pos.xyz + ray_dir * adv;
             float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
@@ -218,43 +239,20 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
             float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
             float ray_depth = ComputeDepth(ray_pos4);
             float ref_depth = GetDepth(ray_coord);
-#if ENABLE_BACKDEPTH
-#endif
+            float3 ref_pos = GetPosition(ray_coord).xyz;
 
-            if(ray_depth > ref_depth) {
-                occlusion += occulusion_par_march;
-            }
+            occlusion += occulusion_par_march * clamp((ray_depth - ref_depth)*10000000000.0, 0.0, 1.0);
         }
+        occlusion = min(occlusion, clamp(distance*10000, 0.0, 1.0)); // 0.0 if wpos is inner light inner radius
     }
-    if(occlusion >= 1.0) { discard; }
-
-
-
-    half4 gbuffer0 = tex2D (_CameraGBufferTexture0, uv);
-    half4 gbuffer1 = tex2D (_CameraGBufferTexture1, uv);
-    half4 gbuffer2 = tex2D (_CameraGBufferTexture2, uv);
-
+    //if(occlusion >= 1.0) { discard; } // this makes slower
+#endif
     light.color = _Color.rgb * atten;
     half3 baseColor = gbuffer0.rgb;
     half3 specColor = gbuffer1.rgb;
-    half3 normalWorld = gbuffer2.rgb * 2 - 1;
-    normalWorld = normalize(normalWorld);
     half oneMinusRoughness = gbuffer1.a;
-    float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
-
-    if (_LightType == 1)
-    {
-        // tube light
-        light.dir = CalcTubeLightToLight (wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius);
-    }
-    else
-    {
-        // Sphere light
-        light.dir = CalcSphereLightToLight (wpos, lightPos, eyeVec, normalWorld, _InnerRadius);
-    }
 
     half oneMinusReflectivity = 1 - SpecularStrength(specColor.rgb);
-    light.ndotl = LambertTerm (normalWorld, light.dir);
     
     UnityIndirect ind;
     UNITY_INITIALIZE_OUTPUT(UnityIndirect, ind);
@@ -283,7 +281,7 @@ ENDCG
         #pragma target 3.0
         #pragma exclude_renderers nomrt
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
-        #pragma multi_compile ___ ENABLE_BACKDEPTH
+        #pragma multi_compile ___ ENABLE_SHADOW
         #pragma vertex vert_point
         #pragma fragment frag_point
         ENDCG
@@ -301,7 +299,7 @@ ENDCG
         #pragma target 3.0
         #pragma exclude_renderers nomrt
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
-        #pragma multi_compile ___ ENABLE_BACKDEPTH
+        #pragma multi_compile ___ ENABLE_SHADOW
         #pragma vertex vert_line
         #pragma fragment frag_line
         ENDCG

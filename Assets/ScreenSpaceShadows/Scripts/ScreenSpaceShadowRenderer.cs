@@ -76,7 +76,7 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
 
         int id_pos = Shader.PropertyToID("_Position");
         int id_color = Shader.PropertyToID("_Color");
-        int id_params = Shader.PropertyToID("_Params");
+        int id_params = Shader.PropertyToID("_Params1");
         var lights = LightWithScreenSpaceShadow.instances;
         var n = lights.Count;
 
@@ -84,6 +84,15 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
         for (int i = 0; i < n; ++i)
         {
             var light = lights[i];
+            if (light.m_cast_shadow)
+            {
+                m_light_material.EnableKeyword("ENABLE_SHADOW");
+            }
+            else
+            {
+                m_light_material.DisableKeyword("ENABLE_SHADOW");
+            }
+
             switch (light.m_sample)
             {
                 case LightWithScreenSpaceShadow.Sample.Fast:

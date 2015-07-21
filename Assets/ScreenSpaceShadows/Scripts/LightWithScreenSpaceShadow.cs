@@ -22,6 +22,7 @@ public class LightWithScreenSpaceShadow : MonoBehaviour
         High,
     }
     public Type m_type;
+    public bool m_cast_shadow = true;
     public Sample m_sample;
     public float m_range = 10.0f;
     public Color m_color = Color.white;
