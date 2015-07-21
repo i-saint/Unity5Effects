@@ -1,5 +1,7 @@
 Shader "Hidden/ScreenSpaceShadowLight" {
 Properties {
+    _SrcBlend("", Int) = 1
+    _DstBlend("", Int) = 1
 }
 SubShader {
     Tags { "RenderType"="Opaque" }
@@ -49,7 +51,12 @@ struct vs_out
 
 struct ps_out
 {
-    half4 color : SV_Target0;
+#if UNITY_HDR_ON
+    half4
+#else
+    fixed4
+#endif
+        color : SV_Target0;
 };
 
 
@@ -176,7 +183,7 @@ void distance_point_capsule(float3 ppos, float3 pos1, float3 pos2, float radius,
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
 #define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
 
-half4 frag_point(unity_v2f_deferred i) : SV_Target
+ps_out frag_point(unity_v2f_deferred i) : SV_Target
 {
     float3 wpos;
     float2 uv;
@@ -260,10 +267,16 @@ half4 frag_point(unity_v2f_deferred i) : SV_Target
     ind.specular = 0;
 
     half4 res = UNITY_BRDF_PBS (baseColor, specColor, oneMinusReflectivity, oneMinusRoughness, normalWorld, -eyeVec, light, ind);
-    return res * max(1.0-occlusion, 0.0);
+    res *= max(1.0-occlusion, 0.0);
+#ifndef UNITY_HDR_ON
+    res = exp2(-res);
+#endif
+    ps_out r;
+    r.color = res;
+    return r;
 }
 
-half4 frag_line(unity_v2f_deferred i) : SV_Target
+ps_out frag_line(unity_v2f_deferred i) : SV_Target
 {
     return frag_point(i); // todo
 }
@@ -273,8 +286,8 @@ ENDCG
     Pass {
         Fog { Mode Off }
         ZWrite Off
-        ZTest Always
-        Blend One One
+        ZTest Greater
+        Blend [_SrcBlend] [_DstBlend]
         Cull Front
 
         CGPROGRAM
@@ -282,6 +295,7 @@ ENDCG
         #pragma exclude_renderers nomrt
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
         #pragma multi_compile ___ ENABLE_SHADOW
+        #pragma multi_compile ___ UNITY_HDR_ON
         #pragma vertex vert_point
         #pragma fragment frag_point
         ENDCG
@@ -291,8 +305,8 @@ ENDCG
     Pass {
         Fog { Mode Off }
         ZWrite Off
-        ZTest Always
-        Blend One One
+        ZTest Greater
+        Blend [_SrcBlend] [_DstBlend]
         Cull Front
 
         CGPROGRAM
@@ -300,6 +314,7 @@ ENDCG
         #pragma exclude_renderers nomrt
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
         #pragma multi_compile ___ ENABLE_SHADOW
+        #pragma multi_compile ___ UNITY_HDR_ON
         #pragma vertex vert_line
         #pragma fragment frag_line
         ENDCG

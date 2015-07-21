@@ -25,14 +25,26 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
     }
 #endif // UNITY_EDITOR
 
-    void Awake()
-    {
-        m_light_material = new Material(m_light_shader);
-    }
-
     void OnDestroy()
     {
-        Object.DestroyImmediate(m_light_material);
+        if (new Material(m_light_shader) != null)
+        {
+            Object.DestroyImmediate(m_light_material);
+        }
+    }
+
+    void OnDisable()
+    {
+        if (m_commands != null)
+        {
+            foreach(var cam in m_cameras) {
+                if (cam != null)
+                {
+                    cam.RemoveCommandBuffer(CameraEvent.AfterLighting, m_commands);
+                }
+            }
+            m_cameras.Clear();
+        }
     }
 
     void OnPreRender()
@@ -41,11 +53,11 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
 
         var cam = GetComponent<Camera>();
 
-        UpdateCommandBuffer();
+        UpdateCommandBuffer(cam);
 
         if (!m_cameras.Contains(cam))
         {
-            cam.AddCommandBuffer(CameraEvent.BeforeGBuffer, m_commands);
+            cam.AddCommandBuffer(CameraEvent.AfterLighting, m_commands);
             m_cameras.Add(cam);
         }
     }
@@ -57,21 +69,32 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
         var cam = Camera.current;
         if (!cam) { return; }
 
-        UpdateCommandBuffer();
+        UpdateCommandBuffer(cam);
 
         if (!m_cameras.Contains(cam))
         {
+#if UNITY_EDITOR
+            if (cam.renderingPath != RenderingPath.DeferredShading &&
+                (cam.renderingPath == RenderingPath.UsePlayerSettings && PlayerSettings.renderingPath != RenderingPath.DeferredShading))
+            {
+                Debug.Log("ScreenSpaceShadowRenderer: Rendering path must be deferred.");
+            }
+#endif // UNITY_EDITOR
             cam.AddCommandBuffer(CameraEvent.AfterLighting, m_commands);
             m_cameras.Add(cam);
         }
     }
 
-    void UpdateCommandBuffer()
+    void UpdateCommandBuffer(Camera cam)
     {
         if(m_commands == null)
         {
             m_commands = new CommandBuffer();
             m_commands.name = "ScreenSpaceShadowRenderer";
+        }
+        if (m_light_material == null)
+        {
+            m_light_material = new Material(m_light_shader);
         }
 
         int id_pos = Shader.PropertyToID("_Position");
@@ -81,6 +104,21 @@ public class ScreenSpaceShadowRenderer : MonoBehaviour
         var n = lights.Count;
 
         m_commands.Clear();
+        if(cam.hdr)
+        {
+            m_light_material.EnableKeyword("UNITY_HDR_ON");
+            m_light_material.SetInt("_SrcBlend", (int)BlendMode.One);
+            m_light_material.SetInt("_DstBlend", (int)BlendMode.One);
+            m_commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+        }
+        else
+        {
+            m_light_material.DisableKeyword("UNITY_HDR_ON");
+            m_light_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
+            m_light_material.SetInt("_DstBlend", (int)BlendMode.Zero);
+            m_commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
+        }
+
         for (int i = 0; i < n; ++i)
         {
             var light = lights[i];
