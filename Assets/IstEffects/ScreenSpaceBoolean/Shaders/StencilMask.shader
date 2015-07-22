@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/StencilMask"
+Shader "IstEffects/Boolean/StencilMask"
 {
 SubShader
 {

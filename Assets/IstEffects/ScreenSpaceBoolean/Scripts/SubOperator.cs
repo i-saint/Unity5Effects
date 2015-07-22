@@ -26,6 +26,7 @@ public class SubOperator : ISubOperator
             materials[i] = mat;
         }
         renderer.sharedMaterials = materials;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
 
         var mat_mask = AssetDatabase.LoadAssetAtPath<Material>("Assets/IstEffects/ScreenSpaceBoolean/Materials/StencilMask.mat");
         m_mask_materials = new Material[materials.Length];

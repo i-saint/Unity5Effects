@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/Standard And"
+Shader "IstEffects/Boolean/Standard And"
 {
     Properties
     {

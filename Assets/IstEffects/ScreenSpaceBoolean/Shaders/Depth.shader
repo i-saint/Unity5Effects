@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/Depth"
+Shader "IstEffects/Boolean/Depth"
 {
 
 SubShader

@@ -1,4 +1,4 @@
-Shader "GBufferUtils/SimpleTexture"
+Shader "IstEffects/GbufferUtils/SimpleTexture"
 {
 Properties {
     _MainTex("Color", 2D) = "white" {}

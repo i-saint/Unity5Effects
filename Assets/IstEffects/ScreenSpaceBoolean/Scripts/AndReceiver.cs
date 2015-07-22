@@ -26,6 +26,7 @@ public class AndReceiver : IAndReceiver
             materials[i] = mat;
         }
         renderer.sharedMaterials = materials;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
 
         var mat_depth = AssetDatabase.LoadAssetAtPath<Material>("Assets/IstEffects/ScreenSpaceBoolean/Materials/Depth.mat");
         m_depth_materials = new Material[materials.Length];

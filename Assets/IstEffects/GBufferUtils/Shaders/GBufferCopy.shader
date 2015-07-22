@@ -1,4 +1,4 @@
-﻿Shader "Hidden/GBufferCopy" {
+﻿Shader "Hidden/IstEffects/GbufferUtils/GBufferCopy" {
 CGINCLUDE
 sampler2D _CameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
 sampler2D _CameraGBufferTexture1;   // spec color (rgb), smoothness (a)

@@ -1,4 +1,4 @@
-Shader "Hidden/Boolean_SubComposite"
+Shader "Hidden/IstEffects/Boolean/SubComposite"
 {
 
 SubShader

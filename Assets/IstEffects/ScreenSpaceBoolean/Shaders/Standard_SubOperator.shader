@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/Standard SubOperator"
+Shader "IstEffects/Boolean/Standard SubOperator"
 {
     Properties
     {

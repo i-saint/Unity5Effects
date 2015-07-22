@@ -1,4 +1,4 @@
-Shader "GBufferUtils/Depth"
+Shader "IstEffects/GbufferUtils/Depth"
 {
 
 SubShader

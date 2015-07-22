@@ -1,4 +1,4 @@
-Shader "BooleanRenderer/Standard SubReceiver"
+Shader "IstEffects/Boolean/Standard SubReceiver"
 {
     Properties
     {
