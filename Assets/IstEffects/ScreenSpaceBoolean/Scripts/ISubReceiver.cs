@@ -83,5 +83,4 @@ public abstract class ISubReceiver : MonoBehaviour
     // for detecting piercing
     public abstract void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb);
     public abstract void IssueDrawCall_FrontDepth(SubRenderer br, CommandBuffer cb);
-    public abstract void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb);
 }

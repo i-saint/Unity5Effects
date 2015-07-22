@@ -7,20 +7,18 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("IstEffects/ScreenSpaceBoolean/SubOperatorMesh")]
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
+[AddComponentMenu("IstEffects/ScreenSpaceBoolean/SubOperator")]
+[RequireComponent(typeof(Renderer))]
 [ExecuteInEditMode]
-public class SubOperatorMesh : ISubOperator
+public class SubOperator : ISubOperator
 {
-    public Material[] m_materials;
     public Material[] m_mask_materials;
 
 #if UNITY_EDITOR
     public override void Reset()
     {
         base.Reset();
-        var renderer = GetComponent<MeshRenderer>();
+        var renderer = GetComponent<Renderer>();
         var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/IstEffects/ScreenSpaceBoolean/Materials/Default_SubOperator.mat");
         var materials = new Material[renderer.sharedMaterials.Length];
         for (int i = 0; i < materials.Length; ++i)
@@ -37,9 +35,6 @@ public class SubOperatorMesh : ISubOperator
         }
     }
 #endif // UNITY_EDITOR
-
-    Mesh GetMesh() { return GetComponent<MeshFilter>().sharedMesh; }
-    Matrix4x4 GetTRS() { return GetComponent<Transform>().localToWorldMatrix; }
 
     public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
     {
@@ -58,29 +53,23 @@ public class SubOperatorMesh : ISubOperator
             }
         }
 
-        Mesh m = GetMesh();
-        int n = m.subMeshCount;
-        Matrix4x4 t = GetTRS();
+        var renderer = GetComponent<Renderer>();
+        int n = m_mask_materials.Length;
         if (br.m_enable_masking)
         {
             for (int i = 0; i < n; ++i)
             {
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 0);
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 1);
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 2);
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 0);
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 1);
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 2);
             }
         }
         else
         {
             for (int i = 0; i < n; ++i)
             {
-                cb.DrawMesh(m, t, m_mask_materials[i], i, 3);
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 3);
             }
         }
-    }
-
-    public override void IssueDrawCall_GBuffer(SubRenderer br, CommandBuffer cb)
-    {
-
     }
 }
