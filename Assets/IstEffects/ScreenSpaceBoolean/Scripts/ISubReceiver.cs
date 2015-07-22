@@ -7,80 +7,12 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
-public abstract class ISubReceiver : MonoBehaviour
+namespace Ist
 {
-    #region static
-    static private List<ISubReceiver> s_instances;
-    static private Dictionary<int, List<ISubReceiver>> s_groups;
-    static private bool s_dirty = true;
-
-    static public List<ISubReceiver> GetInstances()
+    public abstract class ISubReceiver : GroupedInstanceSet<ISubReceiver>
     {
-        if (s_instances == null) { s_instances = new List<ISubReceiver>(); }
-        return s_instances;
+        // for detecting piercing
+        public abstract void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb);
+        public abstract void IssueDrawCall_FrontDepth(SubRenderer br, CommandBuffer cb);
     }
-
-    static public Dictionary<int, List<ISubReceiver>> GetGroups()
-    {
-        if (s_groups == null) { s_groups = new Dictionary<int, List<ISubReceiver>>(); }
-        if (s_dirty)
-        {
-            s_dirty = false;
-            s_groups.Clear();
-            var instances = GetInstances();
-            for (int i = 0; i < instances.Count; ++i )
-            {
-                var instance = instances[i];
-                for(int j=0; j<instance.m_groups.Length; ++j) {
-                    int k = instance.m_groups[j];
-                    if (!s_groups.ContainsKey(k))
-                    {
-                        s_groups.Add(k, new List<ISubReceiver>());
-                    }
-                    s_groups[k].Add(instance);
-                }
-            }
-        }
-        return s_groups;
-    }
-    #endregion
-
-
-    #region fields
-    public int[] m_groups = new int[] { 0 };
-    #endregion
-
-
-    public int[] groups
-    {
-        get { return m_groups; }
-        set { m_groups = value; s_dirty = true; }
-    }
-
-#if UNITY_EDITOR
-    public virtual void Reset()
-    {
-    }
-
-    public virtual void OnValidate()
-    {
-        s_dirty = true;
-    }
-#endif
-
-    public virtual void OnEnable()
-    {
-        s_dirty = true;
-        GetInstances().Add(this);
-    }
-
-    public virtual void OnDisable()
-    {
-        s_dirty = true;
-        GetInstances().Remove(this);
-    }
-
-    // for detecting piercing
-    public abstract void IssueDrawCall_BackDepth(SubRenderer br, CommandBuffer cb);
-    public abstract void IssueDrawCall_FrontDepth(SubRenderer br, CommandBuffer cb);
 }
