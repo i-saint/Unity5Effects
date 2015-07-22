@@ -5,10 +5,11 @@ Properties {
 }
 SubShader {
     Tags { "RenderType"="Opaque" }
-    Blend Off
-    ZTest Always
+    Fog{ Mode Off }
     ZWrite Off
-    Cull Off
+    ZTest Greater
+    Blend[_SrcBlend][_DstBlend]
+    Cull Front
 
 CGINCLUDE
 #if QUALITY_FAST
@@ -183,7 +184,7 @@ void distance_point_capsule(float3 ppos, float3 pos1, float3 pos2, float radius,
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
 #define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
 
-ps_out frag_point(unity_v2f_deferred i) : SV_Target
+ps_out frag_point(unity_v2f_deferred i)
 {
     float3 wpos;
     float2 uv;
@@ -248,6 +249,9 @@ ps_out frag_point(unity_v2f_deferred i) : SV_Target
             float ref_depth = GetDepth(ray_coord);
             float3 ref_pos = GetPosition(ray_coord).xyz;
 
+            //if (ray_depth > ref_depth) {
+            //    occlusion += occulusion_par_march;
+            //}
             occlusion += occulusion_par_march * clamp((ray_depth - ref_depth)*10000000000.0, 0.0, 1.0);
         }
         occlusion = min(occlusion, clamp(distance*10000, 0.0, 1.0)); // 0.0 if wpos is inner light inner radius
@@ -276,7 +280,7 @@ ps_out frag_point(unity_v2f_deferred i) : SV_Target
     return r;
 }
 
-ps_out frag_line(unity_v2f_deferred i) : SV_Target
+ps_out frag_line(unity_v2f_deferred i)
 {
     return frag_point(i); // todo
 }
@@ -284,12 +288,6 @@ ENDCG
 
     // point light
     Pass {
-        Fog { Mode Off }
-        ZWrite Off
-        ZTest Greater
-        Blend [_SrcBlend] [_DstBlend]
-        Cull Front
-
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
@@ -303,12 +301,6 @@ ENDCG
 
     // line light
     Pass {
-        Fog { Mode Off }
-        ZWrite Off
-        ZTest Greater
-        Blend [_SrcBlend] [_DstBlend]
-        Cull Front
-
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
