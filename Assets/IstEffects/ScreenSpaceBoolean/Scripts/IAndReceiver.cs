@@ -13,12 +13,12 @@ namespace Ist
     {
         void OnWillRenderObject()
         {
-            Singleton<AndRenderer>.GetInstance()._OnWillRenderObject();
+            AndRenderer.GetInstance()._OnWillRenderObject();
         }
 
         void OnRenderObject()
         {
-            Singleton<AndRenderer>.GetInstance()._OnRenderObject();
+            AndRenderer.GetInstance()._OnRenderObject();
         }
 
         public abstract void IssueDrawCall_FrontDepth(AndRenderer br, CommandBuffer cb);

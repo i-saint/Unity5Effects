@@ -28,7 +28,6 @@ namespace Ist
 
         public static Mesh CreateRevertedMesh(Mesh mesh)
         {
-            var neg = new Vector3(-1.0f, -1.0f, -1.0f);
             var ret = new Mesh();
             ret.name = mesh.name + " (Reverse)";
             ret.vertices = mesh.vertices;
@@ -45,7 +44,6 @@ namespace Ist
 
         public static Mesh CopyMesh(Mesh mesh)
         {
-            var neg = new Vector3(-1.0f, -1.0f, -1.0f);
             var ret = new Mesh();
             ret.name = mesh.name + " (Copy)";
             ret.vertices = mesh.vertices;

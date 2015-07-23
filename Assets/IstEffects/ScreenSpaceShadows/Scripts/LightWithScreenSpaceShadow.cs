@@ -9,8 +9,10 @@ using UnityEditor;
 namespace Ist
 {
     [AddComponentMenu("IstEffects/ScreenSpaceShadow/Light")]
+    [RequireComponent(typeof(MeshFilter))]
+    [RequireComponent(typeof(MeshRenderer))]
     [ExecuteInEditMode]
-    public class LightWithScreenSpaceShadow : MonoBehaviour
+    public class LightWithScreenSpaceShadow : ICommandBufferExecuter<LightWithScreenSpaceShadow>
     {
         public enum Type
         {
@@ -33,18 +35,9 @@ namespace Ist
         public float m_capsule_length = 1.0f;
         public float m_occulusion_strength = 3.0f;
 
+        public Shader m_light_shader;
+        Material m_light_material;
 
-        #region static
-        static private List<LightWithScreenSpaceShadow> s_instances;
-        static public List<LightWithScreenSpaceShadow> instances
-        {
-            get
-            {
-                if (s_instances == null) { s_instances = new List<LightWithScreenSpaceShadow>(); }
-                return s_instances;
-            }
-        }
-        #endregion
 
         public Vector4 GetPositionAndRadius()
         {
@@ -68,22 +61,70 @@ namespace Ist
         {
             return GetComponent<Transform>().localToWorldMatrix;
         }
+        public Mesh GetMesh()
+        {
+            return GetComponent<MeshFilter>().sharedMesh;
+        }
+
+        public void IssueDrawCall(CommandBuffer commands)
+        {
+            if (m_light_material == null)
+            {
+                m_light_material = new Material(m_light_shader);
+            }
+
+            if (m_cast_shadow)
+            {
+                m_light_material.EnableKeyword("ENABLE_SHADOW");
+                switch (m_sample)
+                {
+                    case LightWithScreenSpaceShadow.Sample.Fast:
+                        m_light_material.EnableKeyword("QUALITY_FAST");
+                        break;
+                    case LightWithScreenSpaceShadow.Sample.Medium:
+                        m_light_material.EnableKeyword("QUALITY_MEDIUM");
+                        break;
+                    case LightWithScreenSpaceShadow.Sample.High:
+                        m_light_material.EnableKeyword("QUALITY_HIGH");
+                        break;
+                }
+            }
+            else
+            {
+                m_light_material.DisableKeyword("ENABLE_SHADOW");
+            }
+
+            int id_pos = Shader.PropertyToID("_Position");
+            int id_color = Shader.PropertyToID("_Color");
+            int id_params = Shader.PropertyToID("_Params1");
+            commands.SetGlobalVector(id_pos, GetPositionAndRadius());
+            commands.SetGlobalVector(id_color, GetLinearColor());
+            commands.SetGlobalVector(id_params, GetParams());
+            commands.DrawMesh(GetMesh(), GetTRS(), m_light_material, 0, (int)m_type);
+        }
 
 
 #if UNITY_EDITOR
+        void Reset()
+        {
+            m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/IstEffects/ScreenSpaceShadows/Shaders/Light.shader");
+            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/IstEffects/Utilities/Meshes/Sphere.asset");
+            GetComponent<MeshRenderer>().sharedMaterials = new Material[0];
+        }
 #endif // UNITY_EDITOR
 
-
-        void OnEnable()
+        void OnDestroy()
         {
-            instances.Add(this);
+            if (m_light_material != null)
+            {
+                Object.DestroyImmediate(m_light_material);
+            }
         }
 
-        void OnDisable()
+        void Update()
         {
-            instances.Remove(this);
+            GetComponent<Transform>().localScale = new Vector3(m_range, m_range, m_range);
         }
-
 
         void OnDrawGizmos()
         {
@@ -105,6 +146,45 @@ namespace Ist
             }
             Gizmos.matrix = Matrix4x4.identity;
             Gizmos.DrawWireSphere(transform.position, m_range);
+        }
+
+
+
+        protected override void AddCommandBuffer(Camera cam, CommandBuffer cb)
+        {
+#if UNITY_EDITOR
+            if (cam.renderingPath != RenderingPath.DeferredShading &&
+                (cam.renderingPath == RenderingPath.UsePlayerSettings && PlayerSettings.renderingPath != RenderingPath.DeferredShading))
+            {
+                Debug.Log("ScreenSpaceShadowRenderer: Rendering path must be deferred.");
+            }
+#endif // UNITY_EDITOR
+            cam.AddCommandBuffer(CameraEvent.AfterLighting, cb);
+        }
+
+        protected override void RemoveCommandBuffer(Camera cam, CommandBuffer cb)
+        {
+            cam.RemoveCommandBuffer(CameraEvent.AfterLighting, cb);
+        }
+
+        protected override void UpdateCommandBuffer(CommandBuffer commands)
+        {
+            Camera cam = Camera.current;
+
+            commands.Clear();
+            if (cam.hdr)
+            {
+                commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+            }
+            else
+            {
+                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
+            }
+
+            foreach (var light in LightWithScreenSpaceShadow.GetInstances())
+            {
+                light.IssueDrawCall(commands);
+            }
         }
     }
 }

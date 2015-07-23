@@ -9,11 +9,11 @@ using UnityEditor;
 namespace Ist
 {
 
-    public abstract class ICommandBufferExecuter<T> : MonoBehaviour where T : MonoBehaviour
+    public abstract class ICommandBufferExecuter<T> : MonoBehaviour where T : ICommandBufferExecuter<T>
     {
         #region static
         static HashSet<T> s_instances;
-        static CommandBuffer s_commandbuffer;
+        static CommandBuffer s_commands;
         static HashSet<Camera> s_cameras;
         static int s_nth;
 
@@ -21,12 +21,6 @@ namespace Ist
         {
             if (s_instances == null) { s_instances = new HashSet<T>(); }
             return s_instances;
-        }
-
-        static public CommandBuffer GetCommandBuffer()
-        {
-            if (s_commandbuffer == null) { s_commandbuffer = new CommandBuffer(); }
-            return s_commandbuffer;
         }
 
         static public HashSet<Camera> GetCameraTable()
@@ -39,23 +33,22 @@ namespace Ist
 
         public virtual void OnEnable()
         {
-            GetInstances().Add((T)(System.Object)this);
+            GetInstances().Add(this as T);
         }
 
         public virtual void OnDisable()
         {
             var intances = GetInstances();
-            intances.Remove((T)(System.Object)this);
+            intances.Remove(this as T);
 
-            if (intances.Count == 0)
+            if (intances.Count == 0 && s_commands!=null)
             {
-                var cb = GetCommandBuffer();
                 var cam_table = GetCameraTable();
                 foreach (var c in cam_table)
                 {
                     if (c != null)
                     {
-                        RemoveCommandBuffer(c, cb);
+                        RemoveCommandBuffer(c, s_commands);
                     }
                 }
                 cam_table.Clear();
@@ -64,21 +57,25 @@ namespace Ist
 
         public virtual void OnWillRenderObject()
         {
+            if (!gameObject.activeInHierarchy && !enabled) { return; }
+
             if (s_nth++ == 0)
             {
-                var cam = Camera.current;
-                if (cam == null) { return; }
-
-                var cb = GetCommandBuffer();
-                var cam_table = GetCameraTable();
-                if (!cam_table.Contains(cam))
+                if (s_commands == null)
                 {
-                    cb.name = GetCommandBufferName();
-                    AddCommandBuffer(cam, cb);
-                    cam_table.Add(cam);
+                    s_commands = new CommandBuffer();
+                    s_commands.name = GetCommandBufferName();
                 }
+                UpdateCommandBuffer(s_commands);
+            }
 
-                UpdateCommandBuffer(cb);
+            var cam = Camera.current;
+            if (cam == null) { return; }
+            var cam_table = GetCameraTable();
+            if (!cam_table.Contains(cam))
+            {
+                AddCommandBuffer(cam, s_commands);
+                cam_table.Add(cam);
             }
         }
 

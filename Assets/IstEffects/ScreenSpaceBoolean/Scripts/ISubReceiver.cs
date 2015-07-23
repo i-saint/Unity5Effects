@@ -13,12 +13,12 @@ namespace Ist
     {
         void OnWillRenderObject()
         {
-            Singleton<SubRenderer>.GetInstance()._OnWillRenderObject();
+            SubRenderer.GetInstance()._OnWillRenderObject();
         }
 
         void OnRenderObject()
         {
-            Singleton<SubRenderer>.GetInstance()._OnRenderObject();
+            SubRenderer.GetInstance()._OnRenderObject();
         }
 
         // for detecting piercing
