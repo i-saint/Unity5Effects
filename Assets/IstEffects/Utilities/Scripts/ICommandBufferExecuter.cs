@@ -87,10 +87,10 @@ namespace Ist
             s_nth = 0;
         }
 
-        public virtual string GetCommandBufferName() { return "ICommandBufferExecuter<" + typeof(T).Name + ">"; }
-        public abstract void AddCommandBuffer(Camera c, CommandBuffer cb);
-        public abstract void RemoveCommandBuffer(Camera c, CommandBuffer cb);
-        public abstract void UpdateCommandBuffer(CommandBuffer commands);
+        protected virtual string GetCommandBufferName() { return typeof(T).Name; }
+        protected abstract void AddCommandBuffer(Camera c, CommandBuffer cb);
+        protected abstract void RemoveCommandBuffer(Camera c, CommandBuffer cb);
+        protected abstract void UpdateCommandBuffer(CommandBuffer commands);
     }
 
 }

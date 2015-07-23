@@ -45,12 +45,12 @@ namespace Ist
         }
 
 
-        public override void AddCommandBuffer(Camera c, CommandBuffer cb)
+        protected override void AddCommandBuffer(Camera c, CommandBuffer cb)
         {
             c.AddCommandBuffer(CameraEvent.AfterGBuffer, cb);
         }
 
-        public override void RemoveCommandBuffer(Camera c, CommandBuffer cb)
+        protected override void RemoveCommandBuffer(Camera c, CommandBuffer cb)
         {
             c.RemoveCommandBuffer(CameraEvent.AfterGBuffer, cb);
         }
