@@ -134,7 +134,7 @@ namespace Ist
                 m_material = new Material(m_shader);
                 m_material.hideFlags = HideFlags.DontSave;
 
-                m_quad = GBufferUtils.GenerateQuad();
+                m_quad = MeshUtils.GenerateQuad();
             }
             UpdateRenderTargets();
 

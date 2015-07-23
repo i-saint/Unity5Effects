@@ -82,7 +82,7 @@ namespace Ist
             }
         }
 
-        public virtual void OnPostRender()
+        public virtual void OnRenderObject()
         {
             s_nth = 0;
         }

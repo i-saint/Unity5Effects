@@ -26,29 +26,11 @@ namespace Ist
         Material m_material;
         CommandBuffer m_commands;
 
-        public static Mesh GenerateQuad()
-        {
-            Vector3[] vertices = new Vector3[4] {
-                new Vector3( 1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f,-1.0f, 0.0f),
-                new Vector3( 1.0f,-1.0f, 0.0f),
-            };
-            int[] indices = new int[6] { 0, 1, 2, 2, 3, 0 };
-
-            Mesh r = new Mesh();
-            r.name = "Quad";
-            r.vertices = vertices;
-            r.triangles = indices;
-            return r;
-        }
-
-
 #if UNITY_EDITOR
         void Reset()
         {
             m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/IstEffects/RimLight/Shaders/RimLight.shader");
-            m_quad = GenerateQuad();
+            m_quad = MeshUtils.GenerateQuad();
             GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
         }
 #endif // UNITY_EDITOR

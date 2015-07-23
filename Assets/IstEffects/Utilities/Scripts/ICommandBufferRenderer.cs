@@ -54,7 +54,7 @@ namespace Ist
             }
         }
 
-        public void _OnPostRender()
+        public void _OnRenderObject()
         {
             m_nth = 0;
         }

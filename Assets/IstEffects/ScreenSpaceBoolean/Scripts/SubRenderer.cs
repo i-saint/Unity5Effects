@@ -13,7 +13,6 @@ namespace Ist
     [ExecuteInEditMode]
     public class SubRenderer : ICommandBufferRenderer<SubRenderer>
     {
-        public bool m_enable_masking = true;
         public bool m_enable_piercing = true;
 
         public Mesh m_quad;
@@ -22,26 +21,10 @@ namespace Ist
         Material m_material_composite;
 
 
-        public static Mesh GenerateQuad()
-        {
-            Vector3[] vertices = new Vector3[4] {
-                new Vector3( 1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f,-1.0f, 0.0f),
-                new Vector3( 1.0f,-1.0f, 0.0f),
-            };
-            int[] indices = new int[6] { 0, 1, 2, 2, 3, 0 };
-
-            Mesh r = new Mesh();
-            r.vertices = vertices;
-            r.triangles = indices;
-            return r;
-        }
-
 #if UNITY_EDITOR
         void Reset()
         {
-            m_quad = GenerateQuad();
+            m_quad = MeshUtils.GenerateQuad();
             m_shader_composite = AssetDatabase.LoadAssetAtPath<Shader>("Assets/IstEffects/ScreenSpaceBoolean/Shaders/CompositeSub.shader");
         }
 #endif // UNITY_EDITOR

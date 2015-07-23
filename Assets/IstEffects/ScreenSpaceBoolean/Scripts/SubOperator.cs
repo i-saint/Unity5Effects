@@ -40,38 +40,17 @@ namespace Ist
 
         public override void IssueDrawCall_DepthMask(SubRenderer br, CommandBuffer cb)
         {
-            if (br.m_enable_piercing)
-            {
-                for (int i = 0; i < m_mask_materials.Length; ++i)
-                {
-                    m_mask_materials[i].EnableKeyword("ENABLE_PIERCING");
-                }
-            }
-            else
-            {
-                for (int i = 0; i < m_mask_materials.Length; ++i)
-                {
-                    m_mask_materials[i].DisableKeyword("ENABLE_PIERCING");
-                }
-            }
-
             var renderer = GetComponent<Renderer>();
             int n = m_mask_materials.Length;
-            if (br.m_enable_masking)
+            for (int i = 0; i < n; ++i)
             {
-                for (int i = 0; i < n; ++i)
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 0);
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 1);
+                if (br.m_enable_piercing)
                 {
-                    cb.DrawRenderer(renderer, m_mask_materials[i], i, 0);
-                    cb.DrawRenderer(renderer, m_mask_materials[i], i, 1);
                     cb.DrawRenderer(renderer, m_mask_materials[i], i, 2);
                 }
-            }
-            else
-            {
-                for (int i = 0; i < n; ++i)
-                {
-                    cb.DrawRenderer(renderer, m_mask_materials[i], i, 3);
-                }
+                cb.DrawRenderer(renderer, m_mask_materials[i], i, 3);
             }
         }
     }

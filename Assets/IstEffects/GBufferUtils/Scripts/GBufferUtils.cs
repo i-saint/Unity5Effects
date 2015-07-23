@@ -49,7 +49,7 @@ namespace Ist
         void Reset()
         {
             m_sh_gbuffer_copy = AssetDatabase.LoadAssetAtPath("Assets/IstEffects/GBufferUtils/Shaders/GBufferCopy.shader", typeof(Shader)) as Shader;
-            m_quad = GenerateQuad();
+            m_quad = MeshUtils.GenerateQuad();
         }
 #endif // UNITY_EDITOR
 
@@ -190,23 +190,6 @@ namespace Ist
                 Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
                 Graphics.SetRenderTarget(null);
             }
-        }
-
-        public static Mesh GenerateQuad()
-        {
-            Vector3[] vertices = new Vector3[4] {
-                new Vector3( 1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f,-1.0f, 0.0f),
-                new Vector3( 1.0f,-1.0f, 0.0f),
-            };
-            int[] indices = new int[6] { 0, 1, 2, 2, 3, 0 };
-
-            Mesh r = new Mesh();
-            r.name = "Quad";
-            r.vertices = vertices;
-            r.triangles = indices;
-            return r;
         }
     }
 }

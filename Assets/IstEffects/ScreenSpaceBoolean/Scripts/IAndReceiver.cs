@@ -16,9 +16,9 @@ namespace Ist
             Singleton<AndRenderer>.GetInstance()._OnWillRenderObject();
         }
 
-        void OnPostRender()
+        void OnRenderObject()
         {
-            Singleton<AndRenderer>.GetInstance()._OnPostRender();
+            Singleton<AndRenderer>.GetInstance()._OnRenderObject();
         }
 
         public abstract void IssueDrawCall_FrontDepth(AndRenderer br, CommandBuffer cb);

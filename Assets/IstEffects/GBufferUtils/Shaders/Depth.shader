@@ -4,6 +4,7 @@ Shader "IstEffects/GbufferUtils/Depth"
 SubShader
 {
 CGINCLUDE
+#include "UnityCG.cginc"
 
 float ComputeDepth(float4 clippos)
 {
@@ -35,7 +36,8 @@ struct ps_out
 vs_out vert(ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }
 
