@@ -73,6 +73,22 @@ namespace Ist
                 m_light_material = new Material(m_light_shader);
             }
 
+            var cam = Camera.current;
+            if (cam.hdr)
+            {
+                m_light_material.EnableKeyword("UNITY_HDR_ON");
+                m_light_material.SetInt("_SrcBlend", (int)BlendMode.One);
+                m_light_material.SetInt("_DstBlend", (int)BlendMode.One);
+                commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+            }
+            else
+            {
+                m_light_material.DisableKeyword("UNITY_HDR_ON");
+                m_light_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
+                m_light_material.SetInt("_DstBlend", (int)BlendMode.Zero);
+                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
+            }
+
             if (m_cast_shadow)
             {
                 m_light_material.EnableKeyword("ENABLE_SHADOW");
