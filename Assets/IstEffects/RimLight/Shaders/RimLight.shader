@@ -67,24 +67,24 @@ ps_out frag(vs_out i)
     float h = 0.0;
     float3 p = GetPosition(coord).xyz;
     float3 cam_dir = normalize(p.xyz - _WorldSpaceCameraPos.xyz);
-    float2 pixel_size = _ScreenParams.zw - 1.0;
     float3 n1 = GetNormal(coord).xyz;
     h = pow(max(1.0 - abs(dot(cam_dir, n1) - _Threshold), 0.0) * _InvThreshold, _Factor) * _Intensity;
 
 #if ENABLE_EDGE_HIGHLIGHTING
+    float2 pixel_size = _ScreenParams.zw - 1.0;
     float3 n2 = GetNormal(coord + float2(pixel_size.x, 0.0)).xyz;
     float3 n3 = GetNormal(coord + float2(0.0, pixel_size.y)).xyz;
 
     //if (dot(n1, n2)<_EdgeThreshold || dot(n1, n3)<_EdgeThreshold) {
     //    h += _EdgeIntensity;
     //}
-
     // equivalent to above code. this if more faster in some cases.
     float t1 = dot(n1, n2) - _EdgeThreshold;
     float t2 = dot(n1, n3) - _EdgeThreshold;
     float t = clamp(min(min(t1, t2), 0.0) * -100000000000.0, 0.0, 1.0);
     h += _EdgeIntensity * t;
 #endif
+
 #if ENABLE_SMOOTHNESS_ATTENUAION
     h *= GetSpecular(coord).w;
 #endif

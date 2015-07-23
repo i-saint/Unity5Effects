@@ -25,15 +25,15 @@ namespace Ist
             Medium,
             High,
         }
-        public Type m_type;
+        public Type m_type = Type.Point;
         public bool m_cast_shadow = true;
-        public Sample m_sample;
+        public Sample m_sample = Sample.Medium;
         public float m_range = 10.0f;
         public Color m_color = Color.white;
         public float m_intensity = 1.0f;
         public float m_inner_radius = 0.0f;
         public float m_capsule_length = 1.0f;
-        public float m_occulusion_strength = 3.0f;
+        public float m_occulusion_strength = 2.0f;
 
         public Shader m_light_shader;
         Material m_light_material;

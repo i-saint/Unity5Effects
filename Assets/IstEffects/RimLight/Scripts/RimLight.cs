@@ -13,18 +13,30 @@ namespace Ist
     [ExecuteInEditMode]
     public class RimLight : MonoBehaviour
     {
-        public Vector4 m_color = new Vector4(0.75f, 0.75f, 1.25f, 0.0f);
-        public float m_intensity = 0.5f;
+        public Color m_color = new Color(0.75f, 0.75f, 1.0f, 0.0f);
+        public float m_intensity = 1.0f;
         public float m_factor = 1.5f;
+        [Range(0.0f, .99f)]
         public float m_threshold = 0.5f;
         public bool m_edge_highlighting = true;
-        public float m_edge_intensity = 0.4f;
+        public float m_edge_intensity = 0.3f;
+        [Range(0.0f, .99f)]
         public float m_edge_threshold = 0.8f;
-        public bool m_smoothness_attenuation = true;
+        public bool m_mul_smoothness = true;
         public Shader m_shader;
         public Mesh m_quad;
         Material m_material;
         CommandBuffer m_commands;
+
+        public Vector4 GetLinearColor()
+        {
+            return new Vector4(
+                Mathf.GammaToLinearSpace(m_color.r),
+                Mathf.GammaToLinearSpace(m_color.g),
+                Mathf.GammaToLinearSpace(m_color.b),
+                1.0f
+            );
+        }
 
 #if UNITY_EDITOR
         void Reset()
@@ -97,7 +109,7 @@ namespace Ist
                 m_material.DisableKeyword("ENABLE_EDGE_HIGHLIGHTING");
             }
 
-            if (m_smoothness_attenuation)
+            if (m_mul_smoothness)
             {
                 m_material.EnableKeyword("ENABLE_SMOOTHNESS_ATTENUAION");
             }
@@ -106,8 +118,8 @@ namespace Ist
                 m_material.DisableKeyword("ENABLE_SMOOTHNESS_ATTENUAION");
             }
 
-            m_material.SetVector("_Color", m_color);
-            m_material.SetVector("_Params1", new Vector4(m_intensity, m_threshold, 1.0f / m_threshold, m_factor));
+            m_material.SetVector("_Color", GetLinearColor());
+            m_material.SetVector("_Params1", new Vector4(m_intensity, m_threshold, 1.0f / (1.0f-m_threshold), m_factor));
             m_material.SetVector("_Params2", new Vector4(m_edge_intensity, m_edge_threshold, 0.0f, 0.0f));
         }
     }
