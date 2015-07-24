@@ -3,7 +3,9 @@ Properties {
     _Color ("Color", Color) = (1,1,1,1)
     _MainTex ("Albedo (RGB)", 2D) = "white" {}
     _Glossiness ("Smoothness", Range(0,1)) = 0.5
-    _Metallic ("Metallic", Range(0,1)) = 0.0
+    _Metallic("Metallic", Range(0, 1)) = 0.0
+    _Position("Position", Vector) = (0, 0, 0, 0)
+    _Rotation("Rotation", Vector) = (0, 1, 0, 0)
 }
 
 CGINCLUDE
@@ -22,9 +24,13 @@ int g_hdr;
 int g_enable_adaptive;
 int g_enable_temporal;
 int g_enable_glowline;
+float4 _Rotation;
+float4 _Position;
 
 float map(float3 p)
 {
+    p = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), p);
+    p += _Position.xyz;
     if(g_scene==0) {
         return pseudo_kleinian( (p+float3(0.0, -0.5, 0.0)).xzy );
     }

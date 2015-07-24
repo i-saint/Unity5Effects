@@ -1,14 +1,15 @@
 ﻿Shader "WaterSurface/Surface" {
 Properties {
-    g_speed ("g_speed", Float) = 1.0
-    g_refraction ("g_refraction", Float) = 0.05
-    g_reflection_intensity ("g_reflection_intensity ", Float) = 0.3
-    g_fresnel ("g_fresnel", Float) = 0.25
-    g_raymarch_step ("g_raymarch_step", Float) = 0.2
-    g_attenuation_by_distance ("g_attenuation_by_distance", Float) = 0.02
+    _Speed("Speed", Float) = 1.0
+    _Scale("Scale", Float) = 1.0
+    _Refraction("Refraction", Float) = 0.05
+    _ReflectionIntensity ("_ReflectionIntensity ", Float) = 0.3
+    _Fresnel ("_Fresnel", Float) = 0.25
+    _RaymaechStep ("_RaymaechStep", Float) = 0.2
+    _AttenuationByDistance ("_AttenuationByDistance", Float) = 0.02
 }
 SubShader {
-    Tags { "Queue"="Transparent+100" "RenderType"="Opaque" }
+    Tags { "Queue"="Transparent+200" "RenderType"="Opaque" }
     Blend Off
     ZTest Less
     ZWrite Off
@@ -20,14 +21,16 @@ CGINCLUDE
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
 
 #define MAX_MARCH 16
+//#define ENABLE_REFLECTIONS
 
 sampler2D _FrameBuffer1;
-float g_speed;
-float g_refraction;
-float g_reflection_intensity;
-float g_fresnel;
-float g_raymarch_step;
-float g_attenuation_by_distance;
+float _Speed;
+float _Scale;
+float _Refraction;
+float _ReflectionIntensity;
+float _Fresnel;
+float _RaymaechStep;
+float _AttenuationByDistance;
 
 struct ia_out
 {
@@ -70,7 +73,7 @@ vs_out vert(ia_out v)
 
 float compute_octave(float3 pos, float scale)
 {
-    float time = _Time.y*g_speed;
+    float time = _Time.y*_Speed;
     float o1 = sea_octave(pos.xzy*1.25*scale + float3(1.0,2.0,-1.5)*time*1.25 + sin(pos.xzy+time*8.3)*0.15, 4.0);
     float o2 = sea_octave(pos.xzy*2.50*scale + float3(2.0,-1.0,1.0)*time*-2.0 - sin(pos.xzy+time*6.3)*0.2, 8.0);
     return o1 * o2;
@@ -99,7 +102,7 @@ ps_out frag(vs_out i)
         coord.y = 1.0 - coord.y;
     #endif
 
-    float3 n = guess_normal(i.world_pos.xyz, 1.0);
+    float3 n = guess_normal(i.world_pos.xyz, _Scale);
     float3x3 tbn = float3x3( i.tangent.xyz, i.binormal, i.normal.xyz);
     n = normalize(mul(n, tbn));
 
@@ -112,8 +115,8 @@ ps_out frag(vs_out i)
     ps_out r;
     {
         float3 eye = normalize(_WorldSpaceCameraPos.xyz-i.world_pos.xyz);
-        float adv = g_raymarch_step * jitter(i.world_pos.xyz);
-        float3 refdir = normalize(-eye + -reflect(-eye, n.xyz)*g_refraction);
+        float adv = _RaymaechStep * jitter(i.world_pos.xyz);
+        float3 refdir = normalize(-eye + -reflect(-eye, n.xyz)*_Refraction);
         for(int k=0; k<MAX_MARCH; ++k) {
             float4 tpos = mul(UNITY_MATRIX_VP, float4((i.world_pos+refdir * adv), 1.0) );
             float ray_depth = ComputeDepth(tpos);
@@ -123,16 +126,16 @@ ps_out frag(vs_out i)
             #endif
             ref_depth = GetDepth(ref_coord);
             if(ray_depth >= ref_depth) { break; }
-            adv = adv + g_raymarch_step;
+            adv = adv + _RaymaechStep;
         }
 
         float f1 = max(1.0-abs(dot(n, eye))-0.5, 0.0)*2.0;
         float f2 = 1.0-abs(dot(i.normal, eye));
 
         r.color = tex2D(_FrameBuffer1, ref_coord);
-        r.color *= 0.9;
-        r.color = r.color * max(1.0 - adv * g_attenuation_by_distance, 0.0);
-        r.color += (f1 * f2) * g_fresnel * fade;
+        //r.color *= 0.9;
+        r.color = r.color * max(1.0 - adv * _AttenuationByDistance, 0.0);
+        r.color += (f1 * f2) * _Fresnel * fade;
         //r.color = adv;
     }
 #ifdef ENABLE_REFLECTIONS
@@ -144,7 +147,7 @@ ps_out frag(vs_out i)
         #if UNITY_UV_STARTS_AT_TOP
             tcoord.y = 1.0-tcoord.y;
         #endif
-        r.color.xyz += tex2D(_FrameBuffer1, tcoord).xyz * g_reflection_intensity;
+        r.color.xyz += tex2D(_FrameBuffer1, tcoord).xyz * _ReflectionIntensity;
     }
 #endif // ENABLE_REFLECTIONS
     //r.color.rgb = pow(n*0.5+0.5, 4.0); // for debug
