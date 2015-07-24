@@ -19,16 +19,9 @@ namespace Ist
             Point,
             Line,
         }
-        public enum Sample
-        {
-            Fast,
-            Medium,
-            High,
-        }
         public Type m_type = Type.Point;
         public bool m_inverse = false;
         public bool m_cast_shadow = true;
-        public Sample m_sample = Sample.Medium;
         public float m_range = 10.0f;
         public Color m_color = Color.white;
         public float m_intensity = 1.0f;
@@ -98,9 +91,9 @@ namespace Ist
             }
 
             int id_occulusion = Shader.PropertyToID("Occulusion");
-            commands.GetTemporaryRT(id_occulusion, -1, -1, 0, FilterMode.Point, RenderTextureFormat.R8);
+            commands.GetTemporaryRT(id_occulusion, -1, -1, 0, FilterMode.Point, RenderTextureFormat.RHalf);
             commands.SetRenderTarget(id_occulusion, BuiltinRenderTextureType.CameraTarget);
-            commands.ClearRenderTarget(false, true, Color.black);
+            commands.ClearRenderTarget(false, true, Color.white);
             if (m_cast_shadow)
             {
                 commands.SetGlobalVector("_StencilParams1", GetStencilParams1());
@@ -137,18 +130,6 @@ namespace Ist
             if (m_cast_shadow)
             {
                 m_light_material.EnableKeyword("ENABLE_SHADOW");
-                switch (m_sample)
-                {
-                    case LightWithStencilShadow.Sample.Fast:
-                        m_light_material.EnableKeyword("QUALITY_FAST");
-                        break;
-                    case LightWithStencilShadow.Sample.Medium:
-                        m_light_material.EnableKeyword("QUALITY_MEDIUM");
-                        break;
-                    case LightWithStencilShadow.Sample.High:
-                        m_light_material.EnableKeyword("QUALITY_HIGH");
-                        break;
-                }
             }
             else
             {

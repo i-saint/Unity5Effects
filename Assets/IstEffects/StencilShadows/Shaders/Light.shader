@@ -9,12 +9,6 @@ SubShader {
     Tags { "RenderType"="Opaque" }
     Fog{ Mode Off }
 
-    Stencil{
-        Ref 0
-        ReadMask [_StencilReadMask]
-        WriteMask [_StencilWriteMask]
-        Comp Equal
-    }
     ZWrite Off
     ZTest Always
     Blend[_SrcBlend][_DstBlend]
@@ -27,7 +21,7 @@ CGINCLUDE
 #include "UnityDeferredLibrary.cginc"
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
 
-sampler2D _BackDepth;
+sampler2D _Occulusion;
 float4 _Position;
 float4 _Color;
 float4 _Params1;
@@ -151,6 +145,9 @@ void DeferredCalculateLightParams (
     float att = dot(tolight, tolight) * _RangeInvSq;
     float atten = tex2D (_LightTextureB0, att.rr).UNITY_ATTEN_CHANNEL;
 #endif
+#if ENABLE_SHADOW
+    atten *= min(tex2D(_Occulusion, uv).x, 1.0);
+#endif
 
     outWorldPos = wpos;
     outUV = uv;
@@ -213,7 +210,7 @@ ps_out frag_point(unity_v2f_deferred i)
     float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
 
     float3 lightClosestPoint;
-    if (_LightType == 2)
+    if (_LightType == 1)
     {
         // tube light
         light.dir = CalcTubeLightToLight (wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
@@ -276,6 +273,7 @@ ENDCG
         #pragma target 3.0
         #pragma exclude_renderers nomrt
         #pragma multi_compile ___ ENABLE_SHADOW
+        #pragma multi_compile ___ ENABLE_INVERSE
         #pragma multi_compile ___ UNITY_HDR_ON
         #pragma vertex vert_line
         #pragma fragment frag_line
