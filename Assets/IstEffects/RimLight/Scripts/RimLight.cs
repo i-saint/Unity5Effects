@@ -83,9 +83,9 @@ namespace Ist
                 m_commands.name = "Rim Light";
 
                 cam.AddCommandBuffer(CameraEvent.AfterLighting, m_commands);
-                m_commands.DrawMesh(m_quad, Matrix4x4.identity, m_material, 0, 0);
             }
 
+            m_commands.Clear();
             if (cam.hdr)
             {
                 m_material.EnableKeyword("UNITY_HDR_ON");
@@ -100,6 +100,7 @@ namespace Ist
                 m_material.SetInt("_DstBlend", (int)BlendMode.Zero);
                 m_commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
             }
+            m_commands.DrawMesh(m_quad, Matrix4x4.identity, m_material, 0, 0);
 
             if (m_edge_highlighting)
             {
