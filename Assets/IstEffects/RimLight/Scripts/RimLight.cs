@@ -11,6 +11,7 @@ namespace Ist
     [RequireComponent(typeof(Camera))]
     [RequireComponent(typeof(GBufferUtils))]
     [ExecuteInEditMode]
+    [AddComponentMenu("IstEffects/RimLight")]
     public class RimLight : MonoBehaviour
     {
         public Color m_color = new Color(0.75f, 0.75f, 1.0f, 0.0f);

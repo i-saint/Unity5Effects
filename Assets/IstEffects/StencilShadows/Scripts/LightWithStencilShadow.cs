@@ -12,11 +12,12 @@ namespace Ist
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     [ExecuteInEditMode]
-    public class LightWithScreenSpaceShadow : ICommandBufferExecuter<LightWithScreenSpaceShadow>
+    public class LightWithStencilShadow : ICommandBufferExecuter<LightWithStencilShadow>
     {
         public enum Type
         {
             Point,
+            InversePoint,
             Line,
         }
         public enum Sample
@@ -94,13 +95,13 @@ namespace Ist
                 m_light_material.EnableKeyword("ENABLE_SHADOW");
                 switch (m_sample)
                 {
-                    case LightWithScreenSpaceShadow.Sample.Fast:
+                    case LightWithStencilShadow.Sample.Fast:
                         m_light_material.EnableKeyword("QUALITY_FAST");
                         break;
-                    case LightWithScreenSpaceShadow.Sample.Medium:
+                    case LightWithStencilShadow.Sample.Medium:
                         m_light_material.EnableKeyword("QUALITY_MEDIUM");
                         break;
-                    case LightWithScreenSpaceShadow.Sample.High:
+                    case LightWithStencilShadow.Sample.High:
                         m_light_material.EnableKeyword("QUALITY_HIGH");
                         break;
                 }
@@ -123,7 +124,7 @@ namespace Ist
 #if UNITY_EDITOR
         void Reset()
         {
-            m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/IstEffects/ScreenSpaceShadows/Shaders/Light.shader");
+            m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/IstEffects/StencilShadows/Shaders/Light.shader");
             GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/IstEffects/Utilities/Meshes/Sphere.asset");
             GetComponent<MeshRenderer>().sharedMaterials = new Material[0];
         }
@@ -197,7 +198,7 @@ namespace Ist
                 commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
             }
 
-            foreach (var light in LightWithScreenSpaceShadow.GetInstances())
+            foreach (var light in LightWithStencilShadow.GetInstances())
             {
                 light.IssueDrawCall(commands);
             }

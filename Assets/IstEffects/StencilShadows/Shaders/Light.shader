@@ -1,4 +1,4 @@
-Shader "Hidden/IstEffects/ScreenSpaceShadowLight" {
+Shader "Hidden/IstEffects/StencilShadowLight" {
 Properties {
     _SrcBlend("", Int) = 1
     _DstBlend("", Int) = 1
@@ -7,7 +7,7 @@ SubShader {
     Tags { "RenderType"="Opaque" }
     Fog{ Mode Off }
     ZWrite Off
-    ZTest Greater
+    ZTest Always
     Blend[_SrcBlend][_DstBlend]
     Cull Front
 
@@ -142,9 +142,16 @@ void DeferredCalculateLightParams (
     // Point light
     float3 tolight = wpos - lightPos;
     half3 lightDir = -normalize (tolight);
-    
+    if (_LightType == 1) {
+        lightPos += lightDir * _Range;
+        lightDir *= -1.0;
+    }
+
     float att = dot(tolight, tolight) * _RangeInvSq;
     float atten = tex2D (_LightTextureB0, att.rr).UNITY_ATTEN_CHANNEL;
+    if (_LightType == 1) {
+        atten = 1.0;
+    }
 
     outWorldPos = wpos;
     outUV = uv;
@@ -191,6 +198,10 @@ ps_out frag_point(unity_v2f_deferred i)
     DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
     
     float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
+    if (_LightType == 1) {
+        lightPos += light.dir * _Range;
+        light.dir *= -1.0;
+    }
     float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
     float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
     float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
@@ -203,7 +214,7 @@ ps_out frag_point(unity_v2f_deferred i)
     float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
 
     float3 lightClosestPoint;
-    if (_LightType == 1)
+    if (_LightType == 2)
     {
         // tube light
         light.dir = CalcTubeLightToLight (wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
@@ -213,6 +224,7 @@ ps_out frag_point(unity_v2f_deferred i)
         // Sphere light
         light.dir = CalcSphereLightToLight (wpos, lightPos, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
     }
+
     light.ndotl = LambertTerm (normalWorld, light.dir);
     if(dot(gbuffer2.xyz, 1.0) * light.ndotl <= 0.0) { discard; }
 
@@ -274,6 +286,7 @@ ps_out frag_point(unity_v2f_deferred i)
 #endif
     ps_out r;
     r.color = res;
+    //r.color.rgb = light.dir;
     return r;
 }
 
@@ -284,6 +297,19 @@ ps_out frag_line(unity_v2f_deferred i)
 ENDCG
 
     // point light
+    Pass {
+        CGPROGRAM
+        #pragma target 3.0
+        #pragma exclude_renderers nomrt
+        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma multi_compile ___ ENABLE_SHADOW
+        #pragma multi_compile ___ UNITY_HDR_ON
+        #pragma vertex vert_point
+        #pragma fragment frag_point
+        ENDCG
+    }
+
+    // inverse point light
     Pass {
         CGPROGRAM
         #pragma target 3.0
