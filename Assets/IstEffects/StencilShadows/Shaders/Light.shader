@@ -1,25 +1,26 @@
-Shader "Hidden/IstEffects/StencilShadowLight" {
+Shader "Hidden/IstEffects/StencilShadows/Light" {
 Properties {
     _SrcBlend("", Int) = 1
     _DstBlend("", Int) = 1
+    _StencilReadMask("", Int) = 7
+    _StencilWriteMask("", Int) = 7
 }
 SubShader {
     Tags { "RenderType"="Opaque" }
     Fog{ Mode Off }
+
+    Stencil{
+        Ref 0
+        ReadMask [_StencilReadMask]
+        WriteMask [_StencilWriteMask]
+        Comp Equal
+    }
     ZWrite Off
     ZTest Always
     Blend[_SrcBlend][_DstBlend]
     Cull Front
 
 CGINCLUDE
-#if QUALITY_FAST
-    #define MAX_MARCH 12
-#elif QUALITY_HIGH
-    #define MAX_MARCH 48
-#else // QUALITY_MEDIUM
-    #define MAX_MARCH 24
-#endif
-
 #define POINT
 #include "UnityCG.cginc"
 #include "UnityPBSLighting.cginc"
@@ -142,16 +143,14 @@ void DeferredCalculateLightParams (
     // Point light
     float3 tolight = wpos - lightPos;
     half3 lightDir = -normalize (tolight);
-    if (_LightType == 1) {
-        lightPos += lightDir * _Range;
-        lightDir *= -1.0;
-    }
-
+#if ENABLE_INVERSE
+    lightPos += lightDir * _Range;
+    lightDir *= -1.0;
+    float atten = 1.0;
+#else
     float att = dot(tolight, tolight) * _RangeInvSq;
     float atten = tex2D (_LightTextureB0, att.rr).UNITY_ATTEN_CHANNEL;
-    if (_LightType == 1) {
-        atten = 1.0;
-    }
+#endif
 
     outWorldPos = wpos;
     outUV = uv;
@@ -198,10 +197,10 @@ ps_out frag_point(unity_v2f_deferred i)
     DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
     
     float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
-    if (_LightType == 1) {
-        lightPos += light.dir * _Range;
-        light.dir *= -1.0;
-    }
+#if ENABLE_INVERSE
+    lightPos += light.dir * _Range;
+    light.dir *= -1.0;
+#endif
     float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
     float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
     float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
@@ -229,44 +228,6 @@ ps_out frag_point(unity_v2f_deferred i)
     if(dot(gbuffer2.xyz, 1.0) * light.ndotl <= 0.0) { discard; }
 
     float occlusion = 0.0;
-#if ENABLE_SHADOW
-    {
-        float distance;
-        float3 ray_dir;
-        float occulusion_par_march = _OcculusionStrength / MAX_MARCH;
-        if (_LightType == 0)
-        {
-            float3 diff = wpos.xyz - lightPos.xyz;
-            distance = length(diff);
-            ray_dir = normalize(diff);
-        }
-        else
-        {
-            distance_point_capsule(wpos, lightPos1, lightPos2, 0.0,
-                lightPos, ray_dir, distance);
-        }
-        distance -= _InnerRadius;
-        float3 begin_pos = lightPos + ray_dir * _InnerRadius;
-        float march_step = distance / MAX_MARCH;
-        float jitter = Jitter(wpos);
-        for(int k=0; k<MAX_MARCH; ++k) {
-            float adv = march_step * (float(k) + jitter);
-            float3 ray_pos = begin_pos.xyz + ray_dir * adv;
-            float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
-            ray_pos4.y *= _ProjectionParams.x;
-            float2 ray_coord = ray_pos4.xy / ray_pos4.w * 0.5 + 0.5 + HalfPixelSize;
-            float ray_depth = ComputeDepth(ray_pos4);
-            float ref_depth = GetDepth(ray_coord);
-
-            //if (ray_depth > ref_depth) {
-            //    occlusion += occulusion_par_march;
-            //}
-            occlusion += occulusion_par_march * clamp((ray_depth - ref_depth)*10000000000.0, 0.0, 1.0);
-        }
-        occlusion = min(occlusion, clamp(distance*10000, 0.0, 1.0)); // 0.0 if wpos is inner light inner radius
-    }
-    //if(occlusion >= 1.0) { discard; } // this makes slower
-#endif
     light.color = _Color.rgb * atten;
     half3 baseColor = gbuffer0.rgb;
     half3 specColor = gbuffer1.rgb;
@@ -301,21 +262,8 @@ ENDCG
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
         #pragma multi_compile ___ ENABLE_SHADOW
-        #pragma multi_compile ___ UNITY_HDR_ON
-        #pragma vertex vert_point
-        #pragma fragment frag_point
-        ENDCG
-    }
-
-    // inverse point light
-    Pass {
-        CGPROGRAM
-        #pragma target 3.0
-        #pragma exclude_renderers nomrt
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
-        #pragma multi_compile ___ ENABLE_SHADOW
+        #pragma multi_compile ___ ENABLE_INVERSE
         #pragma multi_compile ___ UNITY_HDR_ON
         #pragma vertex vert_point
         #pragma fragment frag_point
@@ -327,7 +275,6 @@ ENDCG
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
         #pragma multi_compile ___ ENABLE_SHADOW
         #pragma multi_compile ___ UNITY_HDR_ON
         #pragma vertex vert_line

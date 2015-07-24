@@ -17,7 +17,6 @@ namespace Ist
         public enum Type
         {
             Point,
-            InversePoint,
             Line,
         }
         public enum Sample
@@ -27,6 +26,7 @@ namespace Ist
             High,
         }
         public Type m_type = Type.Point;
+        public bool m_inverse = false;
         public bool m_cast_shadow = true;
         public Sample m_sample = Sample.Medium;
         public float m_range = 10.0f;
@@ -34,9 +34,10 @@ namespace Ist
         public float m_intensity = 1.0f;
         public float m_inner_radius = 0.0f;
         public float m_capsule_length = 1.0f;
-        public float m_occulusion_strength = 2.0f;
 
         public Shader m_light_shader;
+        public Material m_stencil_material;
+        public Mesh m_quad_mesh;
         Material m_light_material;
 
 
@@ -56,7 +57,7 @@ namespace Ist
         }
         public Vector4 GetParams()
         {
-            return new Vector4(m_inner_radius, m_capsule_length, (float)m_type, m_occulusion_strength);
+            return new Vector4(m_inner_radius, m_capsule_length, (float)m_type, 0.0f);
         }
         public Matrix4x4 GetTRS()
         {
@@ -65,6 +66,12 @@ namespace Ist
         public Mesh GetMesh()
         {
             return GetComponent<MeshFilter>().sharedMesh;
+        }
+
+        public Vector4 GetStencilParams1()
+        {
+            var pos = GetComponent<Transform>().position;
+            return new Vector4(pos.x, pos.y, pos.z, m_range);
         }
 
         public void IssueDrawCall(CommandBuffer commands)
@@ -87,7 +94,44 @@ namespace Ist
                 m_light_material.DisableKeyword("UNITY_HDR_ON");
                 m_light_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
                 m_light_material.SetInt("_DstBlend", (int)BlendMode.Zero);
-                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
+                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3, BuiltinRenderTextureType.CameraTarget);
+            }
+
+            int id_occulusion = Shader.PropertyToID("Occulusion");
+            commands.GetTemporaryRT(id_occulusion, -1, -1, 0, FilterMode.Point, RenderTextureFormat.R8);
+            commands.SetRenderTarget(id_occulusion, BuiltinRenderTextureType.CameraTarget);
+            commands.ClearRenderTarget(false, true, Color.black);
+            if (m_cast_shadow)
+            {
+                commands.SetGlobalVector("_StencilParams1", GetStencilParams1());
+                // make stencil mask
+                foreach (var v in StencilShadowCaster.GetInstances())
+                {
+                    v.IssueDrawCall_FrontStencil(this, commands);
+                }
+                foreach (var v in StencilShadowCaster.GetInstances())
+                {
+                    v.IssueDrawCall_BackStencil(this, commands);
+                }
+            }
+            commands.SetGlobalTexture("_Occulusion", id_occulusion);
+
+            if (cam.hdr)
+            {
+                commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+            }
+            else
+            {
+                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3, BuiltinRenderTextureType.CameraTarget);
+            }
+
+            if (m_inverse)
+            {
+                m_light_material.EnableKeyword("ENABLE_INVERSE");
+            }
+            else
+            {
+                m_light_material.DisableKeyword("ENABLE_INVERSE");
             }
 
             if (m_cast_shadow)
@@ -125,6 +169,8 @@ namespace Ist
         void Reset()
         {
             m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/IstEffects/StencilShadows/Shaders/Light.shader");
+            m_stencil_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/IstEffects/StencilShadows/Materials/Stencil.mat");
+            m_quad_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/IstEffects/Utilities/Meshes/Quad.asset");
             GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/IstEffects/Utilities/Meshes/Sphere.asset");
             GetComponent<MeshRenderer>().sharedMaterials = new Material[0];
         }
