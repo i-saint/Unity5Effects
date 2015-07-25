@@ -1,18 +1,4 @@
-﻿Shader "WaterSurface/Surface" {
-Properties {
-    _ScrollSpeed("ScrollSpeed", Float) = 1.0
-    _Scale("Scale", Float) = 1.0
-    _Refraction("Refraction", Float) = 0.025
-    _Reflection ("Reflection", Float) = 0.1
-    _FresnelBias("Fresnel Bias", Float) = 0.0
-    _FresnelScale("Fresnel Scale", Float) = 0.03
-    _FresnelPow("Fresnel Pow", Float) = 5.0
-    _FresnelColor("Fresnel Color", Color) = (1, 1, 1, 1)
-    _MarchStep("MarchStep", Float) = 0.2
-    _MarchBoost("MarchBoost", Float) = 1.2
-    _AttenuationByDistance("AttenuationByDistance", Float) = 0.075
-    _FalloffColor("FalloffColor", Color) = (0,0,0,0)
-}
+﻿Shader "Hidden/IstEffects/WaterSurface" {
 SubShader {
     Tags { "Queue"="Transparent+200" "RenderType"="Transparent" }
     Blend Off
@@ -27,7 +13,7 @@ CGINCLUDE
 #define ENABLE_REFLECTIONS
 
 #if QUALITY_FAST
-    #define MAX_MARCH 8
+    #define MAX_MARCH 12
 #elif QUALITY_HIGH
     #define MAX_MARCH 32
 #else // QUALITY_MEDIUM
@@ -36,18 +22,23 @@ CGINCLUDE
 
 sampler2D _RandomVectors;
 sampler2D _FrameBuffer1;
-float _ScrollSpeed;
-float _Scale;
-float _MarchStep;
-float _MarchBoost;
-float _Refraction;
-float _Reflection;
-float _FresnelBias;
-float _FresnelScale;
-float _FresnelPow;
+float4 _Param1;
+float4 _Param2;
+float4 _Param3;
+
 float4 _FresnelColor;
-float _AttenuationByDistance;
 float4 _FalloffColor;
+#define _ScrollSpeed    _Param1.x
+#define _Scale          _Param1.y
+#define _MarchStep      _Param1.z
+#define _MarchBoost     _Param1.w
+#define _Refraction     _Param2.x
+#define _Reflection     _Param2.y
+#define _Attenuation    _Param2.z
+#define _FresnelBias    _Param3.x
+#define _FresnelScale   _Param3.y
+#define _FresnelPow     _Param3.z
+
 
 struct ia_out
 {
@@ -74,10 +65,9 @@ struct ps_out
 
 vs_out vert(ia_out v)
 {
-    float4 spos = mul(UNITY_MATRIX_MVP, v.vertex);
     vs_out o;
-    o.vertex = spos;
-    o.screen_pos = spos;
+    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.screen_pos.y *= _ProjectionParams.x;
     o.world_pos = mul(_Object2World, v.vertex);
     o.normal = normalize(mul(_Object2World, float4(v.normal.xyz, 0.0)).xyz);
     o.tangent = float4(normalize(mul(_Object2World, float4(v.tangent.xyz,0.0)).xyz), v.tangent.w);
@@ -114,10 +104,7 @@ float jitter(float3 p)
 
 ps_out frag(vs_out i)
 {
-    float2 coord = (i.screen_pos.xy / i.screen_pos.w + 1.0) * 0.5;
-    #if UNITY_UV_STARTS_AT_TOP
-        coord.y = 1.0 - coord.y;
-    #endif
+    float2 coord = i.screen_pos.xy / i.screen_pos.w;
 
     float3 vn = i.normal.xyz;
     float3 wn = guess_normal(i.world_pos.xyz, _Scale);
@@ -142,10 +129,10 @@ ps_out frag(vs_out i)
             float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
             ray_pos4.y *= _ProjectionParams.x;
             float ray_depth = ComputeDepth(ray_pos4);
-            ray_coord = (ray_pos4.xy / ray_pos4.w + 1.0) * 0.5;
+            ray_coord = (ray_pos4.xy / ray_pos4.w) * 0.5 + 0.5;
             ref_depth = GetDepth(ray_coord);
             if(ray_depth >= ref_depth) { break; }
-            ray_adv = ray_adv + step;
+            ray_adv += step;
             step *= _MarchBoost;
         }
 
@@ -157,11 +144,12 @@ ps_out frag(vs_out i)
         ray_coord = lerp(coord, ray_coord, l);
 
         r.color = tex2D(_FrameBuffer1, ray_coord);
-        r.color = lerp(_FalloffColor, r.color, max(1.0 - ray_adv * _AttenuationByDistance, 0.0));
+        r.color = lerp(_FalloffColor, r.color, max(1.0 - ray_adv * _Attenuation, 0.0));
 
         float fresnel = _FresnelBias + pow(1.0 + dot(cam_dir, n), _FresnelPow) * _FresnelScale;
         r.color += _FresnelColor * fresnel;
     }
+
 #ifdef ENABLE_REFLECTIONS
     {
         // fake
@@ -174,7 +162,8 @@ ps_out frag(vs_out i)
         r.color.xyz = lerp(r.color.xyz, fc.xyz, saturate(fc.w)*_Reflection);
     }
 #endif // ENABLE_REFLECTIONS
-    //r.color.rgb = n * 0.5 + 0.5; // for debug
+    //r.color.rgb = n * 0.5 + 0.5; // 
+    //r.color = ray_adv * 0.1; // for debug
     return r;
 }
 ENDCG

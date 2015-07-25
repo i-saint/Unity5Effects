@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Ist
 {
     [RequireComponent(typeof(Camera))]
-    //[ExecuteInEditMode]
+    [ExecuteInEditMode]
     public class GBufferUtils : MonoBehaviour
     {
         public bool m_enable_inv_matrices;
