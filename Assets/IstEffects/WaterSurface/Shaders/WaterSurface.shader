@@ -3,10 +3,14 @@ Properties {
     _Speed("Speed", Float) = 1.0
     _Scale("Scale", Float) = 1.0
     _Refraction("Refraction", Float) = 0.05
-    _ReflectionIntensity ("_ReflectionIntensity ", Float) = 0.3
-    _Fresnel ("_Fresnel", Float) = 0.25
-    _RaymaechStep ("_RaymaechStep", Float) = 0.2
-    _AttenuationByDistance ("_AttenuationByDistance", Float) = 0.02
+    _ReflectionIntensity ("ReflectionIntensity ", Float) = 0.3
+    _FresnelBias("Fresnel Bias", Float) = 0.0
+    _FresnelScale("Fresnel Scale", Float) = 0.25
+    _FresnelPow("Fresnel Pow", Float) = 5.0
+    _FresnelColor("Fresnel Color", Color) = (1, 1, 1, 1)
+    _RaymaechStep("RaymaechStep", Float) = 0.2
+    _AttenuationByDistance("AttenuationByDistance", Float) = 0.02
+    _FalloffColor("FalloffColor", Color) = (0,0,0,0)
 }
 SubShader {
     Tags { "Queue"="Transparent+200" "RenderType"="Opaque" }
@@ -23,14 +27,19 @@ CGINCLUDE
 #define MAX_MARCH 16
 //#define ENABLE_REFLECTIONS
 
+sampler2D _RandomVectors;
 sampler2D _FrameBuffer1;
 float _Speed;
 float _Scale;
 float _Refraction;
 float _ReflectionIntensity;
-float _Fresnel;
+float _FresnelBias;
+float _FresnelScale;
+float _FresnelPow;
+float4 _FresnelColor;
 float _RaymaechStep;
 float _AttenuationByDistance;
+float4 _FalloffColor;
 
 struct ia_out
 {
@@ -102,14 +111,15 @@ ps_out frag(vs_out i)
         coord.y = 1.0 - coord.y;
     #endif
 
-    float3 n = guess_normal(i.world_pos.xyz, _Scale);
+    float3 vn = i.normal.xyz;
+    float3 wn = guess_normal(i.world_pos.xyz, _Scale);
     float3x3 tbn = float3x3( i.tangent.xyz, i.binormal, i.normal.xyz);
-    n = normalize(mul(n, tbn));
+    wn = normalize(mul(wn, tbn));
+    float3 n = normalize(wn + vn);
 
     float pd = length(i.world_pos.xyz - _WorldSpaceCameraPos.xyz);
-    float fade = max(1.0-pd*0.05, 0.0);
     float3 cam_dir = normalize(i.world_pos - _WorldSpaceCameraPos);
-    float2 ref_coord = 0.0;
+    float2 ray_coord = 0.0;
     float ref_depth = 0.0;
 
     ps_out r;
@@ -118,25 +128,33 @@ ps_out frag(vs_out i)
         float adv = _RaymaechStep * jitter(i.world_pos.xyz);
         float3 refdir = normalize(-eye + -reflect(-eye, n.xyz)*_Refraction);
         for(int k=0; k<MAX_MARCH; ++k) {
-            float4 tpos = mul(UNITY_MATRIX_VP, float4((i.world_pos+refdir * adv), 1.0) );
-            float ray_depth = ComputeDepth(tpos);
-            ref_coord = (tpos.xy / tpos.w + 1.0) * 0.5;
-            #if UNITY_UV_STARTS_AT_TOP
-                ref_coord.y = 1.0 - ref_coord.y;
-            #endif
-            ref_depth = GetDepth(ref_coord);
+            float3 ray_pos = i.world_pos + refdir * adv;
+            float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
+            ray_pos4.y *= _ProjectionParams.x;
+            float ray_depth = ComputeDepth(ray_pos4);
+            ray_coord = (ray_pos4.xy / ray_pos4.w + 1.0) * 0.5;
+            ref_depth = GetDepth(ray_coord);
             if(ray_depth >= ref_depth) { break; }
             adv = adv + _RaymaechStep;
         }
 
-        float f1 = max(1.0-abs(dot(n, eye))-0.5, 0.0)*2.0;
-        float f2 = 1.0-abs(dot(i.normal, eye));
+        float4 hit_pos = GetPosition(ray_coord);
+        float dist1 = dot(i.normal.xyz, i.world_pos.xyz);
+        float dist2 = dot(i.normal.xyz, hit_pos.xyz);
+        // dist2 > dist1 : hit_pos is above the surface
+        float l = clamp((dist1 - dist2) * 1000, 0, 1);
+        ray_coord = lerp(coord, ray_coord, l);
 
-        r.color = tex2D(_FrameBuffer1, ref_coord);
-        //r.color *= 0.9;
-        r.color = r.color * max(1.0 - adv * _AttenuationByDistance, 0.0);
-        r.color += (f1 * f2) * _Fresnel * fade;
-        //r.color = adv;
+
+        r.color = tex2D(_FrameBuffer1, ray_coord);
+        r.color = lerp(_FalloffColor, r.color, max(1.0 - adv * _AttenuationByDistance, 0.0));
+
+        float f1 = max(1.0-abs(dot(n, eye))-0.5, 0.0)*2.0;
+        float f2 = 1.0 - abs(dot(i.normal, eye));
+        // FRESNEL CALCS float fcbias = 0.20373;
+        float fresnel = saturate(_FresnelBias + pow(1.0 + dot(cam_dir, n), _FresnelPow) * _FresnelScale);
+        r.color += _FresnelColor * fresnel;
+        //r.color += (f1 * f2 + (f2 * f2 * f2)) * _FresnelPow;
     }
 #ifdef ENABLE_REFLECTIONS
     {
@@ -150,8 +168,7 @@ ps_out frag(vs_out i)
         r.color.xyz += tex2D(_FrameBuffer1, tcoord).xyz * _ReflectionIntensity;
     }
 #endif // ENABLE_REFLECTIONS
-    //r.color.rgb = pow(n*0.5+0.5, 4.0); // for debug
-    //r.color.rgb = ref_depth; // for debug
+    //r.color.rgb = n * 0.5 + 0.5; // for debug
     return r;
 }
 ENDCG
