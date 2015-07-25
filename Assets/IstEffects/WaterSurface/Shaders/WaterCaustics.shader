@@ -5,14 +5,13 @@ Properties{
     _Scale("Scale", Float) = 1.0
 }
 SubShader {
-    Tags { "Queue"="Transparent+100" "RenderType"="Opaque" }
+    Tags { "Queue"="Transparent+100" "RenderType"="Transparent" }
     Blend One One
     ZTest Greater
     ZWrite Off
     Cull Front
 
 CGINCLUDE
-#include "Compat.cginc"
 #include "Noise.cginc"
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
 

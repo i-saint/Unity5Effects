@@ -127,6 +127,7 @@ namespace Ist
             }
         }
 
+        [ImageEffectOpaque]
         void OnRenderImage(RenderTexture src, RenderTexture dst)
         {
             if (m_material == null)

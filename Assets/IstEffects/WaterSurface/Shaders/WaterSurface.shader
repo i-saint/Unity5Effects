@@ -1,43 +1,51 @@
 ﻿Shader "WaterSurface/Surface" {
 Properties {
-    _Speed("Speed", Float) = 1.0
+    _ScrollSpeed("ScrollSpeed", Float) = 1.0
     _Scale("Scale", Float) = 1.0
-    _Refraction("Refraction", Float) = 0.05
-    _ReflectionIntensity ("ReflectionIntensity ", Float) = 0.3
+    _Refraction("Refraction", Float) = 0.025
+    _Reflection ("Reflection", Float) = 0.1
     _FresnelBias("Fresnel Bias", Float) = 0.0
-    _FresnelScale("Fresnel Scale", Float) = 0.25
+    _FresnelScale("Fresnel Scale", Float) = 0.03
     _FresnelPow("Fresnel Pow", Float) = 5.0
     _FresnelColor("Fresnel Color", Color) = (1, 1, 1, 1)
-    _RaymaechStep("RaymaechStep", Float) = 0.2
-    _AttenuationByDistance("AttenuationByDistance", Float) = 0.02
+    _MarchStep("MarchStep", Float) = 0.2
+    _MarchBoost("MarchBoost", Float) = 1.2
+    _AttenuationByDistance("AttenuationByDistance", Float) = 0.075
     _FalloffColor("FalloffColor", Color) = (0,0,0,0)
 }
 SubShader {
-    Tags { "Queue"="Transparent+200" "RenderType"="Opaque" }
+    Tags { "Queue"="Transparent+200" "RenderType"="Transparent" }
     Blend Off
     ZTest Less
     ZWrite Off
     Cull Back
 
 CGINCLUDE
-#include "Compat.cginc"
 #include "Noise.cginc"
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
 
-#define MAX_MARCH 16
-//#define ENABLE_REFLECTIONS
+#define ENABLE_REFLECTIONS
+
+#if QUALITY_FAST
+    #define MAX_MARCH 8
+#elif QUALITY_HIGH
+    #define MAX_MARCH 32
+#else // QUALITY_MEDIUM
+    #define MAX_MARCH 16
+#endif
 
 sampler2D _RandomVectors;
 sampler2D _FrameBuffer1;
-float _Speed;
+float _ScrollSpeed;
 float _Scale;
+float _MarchStep;
+float _MarchBoost;
 float _Refraction;
-float _ReflectionIntensity;
+float _Reflection;
 float _FresnelBias;
 float _FresnelScale;
 float _FresnelPow;
 float4 _FresnelColor;
-float _RaymaechStep;
 float _AttenuationByDistance;
 float4 _FalloffColor;
 
@@ -82,7 +90,7 @@ vs_out vert(ia_out v)
 
 float compute_octave(float3 pos, float scale)
 {
-    float time = _Time.y*_Speed;
+    float time = _Time.y*_ScrollSpeed;
     float o1 = sea_octave(pos.xzy*1.25*scale + float3(1.0,2.0,-1.5)*time*1.25 + sin(pos.xzy+time*8.3)*0.15, 4.0);
     float o2 = sea_octave(pos.xzy*2.50*scale + float3(2.0,-1.0,1.0)*time*-2.0 - sin(pos.xzy+time*6.3)*0.2, 8.0);
     return o1 * o2;
@@ -119,53 +127,51 @@ ps_out frag(vs_out i)
 
     float pd = length(i.world_pos.xyz - _WorldSpaceCameraPos.xyz);
     float3 cam_dir = normalize(i.world_pos - _WorldSpaceCameraPos);
+    float ray_adv = 0.0;
     float2 ray_coord = 0.0;
     float ref_depth = 0.0;
 
     ps_out r;
     {
-        float3 eye = normalize(_WorldSpaceCameraPos.xyz-i.world_pos.xyz);
-        float adv = _RaymaechStep * jitter(i.world_pos.xyz);
+        float3 eye = normalize(_WorldSpaceCameraPos.xyz - i.world_pos.xyz);
+        float step = _MarchStep;
+        ray_adv = step * jitter(i.world_pos.xyz);
         float3 refdir = normalize(-eye + -reflect(-eye, n.xyz)*_Refraction);
         for(int k=0; k<MAX_MARCH; ++k) {
-            float3 ray_pos = i.world_pos + refdir * adv;
+            float3 ray_pos = i.world_pos + refdir * ray_adv;
             float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0));
             ray_pos4.y *= _ProjectionParams.x;
             float ray_depth = ComputeDepth(ray_pos4);
             ray_coord = (ray_pos4.xy / ray_pos4.w + 1.0) * 0.5;
             ref_depth = GetDepth(ray_coord);
             if(ray_depth >= ref_depth) { break; }
-            adv = adv + _RaymaechStep;
+            ray_adv = ray_adv + step;
+            step *= _MarchBoost;
         }
 
         float4 hit_pos = GetPosition(ray_coord);
-        float dist1 = dot(i.normal.xyz, i.world_pos.xyz);
-        float dist2 = dot(i.normal.xyz, hit_pos.xyz);
-        // dist2 > dist1 : hit_pos is above the surface
-        float l = clamp((dist1 - dist2) * 1000, 0, 1);
+        float dist_surface = dot(i.normal.xyz, i.world_pos.xyz);
+        float dist_hitpos = dot(i.normal.xyz, hit_pos.xyz);
+        // dist_hitpos > dist_surface : hit_pos is above the surface
+        float l = clamp((dist_surface - dist_hitpos) * 1000, 0, 1);
         ray_coord = lerp(coord, ray_coord, l);
 
-
         r.color = tex2D(_FrameBuffer1, ray_coord);
-        r.color = lerp(_FalloffColor, r.color, max(1.0 - adv * _AttenuationByDistance, 0.0));
+        r.color = lerp(_FalloffColor, r.color, max(1.0 - ray_adv * _AttenuationByDistance, 0.0));
 
-        float f1 = max(1.0-abs(dot(n, eye))-0.5, 0.0)*2.0;
-        float f2 = 1.0 - abs(dot(i.normal, eye));
-        // FRESNEL CALCS float fcbias = 0.20373;
-        float fresnel = saturate(_FresnelBias + pow(1.0 + dot(cam_dir, n), _FresnelPow) * _FresnelScale);
+        float fresnel = _FresnelBias + pow(1.0 + dot(cam_dir, n), _FresnelPow) * _FresnelScale;
         r.color += _FresnelColor * fresnel;
-        //r.color += (f1 * f2 + (f2 * f2 * f2)) * _FresnelPow;
     }
 #ifdef ENABLE_REFLECTIONS
     {
-        float _RayMarchDistance = 1.0;
+        // fake
+        float distance = 1.0;
         float3 ref_dir = reflect(cam_dir, normalize(i.normal.xyz+n.xyz*0.2));
-        float4 tpos = mul(UNITY_MATRIX_VP, float4(i.world_pos.xyz + ref_dir*_RayMarchDistance, 1.0) );
-        float2 tcoord = (tpos.xy / tpos.w + 1.0) * 0.5;
-        #if UNITY_UV_STARTS_AT_TOP
-            tcoord.y = 1.0-tcoord.y;
-        #endif
-        r.color.xyz += tex2D(_FrameBuffer1, tcoord).xyz * _ReflectionIntensity;
+        float4 ray_pos4 = mul(UNITY_MATRIX_VP, float4(i.world_pos.xyz + ref_dir*distance, 1.0) );
+        ray_pos4.y *= _ProjectionParams.x;
+        float2 ray_coord = (ray_pos4.xy / ray_pos4.w + 1.0) * 0.5;
+        half4 fc = tex2D(_FrameBuffer1, ray_coord);
+        r.color.xyz = lerp(r.color.xyz, fc.xyz, saturate(fc.w)*_Reflection);
     }
 #endif // ENABLE_REFLECTIONS
     //r.color.rgb = n * 0.5 + 0.5; // for debug
@@ -178,9 +184,10 @@ ENDCG
     }
     Pass {
         CGPROGRAM
+        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma target 3.0
         #pragma vertex vert
         #pragma fragment frag
-        #pragma target 3.0
         ENDCG
     }
 }
