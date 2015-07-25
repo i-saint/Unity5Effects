@@ -13,7 +13,7 @@ namespace Ist
     [ExecuteInEditMode]
     public class CausticsField : MonoBehaviour
     {
-        public Color m_color = new Color(0.9f, 0.9f, 1.0f, 1.0f);
+        public Color m_color = new Color(0.8f, 0.8f, 1.0f, 1.0f);
         public float m_scroll_speed = 1.00f;
         public float m_scale = 2.0f;
         public float m_intensity = 0.3f;

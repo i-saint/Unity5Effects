@@ -66,7 +66,7 @@ ps_out frag(vs_out i)
     //}
 
     ps_out r;
-    r.color = _Color * (o1 * _Intensity * s);
+    r.color = _Color * (o1 * s * _Intensity);
     return r;
 }
 ENDCG

@@ -16,12 +16,13 @@ CGINCLUDE
 float4 _Color;
 float4 _Params1;
 float4 _Params2;
-#define _Intensity      _Params1.x
-#define _Threshold      _Params1.y
-#define _InvThreshold   _Params1.z
-#define _Factor         _Params1.w
+#define _Intensity      _Params1.w
+#define _FresnelBias    _Params1.x
+#define _FresnelScale   _Params1.y
+#define _FresnelPow     _Params1.z
 #define _EdgeIntensity  _Params2.x
 #define _EdgeThreshold  _Params2.y
+#define _EdgeRadius     _Params2.z
 
 
 struct ia_out
@@ -64,14 +65,13 @@ ps_out frag(vs_out i)
     float depth = GetDepth(coord);
     if (depth >= 1.0) { discard; }
 
-    float h = 0.0;
     float3 p = GetPosition(coord).xyz;
     float3 cam_dir = normalize(p.xyz - _WorldSpaceCameraPos.xyz);
     float3 n1 = GetNormal(coord).xyz;
-    h = pow(max(1.0 - abs(dot(cam_dir, n1) - _Threshold), 0.0) * _InvThreshold, _Factor) * _Intensity;
+    float h = saturate(_FresnelBias + pow(dot(cam_dir, n1) + 1.0, _FresnelPow) * _FresnelScale) * _Intensity;
 
 #if ENABLE_EDGE_HIGHLIGHTING
-    float2 pixel_size = _ScreenParams.zw - 1.0;
+    float2 pixel_size = (_ScreenParams.zw - 1.0) * _EdgeRadius;
     float3 n2 = GetNormal(coord + float2(pixel_size.x, 0.0)).xyz;
     float3 n3 = GetNormal(coord + float2(0.0, pixel_size.y)).xyz;
 

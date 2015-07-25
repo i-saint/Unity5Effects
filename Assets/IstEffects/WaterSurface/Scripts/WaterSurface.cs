@@ -76,9 +76,9 @@ namespace Ist
                     break;
             }
 
-            m_material.SetVector("_Param1", new Vector4(m_scroll_speed, m_scale, m_march_step, m_march_boost));
-            m_material.SetVector("_Param2", new Vector4(m_refraction, m_reflection, m_attenuation, 0.0f));
-            m_material.SetVector("_Param3", new Vector4(m_fresnel_bias, m_fresnel_scale, m_fresnel_pow, 0.0f));
+            m_material.SetVector("_Params1", new Vector4(m_scroll_speed, m_scale, m_march_step, m_march_boost));
+            m_material.SetVector("_Params2", new Vector4(m_refraction, m_reflection, m_attenuation, 0.0f));
+            m_material.SetVector("_Params3", new Vector4(m_fresnel_bias, m_fresnel_scale, m_fresnel_pow, 0.0f));
             m_material.SetVector("_FresnelColor", m_fresnel_color);
             m_material.SetVector("_FalloffColor", m_falloff_color);
         }

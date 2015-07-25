@@ -22,22 +22,22 @@ CGINCLUDE
 
 sampler2D _RandomVectors;
 sampler2D _FrameBuffer1;
-float4 _Param1;
-float4 _Param2;
-float4 _Param3;
+float4 _Params1;
+float4 _Params2;
+float4 _Params3;
 
 float4 _FresnelColor;
 float4 _FalloffColor;
-#define _ScrollSpeed    _Param1.x
-#define _Scale          _Param1.y
-#define _MarchStep      _Param1.z
-#define _MarchBoost     _Param1.w
-#define _Refraction     _Param2.x
-#define _Reflection     _Param2.y
-#define _Attenuation    _Param2.z
-#define _FresnelBias    _Param3.x
-#define _FresnelScale   _Param3.y
-#define _FresnelPow     _Param3.z
+#define _ScrollSpeed    _Params1.x
+#define _Scale          _Params1.y
+#define _MarchStep      _Params1.z
+#define _MarchBoost     _Params1.w
+#define _Refraction     _Params2.x
+#define _Reflection     _Params2.y
+#define _Attenuation    _Params2.z
+#define _FresnelBias    _Params3.x
+#define _FresnelScale   _Params3.y
+#define _FresnelPow     _Params3.z
 
 
 struct ia_out
