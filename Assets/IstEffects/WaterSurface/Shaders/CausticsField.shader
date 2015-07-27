@@ -49,7 +49,7 @@ vs_out vert(ia_out v)
 
 
 float3 GetObjectPosition()  { return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]); }
-float3 GetObjectUp()        { return _Object2World[1].xyz; }
+float3 GetObjectUp()        { return normalize(_Object2World[1].xyz); }
 
 ps_out frag(vs_out i)
 {
@@ -65,25 +65,28 @@ ps_out frag(vs_out i)
     o1 *= (o2*0.5+0.5);
     o1 = pow(o1, _WavePow);
 
-    float attr = 1;
+    float attr1 = 1;
+    float attr2 = 1;
 #if ATTENUATION_DIRECTIONAL
     float3 n = GetNormal(coord).xyz;
     float3 opos = GetObjectPosition();
     float3 oup = GetObjectUp();
     float dist = dot(oup, pos) - dot(oup, opos);
-    attr = pow(max(1.0 - abs(dist * _Attenuation), 0.0), _AttenuationPow);
-    attr *= saturate(1.0 - dot(oup*sign(dist), n));
+    float sign = clamp(dist * 10000, -1, 1);
+    attr1 = pow(saturate(1.0 - abs(dist * _Attenuation)), _AttenuationPow);
+    attr2 = max(-dot(oup*sign, n), 0.0);
 #elif ATTENUATION_RADIAL
+    float3 n = GetNormal(coord).xyz;
     float3 opos = GetObjectPosition();
-    float3 oup = normalize(pos - opos);
-    float dist = dot(oup, pos) - dot(oup, opos);
-    attr = pow(max(1.0 - abs(dist * _Attenuation), 0.0), _AttenuationPow);
-    attr *= saturate(1.0 - dot(oup*sign(dist), n));
+    float3 odir = normalize(pos - opos);
+    float dist = length(pos - opos);
+    attr1 = pow(saturate(1.0 - (dist * _Attenuation)), _AttenuationPow);
+    attr2 = max(-dot(odir, n), 0.0);
 #endif
 
 
     ps_out r;
-    r.color = _Color * (o1 * attr * _Intensity);
+    r.color = _Color * (o1 * attr1 * attr2 * _Intensity);
     return r;
 }
 ENDCG

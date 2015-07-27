@@ -193,9 +193,12 @@ gbuffer_out frag_gbuffer(vs_out v)
 
     float glow = 0.0;
     if(g_enable_glowline) {
-        glow += max((modc(length(ray_pos)-time*1.5, 10.0)-9.0)*2.5, 0.0);
-        float2 p = pattern(ray_pos.xz*0.5);
-        if(p.x<1.3) { glow = 0.0; }
+        float3 p3 = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), ray_pos);
+        p3 += _Position.xyz;
+        p3 *= 2.0;
+        glow += max((modc(length(p3) - time*3, 15.0) - 12.0)*0.7, 0.0);
+        float2 p2 = pattern(p3.xz*0.5);
+        if(p2.x<1.3) { glow = 0.0; }
     }
     glow += max(1.0-abs(dot(-get_camera_forward(), normal)) - 0.4, 0.0) * 1.0;
     
