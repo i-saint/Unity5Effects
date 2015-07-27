@@ -44,8 +44,8 @@ struct ps_out
 vs_out vert (ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
-    o.screen_pos.y *= _ProjectionParams.x;
+    o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }
 
@@ -54,10 +54,14 @@ vs_out vert (ia_out v)
 
 ps_out frag(vs_out i)
 {
-    float2 coord = i.screen_pos.xy * 0.5 + 0.5;
+    float2 coord = i.screen_pos.xy / i.screen_pos.w;
 
     float depth = GetDepth(coord);
-    if (depth >= 1.0) { discard; }
+    if (depth >= 1.0) {
+        ps_out r;
+        r.color = tex2D(_MainTex, coord);
+        return r;
+    }
 
     float3 p = GetPosition(coord).xyz;
     float3 cam_dir = normalize(p.xyz - _WorldSpaceCameraPos.xyz);

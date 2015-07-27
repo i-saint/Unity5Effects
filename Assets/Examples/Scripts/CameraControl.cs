@@ -11,7 +11,7 @@ public class CameraControl : MonoBehaviour
     public Camera m_camera;
     public Transform m_look_target;
 
-    public float m_follow_strength;
+    public float m_follow_strength = 0.2f;
     public Vector3 m_target_offset;
     Vector3 m_look_pos;
 
@@ -23,6 +23,7 @@ public class CameraControl : MonoBehaviour
     void Update()
     {
         if (m_camera == null || m_look_target == null) return;
+        Transform t = GetComponent<Transform>();
         Transform cam_t = m_camera.GetComponent<Transform>();
 
         if (Input.GetKeyUp(KeyCode.R)) { m_rotate_by_time = !m_rotate_by_time; }
@@ -50,8 +51,8 @@ public class CameraControl : MonoBehaviour
             float xz = Input.GetAxis("Mouse X") * -0.1f;
             float y = Input.GetAxis("Mouse Y") * -0.1f;
             var rel = m_camera.cameraToWorldMatrix * new Vector4(xz, y, 0.0f, 0.0f);
-            cam_t.position = cam_t.position + (Vector3)rel;
-            m_look_target.position = m_look_target.position + (Vector3)rel;
+            t.position = t.position + (Vector3)rel;
+            m_look_pos = m_look_pos + (Vector3)rel;
         }
 
         m_look_pos += (m_look_target.position - m_look_pos) * m_follow_strength;

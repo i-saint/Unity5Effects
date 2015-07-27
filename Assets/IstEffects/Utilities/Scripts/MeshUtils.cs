@@ -92,6 +92,6 @@ namespace Ist
                 AssetDatabase.CreateAsset(newmesh, path + "(Reverse).asset");
             }
         }
-    }
 #endif
+    }
 }

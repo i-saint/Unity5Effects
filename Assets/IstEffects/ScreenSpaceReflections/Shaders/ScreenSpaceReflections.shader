@@ -76,7 +76,7 @@ vs_out vert(ia_out v)
 {
     vs_out o;
     o.vertex = o.screen_pos = v.vertex;
-    o.screen_pos.y *= _ProjectionParams.x;
+    o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }
 
@@ -84,7 +84,7 @@ vs_out vert_combine(ia_out v)
 {
     vs_out o;
     o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
-    o.screen_pos.y *= _ProjectionParams.x;
+    o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }
 
@@ -163,7 +163,7 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
 
 ps_out frag_reflections(vs_out i)
 {
-    float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5 + HalfPixelSize;
+    float2 coord = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
 
     ps_out r;
     r.color = 0.0;
@@ -204,15 +204,13 @@ ps_out frag_reflections(vs_out i)
     RayMarching(0.3, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
 #endif
     r.color = blend_color / accumulation;
-    //r.color = float4(diff, diff, diff, 1.0); // for debug
     r.accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
     return r;
 }
 
 float4 frag_combine(vs_out i) : SV_Target
 {
-    float2 coord = (i.screen_pos.xy / i.screen_pos.w) * 0.5 + 0.5;
-    //return tex2D(_ReflectionBuffer, coord); // for debug
+    float2 coord = i.screen_pos.xy / i.screen_pos.w;
 
     float accumulation = tex2D(_AccumulationBuffer, coord).x;
     float2 s = (_ScreenParams.zw-1.0) * 1.25;
