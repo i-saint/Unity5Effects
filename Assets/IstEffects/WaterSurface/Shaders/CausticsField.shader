@@ -12,11 +12,14 @@ CGINCLUDE
 
 float4 _Color;
 float4 _Params1;
+float4 _Params2;
 
 #define _ScrollSpeed    _Params1.x
 #define _Scale          _Params1.y
 #define _Intensity      _Params1.z
-#define _Pow            _Params1.w
+#define _WavePow        _Params1.w
+#define _Attenuation    _Params2.x
+#define _AttenuationPow _Params2.y
 
 
 struct ia_out
@@ -44,6 +47,10 @@ vs_out vert(ia_out v)
     return o;
 }
 
+
+float3 GetObjectPosition()  { return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]); }
+float3 GetObjectUp()        { return _Object2World[1].xyz; }
+
 ps_out frag(vs_out i)
 {
     float2 coord = i.screen_pos.xy / i.screen_pos.w * 0.5 + 0.5;
@@ -56,23 +63,34 @@ ps_out frag(vs_out i)
     float o2 = sea_octave(pos.xzy*2.50*_Scale + float3(2.0, -1.0, 1.0)*time*-2.0 - sin(pos.xzy + time*6.3)*0.2, 8.0);
     o1 = (o1*0.5+0.5 -0.2) * 1.2;
     o1 *= (o2*0.5+0.5);
-    o1 = pow(o1, _Pow);
+    o1 = pow(o1, _WavePow);
 
+    float attr = 1;
+#if ATTENUATION_DIRECTIONAL
     float3 n = GetNormal(coord).xyz;
-    float s = 1.0;
-    //if(pos.y > 0.0) {
-    //    s = dot(n, float3(0.0, -1.0, 0.0))*0.5+0.5;
-    //    s = max(s-0.1-pos.y*0.1, 0.0)*1.25;
-    //}
+    float3 opos = GetObjectPosition();
+    float3 oup = GetObjectUp();
+    float dist = dot(oup, pos) - dot(oup, opos);
+    attr = pow(max(1.0 - abs(dist * _Attenuation), 0.0), _AttenuationPow);
+    attr *= saturate(1.0 - dot(oup*sign(dist), n));
+#elif ATTENUATION_RADIAL
+    float3 opos = GetObjectPosition();
+    float3 oup = normalize(pos - opos);
+    float dist = dot(oup, pos) - dot(oup, opos);
+    attr = pow(max(1.0 - abs(dist * _Attenuation), 0.0), _AttenuationPow);
+    attr *= saturate(1.0 - dot(oup*sign(dist), n));
+#endif
+
 
     ps_out r;
-    r.color = _Color * (o1 * s * _Intensity);
+    r.color = _Color * (o1 * attr * _Intensity);
     return r;
 }
 ENDCG
 
     Pass {
         CGPROGRAM
+        #pragma multi_compile ATTENUATION_NONE ATTENUATION_DIRECTIONAL ATTENUATION_RADIAL
         #pragma vertex vert
         #pragma fragment frag
         #pragma target 3.0
