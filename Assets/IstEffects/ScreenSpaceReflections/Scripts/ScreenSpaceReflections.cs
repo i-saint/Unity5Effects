@@ -152,7 +152,7 @@ namespace Ist
             m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, 0.0f, 0.0f));
             m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[1]);
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[1]);
-            m_material.SetTexture("_FrameBuffer1", src);
+            m_material.SetTexture("_MainTex", src);
 
             m_rb[0] = m_reflection_buffers[0].colorBuffer;
             m_rb[1] = m_accumulation_buffers[0].colorBuffer;
@@ -165,7 +165,7 @@ namespace Ist
             m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[0]);
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[0]);
             m_material.SetPass(1);
-            Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+            Graphics.Blit(src, dst, m_material, 1);
 
             Swap(ref m_reflection_buffers[0], ref m_reflection_buffers[1]);
             Swap(ref m_accumulation_buffers[0], ref m_accumulation_buffers[1]);

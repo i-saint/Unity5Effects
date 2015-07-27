@@ -1,8 +1,8 @@
 Shader "Hidden/ScreenSpaceReflections" {
-Properties {
+Properties{
+    _MainTex("Base (RGB)", 2D) = "" {}
 }
 SubShader {
-    Tags { "RenderType"="Opaque" }
     Blend Off
     ZTest Always
     ZWrite Off
@@ -11,7 +11,7 @@ SubShader {
 CGINCLUDE
 #include "UnityCG.cginc"
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
-sampler2D _FrameBuffer1;
+sampler2D _MainTex;
 sampler2D _ReflectionBuffer;
 sampler2D _AccumulationBuffer;
 
@@ -75,12 +75,18 @@ struct ps_out
 vs_out vert(ia_out v)
 {
     vs_out o;
-    o.vertex = v.vertex;
-    o.screen_pos = v.vertex;
+    o.vertex = o.screen_pos = v.vertex;
     o.screen_pos.y *= _ProjectionParams.x;
     return o;
 }
 
+vs_out vert_combine(ia_out v)
+{
+    vs_out o;
+    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.screen_pos.y *= _ProjectionParams.x;
+    return o;
+}
 
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
 #define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
@@ -151,7 +157,7 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
     float edge_attr = pow(1.0 - max(edge.x,edge.y), 0.5);
     blend_color.a += max(1.0 - (adv / _FalloffDistance), 0.0) * edge_attr * smoothness * hit;
 
-    blend_color.rgb += tex2D(_FrameBuffer1, hit_coord).rgb;
+    blend_color.rgb += tex2D(_MainTex, hit_coord).rgb;
     accumulation += 1.0;
 }
 
@@ -210,7 +216,7 @@ float4 frag_combine(vs_out i) : SV_Target
 
     float accumulation = tex2D(_AccumulationBuffer, coord).x;
     float2 s = (_ScreenParams.zw-1.0) * 1.25;
-    float4 color = tex2D(_FrameBuffer1, coord);
+    float4 color = tex2D(_MainTex, coord);
     float4 ref_color = 0.0;
 #ifdef ENABLE_BLURED_COMBINE
     ref_color += tex2D(_ReflectionBuffer, coord+float2( 0.0, 0.0)) * 0.2;
@@ -242,7 +248,7 @@ ENDCG
     }
     Pass {
         CGPROGRAM
-        #pragma vertex vert
+        #pragma vertex vert_combine
         #pragma fragment frag_combine
         #pragma target 3.0
         ENDCG

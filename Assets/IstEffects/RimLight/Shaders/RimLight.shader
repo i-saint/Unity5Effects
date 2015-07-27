@@ -1,10 +1,8 @@
 ﻿Shader "Hidden/IstImageEffects/RimLight" {
 Properties{
-    _SrcBlend("", Int) = 1
-    _DstBlend("", Int) = 1
+    _MainTex("Base (RGB)", 2D) = "" {}
 }
 SubShader{
-    Blend[_SrcBlend][_DstBlend]
     ZTest Always
     ZWrite Off
     Cull Off
@@ -13,6 +11,7 @@ CGINCLUDE
 #include "UnityCG.cginc"
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
 
+sampler2D _MainTex;
 float4 _Color;
 float4 _Params1;
 float4 _Params2;
@@ -38,19 +37,14 @@ struct vs_out
 
 struct ps_out
 {
-#if UNITY_HDR_ON
-    half4
-#else
-    fixed4
-#endif
-        color : COLOR0;
+    half4 color : COLOR0;
 };
 
 
 vs_out vert (ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = v.vertex;
+    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
     o.screen_pos.y *= _ProjectionParams.x;
     return o;
 }
@@ -90,18 +84,13 @@ ps_out frag(vs_out i)
 #endif
 
     ps_out r;
-    r.color = _Color * h;
-#ifndef UNITY_HDR_ON
-    r.color = exp(-r.color);
-#endif
-    //r.color = h;
+    r.color = tex2D(_MainTex, coord) + _Color * h;
     return r;
 }
 ENDCG
 
     Pass {
         CGPROGRAM
-        #pragma multi_compile ___ UNITY_HDR_ON
         #pragma multi_compile ___ ENABLE_EDGE_HIGHLIGHTING
         #pragma multi_compile ___ ENABLE_SMOOTHNESS_ATTENUAION
         #pragma vertex vert
