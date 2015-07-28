@@ -6,7 +6,7 @@ Unity5 用エフェクト置き場。
 多くはレンダリングパスが deferred であることを前提としています。また、カメラが HDR モードである方がより望ましい結果になります。
 
 ### Temporal Screen Space Reflections
-![alt text](doc/ScreenSpaceReflections.png)  
+![alt text](doc/ScreenSpaceReflections.jpg)  
 スクリーンスペース反射です。  
 kode80 氏が[似たようなもの](https://github.com/kode80/kode80SSR)を公開していますが、そちらとはアルゴリズムが違い、
 若干残像が残ってしまう欠点があるものの、圧倒的に高速でクオリティも引けを取りません。  
@@ -24,8 +24,12 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 重い、影を正しく処理できない、複雑な立体交差で破綻する、などいくつか問題はありますが、見た目に結構インパクトがある効果は得られます。  
 実装の詳細に興味があれば[こちらの記事 (の下の方)](http://i-saint.hatenablog.com/entry/2014/07/25/001608)もどうぞ。
 
+### Rim Light
+![alt text](doc/RimLight.jpg)  
+法線と カメラ -> ピクセル位置 の角度が浅い部分を明るくするアレです。
+
 ### Water Surface & Caustics Field
-![alt text](doc/WaterSurface.png)  
+![alt text](doc/WaterSurface.jpg)  
 水面とコースティクスです。  
 水面は G-Buffer をレイマーチすることで屈折をエミュレートしています。コースティクスは 3 次元ノイズで明るくしてそれっぽく見せかけています。
 
