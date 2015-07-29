@@ -294,12 +294,10 @@ SubShader {
     Cull Off
 
     Pass {
-        Name "DEFERRED"
         Tags { "LightMode" = "Deferred" }
         Stencil {
             Comp Always
             Pass Replace
-            //Ref [_StencilNonBackground] // problematic
             Ref 128
         }
 CGPROGRAM
