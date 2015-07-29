@@ -1,11 +1,19 @@
 ﻿Shader "Raymarcher/Boxnizer" {
 Properties {
-    _Color ("Color", Color) = (1,1,1,1)
-    _MainTex ("Albedo (RGB)", 2D) = "white" {}
-    _Glossiness ("Smoothness", Range(0,1)) = 0.5
-    _Metallic("Metallic", Range(0, 1)) = 0.0
-    _Position("Position", Vector) = (0, 0, 0, 0)
-    _Rotation("Rotation", Vector) = (0, 1, 0, 0)
+    _GridSize("Grid Size", Float) = 0.26
+    _BoxSize("Box Size", Float) = 0.22
+
+    _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
+    _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)
+    _Smoothness("Smoothness", Range(0, 1)) = 0.7
+    _EmissionColor("Emission", Color) = (0.0, 0.0, 0.0, 1.0)
+
+    _FresnelColor("Fresnel Color", Color) = (0.75, 0.75, 0.8, 1.0)
+    _FresnelScale("Fresnel Scale", Float) = 0.3
+    _FresnelPow("Fresnel Pow", Float) = 5.0
+
+    _OffsetPosition("OffsetPosition", Vector) = (0, 0, 0, 0)
+    _Scale("Scale", Vector) = (1, 1, 1, 0)
 }
 
 CGINCLUDE
@@ -15,8 +23,19 @@ CGINCLUDE
 #define MAX_MARCH_SINGLE_GBUFFER_PASS 5
 
 
-int g_hdr;
-int g_enable_glowline;
+float _GridSize;
+float _BoxSize;
+float4 _FresnelColor;
+float _FresnelScale;
+float _FresnelPow;
+
+float4 _SpecularColor;
+float _Smoothness;
+float4 _Position;
+float4 _Rotation;
+float4 _Scale;
+float4 _OffsetPosition;
+
 
 float udBox(float3 p, float3 b)
 {
@@ -31,38 +50,12 @@ float sdBox(float3 p, float3 b)
 
 
 
-float3 GetLocalPosition()
-{
-    return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
-}
-
-float3x3 GetLocalRotation()
-{
-    return float3x3(
-        normalize(_Object2World[0].xyz),
-        normalize(_Object2World[1].xyz),
-        normalize(_Object2World[2].xyz));
-}
-
-
-float3 WorldToLocal(float3 p)
-{
-    p = mul(transpose(GetLocalRotation()), p - GetLocalPosition());
-    return p;
-}
-float3 LocalToWorld(float3 p)
-{
-    p = mul(GetLocalRotation(), p + GetLocalPosition());
-    return p;
-}
-
 float map(float3 p)
 {
-    p = WorldToLocal(p);
+    p = mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
 
-    float grid = 0.26;
-    float3 p1 = modc(p, grid) - grid*0.5;
-    float d1 = sdBox(p1, 0.11);
+    float3 p1 = modc(p, _GridSize) - _GridSize*0.5;
+    float d1 = sdBox(p1, _BoxSize*0.5);
     return d1;
 }
 
@@ -75,43 +68,6 @@ float3 guess_normal(float3 p)
         map(p+float3(0.0,0.0,  d))-map(p+float3(0.0,0.0, -d)) ));
 }
 
-float2 pattern(float2 p)
-{
-    p = frac(p);
-    float r = 0.123;
-    float v = 0.0, g = 0.0;
-    r = frac(r * 9184.928);
-    float cp, d;
-    
-    d = p.x;
-    g += pow(clamp(1.0 - abs(d), 0.0, 1.0), 1000.0);
-    d = p.y;
-    g += pow(clamp(1.0 - abs(d), 0.0, 1.0), 1000.0);
-    d = p.x - 1.0;
-    g += pow(clamp(3.0 - abs(d), 0.0, 1.0), 1000.0);
-    d = p.y - 1.0;
-    g += pow(clamp(1.0 - abs(d), 0.0, 1.0), 10000.0);
-
-    const int ITER = 12;
-    for(int i = 0; i < ITER; i ++)
-    {
-        cp = 0.5 + (r - 0.5) * 0.9;
-        d = p.x - cp;
-        g += pow(clamp(1.0 - abs(d), 0.0, 1.0), 200.0);
-        if(d > 0.0) {
-            r = frac(r * 4829.013);
-            p.x = (p.x - cp) / (1.0 - cp);
-            v += 1.0;
-        }
-        else {
-            r = frac(r * 1239.528);
-            p.x = p.x / cp;
-        }
-        p = p.yx;
-    }
-    v /= float(ITER);
-    return float2(g, v);
-}
 
 struct ia_out
 {
@@ -144,9 +100,7 @@ void raymarching(float2 pos2, float3 pos3, const int num_steps, inout float o_to
     float3 cam_up       = get_camera_up();
     float3 cam_right    = get_camera_right();
     float  cam_focal_len= get_camera_focal_length();
-
     float3 ray_dir = normalize(cam_right*pos2.x + cam_up*pos2.y + cam_forward*cam_focal_len);
-    float max_distance = _ProjectionParams.z - _ProjectionParams.y;
     o_raypos = pos3 + ray_dir * o_total_distance;
 
     o_num_steps = 0.0;
@@ -156,10 +110,8 @@ void raymarching(float2 pos2, float3 pos3, const int num_steps, inout float o_to
         o_total_distance += o_last_distance;
         o_raypos += ray_dir * o_last_distance;
         o_num_steps += 1.0;
-        if(o_last_distance < 0.001 || o_total_distance > max_distance) { break; }
+        if(o_last_distance < 0.001) { break; }
     }
-    o_total_distance = min(o_total_distance, max_distance);
-    //if(o_total_distance > max_distance) { discard; }
 }
 
 
@@ -170,7 +122,9 @@ struct gbuffer_out
     half4 spec_smoothness   : SV_Target1; // RT1: spec color (rgb), smoothness (a)
     half4 normal            : SV_Target2; // RT2: normal (rgb), --unused, very low precision-- (a) 
     half4 emission          : SV_Target3; // RT3: emission (rgb), --unused-- (a)
+#if ENABLE_DEPTH_OUTPUT
     float depth             : SV_Depth;
+#endif
 };
 
 
@@ -179,10 +133,8 @@ gbuffer_out frag_gbuffer(vs_out v)
 #if UNITY_UV_STARTS_AT_TOP
     v.screen_pos.y *= -1.0;
 #endif
-    float time = _Time.y;
-    float aspect = _ScreenParams.x / _ScreenParams.y;
     float2 screen_pos = v.screen_pos.xy;
-    screen_pos.x *= aspect;
+    screen_pos.x *= _ScreenParams.x / _ScreenParams.y;
     float3 world_pos = v.world_pos.xyz;
 
     float num_steps = 1.0;
@@ -191,34 +143,21 @@ gbuffer_out frag_gbuffer(vs_out v)
     float3 ray_pos;
     raymarching(screen_pos, world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
     float3 normal = guess_normal(ray_pos);
-    normal = lerp(v.normal, normal, saturate(total_distance*1000000));
+    normal = lerp(v.normal, normal, saturate((total_distance-0.01)*1000000));
 
-    float glow = 0.0;
-    //if(g_enable_glowline) {
-    //    float3 p3 = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), ray_pos);
-    //    p3 += _Position.xyz;
-    //    p3 *= 2.0;
-    //    glow += max((modc(length(p3) - time*3, 15.0) - 12.0)*0.7, 0.0);
-    //    float2 p2 = pattern(p3.xz*0.5);
-    //    if(p2.x<1.3) { glow = 0.0; }
-    //}
-    glow += max(1.0-abs(dot(-get_camera_forward(), normal)) - 0.4, 0.0) * 1.0;
-    
-    float c = total_distance*0.01;
-    float4 color = float4( c + float3(0.02, 0.02, 0.025)*num_steps*0.4, 1.0 );
-    color.xyz += float3(0.5, 0.5, 0.75)*glow;
-
-    float3 emission = float3(0.7, 0.7, 1.0)*glow*0.6;
+    float3 cam_dir = normalize(ray_pos - _WorldSpaceCameraPos);
+    float fresnel = saturate(pow(dot(cam_dir, normal) + 1.0, _FresnelPow) * _FresnelScale);
 
     gbuffer_out o;
-    o.diffuse = float4(0.75, 0.75, 0.80, 1.0);
-    o.spec_smoothness = float4(0.2, 0.2, 0.2, _Glossiness);
+    o.diffuse = float4(_Color.rgb, 1.0);
+    o.spec_smoothness = float4(_SpecularColor.rgb, _Smoothness);
     o.normal = float4(normal*0.5+0.5, 1.0);
-    //o.emission = g_hdr ? float4(emission, 1.0) : exp2(float4(-emission, 1.0));
-    o.emission = float4(emission, 1.0);
-    o.depth = compute_depth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
+    o.emission = float4(_EmissionColor.rgb + _FresnelColor.rgb * fresnel, 1.0);
 #ifndef UNITY_HDR_ON
-    o.emission = -exp2(o.emission);
+    o.emission = exp2(-o.emission);
+#endif
+#if ENABLE_DEPTH_OUTPUT
+    o.depth = compute_depth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
 #endif
     return o;
 }
@@ -243,6 +182,7 @@ CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag_gbuffer
 #pragma multi_compile ___ UNITY_HDR_ON
+#pragma multi_compile ___ ENABLE_DEPTH_OUTPUT
 ENDCG
     }
     
