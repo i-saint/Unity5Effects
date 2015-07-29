@@ -187,15 +187,15 @@ public class Raymarcher : MonoBehaviour
                 int adepth      = Shader.PropertyToID("ADepth");
                 int adepth_prev = Shader.PropertyToID("ADepthPrev");
 
-                m_cb_prepass.GetTemporaryRT(odepth,     m_camera.pixelWidth / 8, m_camera.pixelHeight / 8, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(odepth_prev,m_camera.pixelWidth / 8, m_camera.pixelHeight / 8, 0, FilterMode.Point, RenderTextureFormat.RHalf);
+                m_cb_prepass.GetTemporaryRT(odepth,     m_camera.pixelWidth / 8, m_camera.pixelHeight / 8, 0, FilterMode.Point, RenderTextureFormat.RFloat);
+                m_cb_prepass.GetTemporaryRT(odepth_prev,m_camera.pixelWidth / 8, m_camera.pixelHeight / 8, 0, FilterMode.Point, RenderTextureFormat.RFloat);
                 m_cb_prepass.GetTemporaryRT(ovelocity,  m_camera.pixelWidth / 8, m_camera.pixelHeight / 8, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(qdepth,     m_camera.pixelWidth / 4, m_camera.pixelHeight / 4, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(qdepth_prev,m_camera.pixelWidth / 4, m_camera.pixelHeight / 4, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(hdepth,     m_camera.pixelWidth / 2, m_camera.pixelHeight / 2, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(hdepth_prev,m_camera.pixelWidth / 2, m_camera.pixelHeight / 2, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(adepth,     m_camera.pixelWidth / 1, m_camera.pixelHeight / 1, 0, FilterMode.Point, RenderTextureFormat.RHalf);
-                m_cb_prepass.GetTemporaryRT(adepth_prev,m_camera.pixelWidth / 1, m_camera.pixelHeight / 1, 0, FilterMode.Point, RenderTextureFormat.RHalf);
+                m_cb_prepass.GetTemporaryRT(qdepth,     m_camera.pixelWidth / 4, m_camera.pixelHeight / 4, 0, FilterMode.Point, RenderTextureFormat.RFloat);
+                m_cb_prepass.GetTemporaryRT(qdepth_prev,m_camera.pixelWidth / 4, m_camera.pixelHeight / 4, 0, FilterMode.Point, RenderTextureFormat.RFloat);
+                m_cb_prepass.GetTemporaryRT(hdepth,     m_camera.pixelWidth / 2, m_camera.pixelHeight / 2, 0, FilterMode.Point, RenderTextureFormat.RFloat);
+                m_cb_prepass.GetTemporaryRT(hdepth_prev,m_camera.pixelWidth / 2, m_camera.pixelHeight / 2, 0, FilterMode.Point, RenderTextureFormat.RFloat);
+                m_cb_prepass.GetTemporaryRT(adepth,     m_camera.pixelWidth / 1, m_camera.pixelHeight / 1, 0, FilterMode.Point, RenderTextureFormat.RFloat);
+                m_cb_prepass.GetTemporaryRT(adepth_prev,m_camera.pixelWidth / 1, m_camera.pixelHeight / 1, 0, FilterMode.Point, RenderTextureFormat.RFloat);
 
                 rt = new RenderTargetIdentifier[2] { odepth, ovelocity };
                 m_cb_prepass.SetGlobalTexture("g_depth_prev", odepth_prev);
