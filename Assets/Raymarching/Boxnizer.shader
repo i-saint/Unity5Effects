@@ -14,6 +14,7 @@ Properties {
 
     _OffsetPosition("OffsetPosition", Vector) = (0, 0, 0, 0)
     _Scale("Scale", Vector) = (1, 1, 1, 0)
+    _CutoutDistance("Cutout Distance", Float) = 0.01
 }
 
 CGINCLUDE
@@ -35,6 +36,7 @@ float4 _Position;
 float4 _Rotation;
 float4 _Scale;
 float4 _OffsetPosition;
+float _CutoutDistance;
 
 
 float udBox(float3 p, float3 b)
@@ -50,9 +52,39 @@ float sdBox(float3 p, float3 b)
 
 
 
+struct ia_out
+{
+    float4 vertex : POSITION;
+    float3 normal : NORMAL;
+};
+
+struct vs_out
+{
+    float4 vertex : SV_POSITION;
+    float4 screen_pos : TEXCOORD0;
+    float4 world_pos : TEXCOORD1;
+    float3 world_normal: TEXCOORD2;
+};
+
+
+vs_out vert(ia_out v)
+{
+    vs_out o;
+    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.world_pos = mul(_Object2World, v.vertex);
+    o.world_normal = mul(_Object2World, v.normal);
+    return o;
+}
+
+
+float3 localize(float3 p)
+{
+    return mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
+}
+
 float map(float3 p)
 {
-    p = mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
+    p = localize(p);
 
     float3 p1 = modc(p, _GridSize) - _GridSize*0.5;
     float d1 = sdBox(p1, _BoxSize*0.5);
@@ -68,31 +100,6 @@ float3 guess_normal(float3 p)
         map(p+float3(0.0,0.0,  d))-map(p+float3(0.0,0.0, -d)) ));
 }
 
-
-struct ia_out
-{
-    float4 vertex : POSITION;
-    float3 normal : NORMAL;
-};
-
-struct vs_out
-{
-    float4 vertex : SV_POSITION;
-    float4 screen_pos : TEXCOORD0;
-    float4 world_pos : TEXCOORD1;
-    float3 normal: TEXCOORD2;
-};
-
-
-vs_out vert(ia_out v)
-{
-    vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
-    o.world_pos = mul(_Object2World, v.vertex);
-    o.normal = mul(_Object2World, v.normal);
-    return o;
-}
-
 void raymarching(float2 pos2, float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
 {
     float3 cam_pos      = get_camera_position();
@@ -101,17 +108,18 @@ void raymarching(float2 pos2, float3 pos3, const int num_steps, inout float o_to
     float3 cam_right    = get_camera_right();
     float  cam_focal_len= get_camera_focal_length();
     float3 ray_dir = normalize(cam_right*pos2.x + cam_up*pos2.y + cam_forward*cam_focal_len);
-    o_raypos = pos3 + ray_dir * o_total_distance;
+    float3 ray_pos = pos3 + ray_dir * o_total_distance;
 
     o_num_steps = 0.0;
     o_last_distance = 0.0;
     for(int i=0; i<num_steps; ++i) {
-        o_last_distance = map(o_raypos);
+        o_last_distance = map(ray_pos);
         o_total_distance += o_last_distance;
-        o_raypos += ray_dir * o_last_distance;
+        ray_pos += ray_dir * o_last_distance;
         o_num_steps += 1.0;
         if(o_last_distance < 0.001) { break; }
     }
+    o_raypos = pos3 + ray_dir * o_total_distance;
 }
 
 
@@ -140,10 +148,10 @@ gbuffer_out frag_gbuffer(vs_out v)
     float num_steps = 1.0;
     float last_distance = 0.0;
     float total_distance = 0;
-    float3 ray_pos;
+    float3 ray_pos = world_pos;
     raymarching(screen_pos, world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
     float3 normal = guess_normal(ray_pos);
-    normal = lerp(v.normal, normal, saturate((total_distance-0.01)*1000000));
+    normal = lerp(v.world_normal, normal, saturate((total_distance-_CutoutDistance)*1000000));
 
     float3 cam_dir = normalize(ray_pos - _WorldSpaceCameraPos);
     float fresnel = saturate(pow(dot(cam_dir, normal) + 1.0, _FresnelPow) * _FresnelScale);
@@ -163,11 +171,40 @@ gbuffer_out frag_gbuffer(vs_out v)
 }
 
 
+struct v2f_shadow {
+    float4 pos : SV_POSITION;
+    LIGHTING_COORDS(0, 1)
+};
+
+v2f_shadow vert_shadow(appdata_full v)
+{
+    v2f_shadow o;
+    o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    TRANSFER_VERTEX_TO_FRAGMENT(o);
+    return o;
+}
+
+half4 frag_shadow(v2f_shadow IN) : SV_Target
+{
+    return 0.0;
+}
+
+
 ENDCG
 
 SubShader {
-    Tags{ "RenderType" = "Opaque" "DisableBatching" = "True" }
-    Cull Off
+    Tags{ "RenderType" = "Opaque" "DisableBatching" = "True" "Queue" = "Geometry+10" }
+
+    Pass{
+        Tags{ "LightMode" = "ShadowCaster" }
+        Cull Front
+        ColorMask 0
+        CGPROGRAM
+#pragma target 3.0
+#pragma vertex vert_shadow
+#pragma fragment frag_shadow
+        ENDCG
+    }
 
     Pass {
         Tags { "LightMode" = "Deferred" }
@@ -176,8 +213,8 @@ SubShader {
             Pass Replace
             Ref 128
         }
+        Cull Back
 CGPROGRAM
-#pragma enable_d3d11_debug_symbols
 #pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag_gbuffer
@@ -185,8 +222,7 @@ CGPROGRAM
 #pragma multi_compile ___ ENABLE_DEPTH_OUTPUT
 ENDCG
     }
-    
-
 }
+
 Fallback Off
 }
