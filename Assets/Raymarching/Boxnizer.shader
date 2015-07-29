@@ -62,7 +62,7 @@ float map(float3 p)
 
     float grid = 0.26;
     float3 p1 = modc(p, grid) - grid*0.5;
-    float d1 = udBox(p1, 0.11);
+    float d1 = sdBox(p1, 0.11);
     return d1;
 }
 
@@ -116,6 +116,7 @@ float2 pattern(float2 p)
 struct ia_out
 {
     float4 vertex : POSITION;
+    float3 normal : NORMAL;
 };
 
 struct vs_out
@@ -123,6 +124,7 @@ struct vs_out
     float4 vertex : SV_POSITION;
     float4 screen_pos : TEXCOORD0;
     float4 world_pos : TEXCOORD1;
+    float3 normal: TEXCOORD2;
 };
 
 
@@ -131,6 +133,7 @@ vs_out vert(ia_out v)
     vs_out o;
     o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
     o.world_pos = mul(_Object2World, v.vertex);
+    o.normal = mul(_Object2World, v.normal);
     return o;
 }
 
@@ -188,6 +191,7 @@ gbuffer_out frag_gbuffer(vs_out v)
     float3 ray_pos;
     raymarching(screen_pos, world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
     float3 normal = guess_normal(ray_pos);
+    normal = lerp(v.normal, normal, saturate(total_distance*1000000));
 
     float glow = 0.0;
     //if(g_enable_glowline) {
@@ -213,6 +217,9 @@ gbuffer_out frag_gbuffer(vs_out v)
     //o.emission = g_hdr ? float4(emission, 1.0) : exp2(float4(-emission, 1.0));
     o.emission = float4(emission, 1.0);
     o.depth = compute_depth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
+#ifndef UNITY_HDR_ON
+    o.emission = -exp2(o.emission);
+#endif
     return o;
 }
 
@@ -235,6 +242,7 @@ CGPROGRAM
 #pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag_gbuffer
+#pragma multi_compile ___ UNITY_HDR_ON
 ENDCG
     }
     
