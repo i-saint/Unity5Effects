@@ -71,7 +71,7 @@ ps_out frag(vs_out i)
     float3 n = GetNormal(coord).xyz;
     float3 opos = GetObjectPosition();
     float3 oup = GetObjectUp();
-    float dist = dot(oup, pos) - dot(oup, opos);
+    float dist = dot(oup, pos.xyz) - dot(oup, opos.xyz);
     float sign = clamp(dist * 10000, -1, 1);
     attr1 = pow(saturate(1.0 - abs(dist * _Attenuation)), _AttenuationPow);
     attr2 = max(-dot(oup*sign, n), 0.0);

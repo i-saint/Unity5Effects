@@ -37,7 +37,7 @@ struct vs_out
 
 struct ps_out
 {
-    half4 color : COLOR0;
+    half4 color : SV_Target;
 };
 
 
