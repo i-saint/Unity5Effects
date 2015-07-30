@@ -72,7 +72,7 @@ vs_out vert(ia_out v)
     vs_out o;
     o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
     o.world_pos = mul(_Object2World, v.vertex);
-    o.world_normal = mul(_Object2World, v.normal);
+    o.world_normal = mul(_Object2World, float4(v.normal, 0.0));
     return o;
 }
 
