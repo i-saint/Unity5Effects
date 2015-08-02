@@ -149,7 +149,9 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
 
     float4 ref_pos = GetPosition(ray_coord);
     float3 ref_normal = GetNormal(ray_coord);
-    if(dot(ref_normal, refdir) > 0.0 || length(ref_pos.xyz-ray_pos.xyz) > hit_radius) {
+    if(/*dot(ref_normal, refdir) > 0.0 ||*/
+        length(ref_pos.xyz-ray_pos.xyz) > hit_radius)
+    {
         hit = 0.0;
     }
     hit_coord = lerp(hit_coord, ray_coord, hit);
