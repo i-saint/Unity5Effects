@@ -19,7 +19,7 @@ public class MPGPLightRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/BatchRenderer/Meshes/cube.asset", typeof(Mesh)) as Mesh;
+        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/BatchRenderer/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
         m_material = AssetDatabase.LoadAssetAtPath("Assets/MassParticle/GPUParticle/Materials/MPGPPointLight.mat", typeof(Material)) as Material;
         m_bounds_size = Vector3.one * 2.0f;
     }
@@ -32,6 +32,16 @@ public class MPGPLightRenderer : BatchRendererBase
         Material m = new Material(src);
         m.SetInt("g_batch_begin", nth * m_instances_par_batch);
         m.SetBuffer("particles", m_world.GetParticleBuffer());
+        if (m_hdr)
+        {
+            m_material.SetInt("_SrcBlend", (int)BlendMode.One);
+            m_material.SetInt("_DstBlend", (int)BlendMode.One);
+        }
+        else
+        {
+            m_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
+            m_material.SetInt("_DstBlend", (int)BlendMode.Zero);
+        }
         return m;
     }
 
@@ -74,14 +84,10 @@ public class MPGPLightRenderer : BatchRendererBase
 
         if (m_hdr)
         {
-            m_material.SetInt("_SrcBlend", (int)BlendMode.One);
-            m_material.SetInt("_DstBlend", (int)BlendMode.One);
             m_cb.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
         }
         else
         {
-            m_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
-            m_material.SetInt("_DstBlend", (int)BlendMode.Zero);
             m_cb.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
         }
 
@@ -106,7 +112,7 @@ public class MPGPLightRenderer : BatchRendererBase
 
         if(m_cameras.Length > 0)
         {
-            m_hdr = m_cameras[0];
+            m_hdr = m_cameras[0].hdr;
         }
 
         base.OnEnable();
