@@ -25,7 +25,7 @@ public abstract class BatchRendererBase : MonoBehaviour
     protected int m_layer;
     protected Transform m_trans;
     protected Mesh m_expanded_mesh;
-    private List< List<Material> >m_actual_materials;
+    protected List< List<Material> >m_actual_materials;
 
     public int GetMaxInstanceCount() { return m_max_instances; }
     public int GetInstanceCount() { return m_instance_count; }
@@ -43,9 +43,22 @@ public abstract class BatchRendererBase : MonoBehaviour
                 ma.ForEach(v => { a(v); });
             });
     }
+
     protected void ClearMaterials()
     {
         m_actual_materials.ForEach(a => { a.Clear(); });
+    }
+
+    protected virtual void IssueDrawCall()
+    {
+        Matrix4x4 matrix = Matrix4x4.identity;
+        m_actual_materials.ForEach(a =>
+        {
+            for (int i = 0; i < m_batch_count; ++i)
+            {
+                Graphics.DrawMesh(m_expanded_mesh, matrix, a[i], m_layer, m_camera, 0, null, m_cast_shadow, m_receive_shadow);
+            }
+        });
     }
 
 
@@ -73,15 +86,7 @@ public abstract class BatchRendererBase : MonoBehaviour
             }
         }
         UpdateGPUResources();
-
-        Matrix4x4 matrix = Matrix4x4.identity;
-        m_actual_materials.ForEach(a =>
-        {
-            for (int i = 0; i < m_batch_count; ++i)
-            {
-                Graphics.DrawMesh(m_expanded_mesh, matrix, a[i], m_layer, m_camera, 0, null, m_cast_shadow, m_receive_shadow);
-            }
-        });
+        IssueDrawCall();
         m_instance_count = m_batch_count = 0;
     }
 

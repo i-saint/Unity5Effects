@@ -1,8 +1,8 @@
 #ifndef MPGPFoundation_h
 #define MPGPFoundation_h
 
-#include "Assets/BatchRenderer/Shaders/Math.cginc"
-#include "Assets/BatchRenderer/Shaders/Geometry.cginc"
+#include "../../../BatchRenderer/Shaders/Math.cginc"
+#include "../../../BatchRenderer/Shaders/Geometry.cginc"
 
 
 struct WorldIData
@@ -61,6 +61,7 @@ struct Particle
     float density;
     int hit_objid;
     uint id;
+    float pad0;
 };
 
 struct Cell

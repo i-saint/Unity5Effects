@@ -148,9 +148,9 @@ public class MPGPWorld : MonoBehaviour
 #if UNITY_EDITOR
     void Reset()
     {
-        m_cs_core = AssetDatabase.LoadAssetAtPath("Assets/GPUParticle/Shaders/ParticleCore.compute", typeof(ComputeShader)) as ComputeShader;
-        m_cs_sort = AssetDatabase.LoadAssetAtPath("Assets/GPUParticle/Shaders/BitonicSort.compute", typeof(ComputeShader)) as ComputeShader;
-        m_cs_hashgrid = AssetDatabase.LoadAssetAtPath("Assets/GPUParticle/Shaders/HashGrid.compute", typeof(ComputeShader)) as ComputeShader;
+        m_cs_core = AssetDatabase.LoadAssetAtPath("Assets/MassParticle/GPUParticle/Shaders/ParticleCore.compute", typeof(ComputeShader)) as ComputeShader;
+        m_cs_sort = AssetDatabase.LoadAssetAtPath("Assets/MassParticle/GPUParticle/Shaders/BitonicSort.compute", typeof(ComputeShader)) as ComputeShader;
+        m_cs_hashgrid = AssetDatabase.LoadAssetAtPath("Assets/MassParticle/GPUParticle/Shaders/HashGrid.compute", typeof(ComputeShader)) as ComputeShader;
     }
 
     void OnValidate()
@@ -444,18 +444,19 @@ public class MPGPWorld : MonoBehaviour
             // do nothing
         }
 
-        //// gbuffer collision
-        //if (m_process_gbuffer_collision)
-        //{
-        //    ComputeShader cs = m_cs_core;
-        //    int kernel = kProcessGBufferCollision;
-        //    cs.SetTexture(kernel, "gbuffer_normal", rtNormalBufferCopy);
-        //    cs.SetTexture(kernel, "gbuffer_position", rtPositionBufferCopy);
-        //    cs.SetBuffer(kernel, "world_data", m_buf_world_data);
-        //    cs.SetBuffer(kernel, "particles", m_buf_particles[0]);
-        //    cs.SetBuffer(kernel, "pimd", m_buf_imd);
-        //    cs.Dispatch(kernel, num_active_blocks, 1, 1);
-        //}
+        // gbuffer collision
+        if (m_process_gbuffer_collision)
+        {
+            ComputeShader cs = m_cs_core;
+            int kernel = kProcessGBufferCollision;
+            // todo: copy gbuffer and assign
+            //cs.SetTexture(kernel, "gbuffer_normal", rtNormalBufferCopy);
+            //cs.SetTexture(kernel, "gbuffer_position", rtPositionBufferCopy);
+            cs.SetBuffer(kernel, "world_data", m_buf_world_data);
+            cs.SetBuffer(kernel, "particles", m_buf_particles[0]);
+            cs.SetBuffer(kernel, "pimd", m_buf_imd);
+            cs.Dispatch(kernel, num_active_blocks, 1, 1);
+        }
 
         // colliders
         if (m_process_colliders)

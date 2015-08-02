@@ -26,7 +26,6 @@ CGINCLUDE
 #include "UnityDeferredLibrary.cginc"
 #include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
 
-sampler2D _BackDepth;
 float4 _Position;
 float4 _Color;
 float4 _Params1;

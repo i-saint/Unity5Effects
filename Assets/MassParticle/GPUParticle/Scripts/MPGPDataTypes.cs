@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public struct MPGPParticle
 {
-    public const int size = 44;
+    public const int size = 48;
 
     public Vector3 position;
     public Vector3 velocity;
@@ -14,6 +14,7 @@ public struct MPGPParticle
     public float density;
     public int hit_objid;
     public uint id;
+    public float pad0;
 };
 
 public struct MPGPSortData
