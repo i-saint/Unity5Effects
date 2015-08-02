@@ -24,6 +24,10 @@ float       g_size;
 float       g_fade_time;
 float       g_spin;
 
+float _HeatThreshold;
+float _HeatIntensity;
+float4 _HeatColor;
+
 
 int ParticleTransform(inout appdata_full v)
 {
@@ -80,15 +84,15 @@ int ParticleTransform(inout appdata_full v)
 
 // legacy surface shader
 #ifdef MPGP_SURFACE
-    void surf(Input data, inout SurfaceOutput o)
+    void surf(Input IN, inout SurfaceOutput o)
     {
-        o.Albedo = _Color * tex2D(_MainTex, data.uv_MainTex);
+        o.Albedo = _Color * tex2D(_MainTex, IN.uv_MainTex);
         o.Emission += _Emission;
 
     #ifdef MPGP_ENABLE_HEAT_EMISSION
-        float speed = data.velocity.w;
-        float ei = max(speed-2.0, 0.0) * 1.0;
-        o.Emission += float3(0.25, 0.05, 0.025)*ei;
+        float speed = IN.velocity.w;
+        float ei = max(speed - _HeatThreshold, 0.0) * _HeatIntensity;
+        o.Emission += _HeatColor.rgb*ei;
     #endif // MPGP_ENABLE_HEAT_EMISSION
     }
 #endif // MPGP_SURFACE
@@ -111,8 +115,8 @@ int ParticleTransform(inout appdata_full v)
 
     #ifdef MPGP_ENABLE_HEAT_EMISSION
         float speed = IN.velocity.w;
-        float ei = max(speed-2.0, 0.0) * 1.0;
-        o.Emission += float3(0.25, 0.05, 0.025)*ei;
+        float ei = max(speed - _HeatThreshold, 0.0) * _HeatIntensity;
+        o.Emission += _HeatColor.rgb*ei;
     #endif // MPGP_ENABLE_HEAT_EMISSION
     }
 #endif // MPGP_STANDARD

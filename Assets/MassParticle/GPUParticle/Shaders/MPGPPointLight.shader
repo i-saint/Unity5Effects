@@ -125,10 +125,7 @@ ps_out frag(vs_out i)
 {
     int instance_id = i.instance_pos.w;
     float2 uv = i.uv.xy / i.uv.w;
-    float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv);
-    float2 screen_pos = uv.xy * 2.0 - 1.0;
-    float4 wpos4 = mul(_InvViewProj, float4(screen_pos, depth, 1.0));
-    float3 wpos = wpos4.xyz / wpos4.w;
+    float3 wpos = GetPosition(uv).xyz;
     float3 lightPos = i.instance_pos.xyz;
     float range_inv_sq = i.instance_pos.w;
 

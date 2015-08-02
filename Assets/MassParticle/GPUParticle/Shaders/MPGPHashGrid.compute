@@ -1,6 +1,7 @@
 ﻿#pragma kernel ClearCells
 #pragma kernel GenerateSortKeys
 #pragma kernel ReorderParticles
+#pragma kernel CopyBackParticles
 
 #include "MPGPFoundation.cginc"
 #define BLOCK_SIZE 512
@@ -85,4 +86,13 @@ void ReorderParticles(uint3 dtid : SV_DispatchThreadID)
         world_idata[0].num_active_particles = i;
         //world_idata[0].num_vertices = world_idata[0].num_vertices_par_instance * i;
     }
+}
+
+[numthreads(BLOCK_SIZE,1,1)]
+void CopyBackParticles(uint3 dtid : SV_DispatchThreadID)
+{
+    uint tid = dtid.x;
+    uint max_particles = world_data[0].num_max_particles;
+
+    particles_rw[tid] = particles[tid];
 }
