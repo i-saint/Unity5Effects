@@ -1,8 +1,8 @@
 #ifndef MPGPFoundation_h
 #define MPGPFoundation_h
 
-#include "../../BatchRenderer/Shaders/Math.cginc"
-#include "../../BatchRenderer/Shaders/Geometry.cginc"
+#include "Assets/BatchRenderer/Shaders/Math.cginc"
+#include "Assets/BatchRenderer/Shaders/Geometry.cginc"
 
 
 struct WorldIData
