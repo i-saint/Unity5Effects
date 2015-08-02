@@ -1,8 +1,9 @@
 ﻿Shader "GPUParticle/Standard" {
 
 Properties {
-    _MainTex ("Base (RGB)", 2D) = "white" {}
-    _Color ("Color", Color) = (0.8, 0.8, 0.8, 1.0)
+    _MainTex ("Albedo", 2D) = "white" {}
+    _Color("Albedo Color", Color) = (0.8, 0.8, 0.8, 1.0)
+    _EmissionColor("Emission Color", Color) = (0, 0, 0, 0)
     _Glossiness ("Smoothness", Range(0,1)) = 0.5
     _Metallic ("Metallic", Range(0,1)) = 0.0
     g_size ("Particle Size", Float) = 0.2

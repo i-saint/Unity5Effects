@@ -85,6 +85,13 @@ public class Raymarcher : MonoBehaviour
     bool m_enable_adaptive_prev;
     bool m_dbg_show_steps_prev;
 
+#if UNITY_EDITOR
+    void Reset()
+    {
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Raymarching/Raymarcher.mat");
+    }
+#endif // UNITY_EDITOR
+
     void Awake()
     {
         var cam = GetComponent<Camera>();

@@ -11,7 +11,21 @@ using UnityEditor;
 [RequireComponent(typeof(MPGPWorld))]
 public class MPGPLightRenderer : BatchRendererBase
 {
+    public enum Sample
+    {
+        Fast,
+        Medium,
+        High,
+    }
+    public Color m_color = Color.white;
+    public float m_size = 1.0f;
+    public float m_intensity = 0.5f;
+    public bool m_enable_shadow = false;
+    public Sample m_sample = Sample.Fast;
+    public float m_occulusion_strength = 0.2f;
+
     MPGPWorld m_world;
+    MaterialPropertyBlock m_mpb;
     CommandBuffer m_cb;
     Camera[] m_cameras;
     bool m_hdr = true;
@@ -26,6 +40,15 @@ public class MPGPLightRenderer : BatchRendererBase
 #endif // UNITY_EDITOR
 
 
+    public Vector4 GetLinearColor()
+    {
+        return new Vector4(
+            Mathf.GammaToLinearSpace(m_color.r * m_intensity),
+            Mathf.GammaToLinearSpace(m_color.g * m_intensity),
+            Mathf.GammaToLinearSpace(m_color.b * m_intensity),
+            1.0f
+        );
+    }
 
     public override Material CloneMaterial(Material src, int nth)
     {
@@ -34,13 +57,29 @@ public class MPGPLightRenderer : BatchRendererBase
         m.SetBuffer("particles", m_world.GetParticleBuffer());
         if (m_hdr)
         {
-            m_material.SetInt("_SrcBlend", (int)BlendMode.One);
-            m_material.SetInt("_DstBlend", (int)BlendMode.One);
+            m.SetInt("_SrcBlend", (int)BlendMode.One);
+            m.SetInt("_DstBlend", (int)BlendMode.One);
         }
         else
         {
-            m_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
-            m_material.SetInt("_DstBlend", (int)BlendMode.Zero);
+            m.SetInt("_SrcBlend", (int)BlendMode.DstColor);
+            m.SetInt("_DstBlend", (int)BlendMode.Zero);
+        }
+        if(m_enable_shadow)
+        {
+            m.EnableKeyword("ENABLE_SHADOW");
+            switch (m_sample)
+            {
+                case Sample.Fast:
+                    m.EnableKeyword("QUALITY_FAST");
+                    break;
+                case Sample.Medium:
+                    m.EnableKeyword("QUALITY_MEDIUM");
+                    break;
+                case Sample.High:
+                    m.EnableKeyword("QUALITY_HIGH");
+                    break;
+            }
         }
         return m;
     }
@@ -73,11 +112,13 @@ public class MPGPLightRenderer : BatchRendererBase
         {
             m_cb = new CommandBuffer();
             m_cb.name = "MPGPLightRenderer";
-
             foreach(var c in m_cameras)
             {
                 c.AddCommandBuffer(CameraEvent.AfterLighting, m_cb);
             }
+
+            m_mpb = new MaterialPropertyBlock();
+            m_mpb.AddColor("_Color", GetLinearColor());
 
         }
         m_cb.Clear();
@@ -90,6 +131,9 @@ public class MPGPLightRenderer : BatchRendererBase
         {
             m_cb.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
         }
+        m_mpb.SetColor("_Color", GetLinearColor());
+        m_mpb.SetFloat("g_size", m_size);
+        m_mpb.SetFloat("_OcculusionStrength", m_occulusion_strength);
 
 
         Matrix4x4 matrix = Matrix4x4.identity;
@@ -97,7 +141,7 @@ public class MPGPLightRenderer : BatchRendererBase
         {
             for (int i = 0; i < m_batch_count; ++i)
             {
-                m_cb.DrawMesh(m_expanded_mesh, matrix, a[i]);
+                m_cb.DrawMesh(m_expanded_mesh, matrix, a[i], 0, 0, m_mpb);
             }
         });
     }
