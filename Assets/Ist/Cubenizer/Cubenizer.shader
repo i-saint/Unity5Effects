@@ -1,4 +1,4 @@
-﻿Shader "Raymarcher/Boxnizer" {
+﻿Shader "Ist/Cubenizer" {
 Properties {
     _GridSize("Grid Size", Float) = 0.26
     _BoxSize("Box Size", Float) = 0.22
@@ -19,16 +19,18 @@ Properties {
 
 CGINCLUDE
 #include "UnityStandardCore.cginc"
-#include "distance_functions.cginc"
 
 #define MAX_MARCH_SINGLE_GBUFFER_PASS 5
+//#define ENABLE_FRESNEL
 
 
 float _GridSize;
 float _BoxSize;
+#ifdef ENABLE_FRESNEL
 float4 _FresnelColor;
 float _FresnelScale;
 float _FresnelPow;
+#endif // ENABLE_FRESNEL
 
 float4 _SpecularColor;
 float _Smoothness;
@@ -39,10 +41,16 @@ float4 _OffsetPosition;
 float _CutoutDistance;
 
 
-float udBox(float3 p, float3 b)
-{
-    return length(max(abs(p) - b, 0.0));
-}
+float  modc(float  a, float  b) { return a - b * floor(a / b); }
+float2 modc(float2 a, float2 b) { return a - b * floor(a / b); }
+float3 modc(float3 a, float3 b) { return a - b * floor(a / b); }
+float4 modc(float4 a, float4 b) { return a - b * floor(a / b); }
+
+float3 GetCameraPosition()      { return _WorldSpaceCameraPos; }
+float3 GetCameraForward()       { return -UNITY_MATRIX_V[2].xyz; }
+float3 GetCameraUp()            { return UNITY_MATRIX_V[1].xyz; }
+float3 GetCameraRight()         { return UNITY_MATRIX_V[0].xyz; }
+float  GetCameraFocalLength()   { return abs(UNITY_MATRIX_P[1][1]); }
 
 float sdBox(float3 p, float3 b)
 {
@@ -102,11 +110,11 @@ float3 guess_normal(float3 p)
 
 void raymarching(float2 pos2, float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
 {
-    float3 cam_pos      = get_camera_position();
-    float3 cam_forward  = get_camera_forward();
-    float3 cam_up       = get_camera_up();
-    float3 cam_right    = get_camera_right();
-    float  cam_focal_len= get_camera_focal_length();
+    float3 cam_pos      = GetCameraPosition();
+    float3 cam_forward  = GetCameraForward();
+    float3 cam_up       = GetCameraUp();
+    float3 cam_right    = GetCameraRight();
+    float  cam_focal_len= GetCameraFocalLength();
     float3 ray_dir = normalize(cam_right*pos2.x + cam_up*pos2.y + cam_forward*cam_focal_len);
     float3 ray_pos = pos3 + ray_dir * o_total_distance;
 
@@ -153,17 +161,23 @@ gbuffer_out frag_gbuffer(vs_out v)
     float3 normal = guess_normal(ray_pos);
     normal = lerp(v.world_normal, normal, saturate((total_distance-_CutoutDistance)*1000000));
 
-    float3 cam_dir = normalize(ray_pos - _WorldSpaceCameraPos);
-    float fresnel = saturate(pow(dot(cam_dir, normal) + 1.0, _FresnelPow) * _FresnelScale);
 
     gbuffer_out o;
     o.diffuse = float4(_Color.rgb, 1.0);
     o.spec_smoothness = float4(_SpecularColor.rgb, _Smoothness);
     o.normal = float4(normal*0.5+0.5, 1.0);
-    o.emission = float4(_EmissionColor.rgb + _FresnelColor.rgb * fresnel, 1.0);
+    o.emission = float4(_EmissionColor.rgb, 1.0);
+
+#ifdef ENABLE_FRESNEL
+    float3 cam_dir = normalize(ray_pos - _WorldSpaceCameraPos);
+    float fresnel = saturate(pow(dot(cam_dir, normal) + 1.0, _FresnelPow) * _FresnelScale);
+    o.emission.rgb += _FresnelColor.rgb * fresnel;
+#endif // ENABLE_FRESNEL
+
 #ifndef UNITY_HDR_ON
     o.emission = exp2(-o.emission);
 #endif
+
 #if ENABLE_DEPTH_OUTPUT
     o.depth = compute_depth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
 #endif

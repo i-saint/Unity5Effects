@@ -1,4 +1,4 @@
-﻿Shader "Raymarcher/ZPrePass" {
+﻿Shader "Ist/ZPrePass" {
 CGINCLUDE
 struct ia_out
 {

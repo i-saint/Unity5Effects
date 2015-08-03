@@ -5,23 +5,23 @@
 
 #define PI      3.1415926535897932384626433832795
 
-float deg2rad(float  deg) { return deg*PI/180.0; }
-float2 deg2rad(float2 deg) { return deg*PI/180.0; }
-float3 deg2rad(float3 deg) { return deg*PI/180.0; }
-float4 deg2rad(float4 deg) { return deg*PI/180.0; }
+float DegToRad(float  deg) { return deg*PI/180.0; }
+float2 DegToRad(float2 deg) { return deg*PI/180.0; }
+float3 DegToRad(float3 deg) { return deg*PI/180.0; }
+float4 DegToRad(float4 deg) { return deg*PI/180.0; }
 
 float  modc(float  a, float  b) { return a - b * floor(a/b); }
 float2 modc(float2 a, float2 b) { return a - b * floor(a/b); }
 float3 modc(float3 a, float3 b) { return a - b * floor(a/b); }
 float4 modc(float4 a, float4 b) { return a - b * floor(a/b); }
 
-float3 get_camera_position()    { return _WorldSpaceCameraPos; }
-float3 get_camera_forward()     { return -UNITY_MATRIX_V[2].xyz; }
-float3 get_camera_up()          { return UNITY_MATRIX_V[1].xyz; }
-float3 get_camera_right()       { return UNITY_MATRIX_V[0].xyz; }
-float get_camera_focal_length() { return abs(UNITY_MATRIX_P[1][1]); }
+float3 GetCameraPosition()    { return _WorldSpaceCameraPos; }
+float3 GetCameraForward()     { return -UNITY_MATRIX_V[2].xyz; }
+float3 GetCameraUp()          { return UNITY_MATRIX_V[1].xyz; }
+float3 GetCameraRight()       { return UNITY_MATRIX_V[0].xyz; }
+float  GetCameraFocalLength() { return abs(UNITY_MATRIX_P[1][1]); }
 
-float compute_depth(float4 clippos)
+float ComputeDepth(float4 clippos)
 {
 #if defined(SHADER_TARGET_GLSL) || defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
     return ((clippos.z / clippos.w) + 1.0) * 0.5;

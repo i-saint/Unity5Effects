@@ -124,11 +124,11 @@ vs_out vert_dummy(ia_out v)
 
 void raymarching(float2 pos, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
 {
-    float3 cam_pos      = get_camera_position();
-    float3 cam_forward  = get_camera_forward();
-    float3 cam_up       = get_camera_up();
-    float3 cam_right    = get_camera_right();
-    float  cam_focal_len= get_camera_focal_length();
+    float3 cam_pos      = GetCameraPosition();
+    float3 cam_forward  = GetCameraForward();
+    float3 cam_up       = GetCameraUp();
+    float3 cam_right    = GetCameraRight();
+    float  cam_focal_len= GetCameraFocalLength();
 
     float3 ray_dir = normalize(cam_right*pos.x + cam_up*pos.y + cam_forward*cam_focal_len);
     float max_distance = _ProjectionParams.z - _ProjectionParams.y;
@@ -174,11 +174,11 @@ gbuffer_out frag_gbuffer(vs_out v)
     float3 ray_pos;
     float3 normal;
     if(g_enable_adaptive) {
-        float3 cam_pos      = get_camera_position();
-        float3 cam_forward  = get_camera_forward();
-        float3 cam_up       = get_camera_up();
-        float3 cam_right    = get_camera_right();
-        float  cam_focal_len= get_camera_focal_length();
+        float3 cam_pos      = GetCameraPosition();
+        float3 cam_forward  = GetCameraForward();
+        float3 cam_up       = GetCameraUp();
+        float3 cam_right    = GetCameraRight();
+        float  cam_focal_len= GetCameraFocalLength();
         float3 ray_dir = normalize(cam_right*pos.x + cam_up*pos.y + cam_forward*cam_focal_len);
 
         total_distance = tex2D(g_depth, v.spos.xy*0.5+0.5).x;
@@ -200,7 +200,7 @@ gbuffer_out frag_gbuffer(vs_out v)
         float2 p2 = pattern(p3.xz*0.5);
         if(p2.x<1.3) { glow = 0.0; }
     }
-    glow += max(1.0-abs(dot(-get_camera_forward(), normal)) - 0.4, 0.0) * 1.0;
+    glow += max(1.0-abs(dot(-GetCameraForward(), normal)) - 0.4, 0.0) * 1.0;
     
     float c = total_distance*0.01;
     float4 color = float4( c + float3(0.02, 0.02, 0.025)*num_steps*0.4, 1.0 );
@@ -213,7 +213,7 @@ gbuffer_out frag_gbuffer(vs_out v)
     o.spec_smoothness = float4(0.2, 0.2, 0.2, _Glossiness);
     o.normal = float4(normal*0.5+0.5, 1.0);
     o.emission = g_hdr ? float4(emission, 1.0) : exp2(float4(-emission, 1.0));
-    o.depth = compute_depth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
+    o.depth = ComputeDepth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
     return o;
 }
 

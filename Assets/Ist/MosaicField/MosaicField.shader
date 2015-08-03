@@ -1,4 +1,4 @@
-Shader "MosaicField/MosaicField" {
+Shader "Ist/MosaicField" {
 Properties {
     _BlockSize ("Block Size", Float) = 15.0
 }
