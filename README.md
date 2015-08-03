@@ -24,6 +24,7 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 重い、影を正しく処理できない、複雑な立体交差で破綻する、などいくつか問題はありますが、見た目に結構インパクトがある効果は得られます。  
 実装の詳細に興味があれば[こちらの記事 (の下の方)](http://i-saint.hatenablog.com/entry/2014/07/25/001608)もどうぞ。
 
+
 ### Rim Light
 ![alt text](doc/RimLight.jpg)  
 法線と カメラ -> ピクセル位置 の角度が浅い部分を明るくするアレです。
@@ -33,8 +34,19 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 水面とコースティクスです。  
 水面は G-Buffer をレイマーチすることで屈折をエミュレートしています。コースティクスは 3 次元ノイズで明るくしてそれっぽく見せかけています。
 
+
+### Light Particle
+![alt text](doc/LightParticle.jpg)  
+一粒一粒を Point Light として扱うパーティクルレンダラ。MassParticle の拡張。
+
+
+### Cubenizer
+![alt text](doc/Cubenizer.jpg)  
+Cube の集合に見せかけるシェーダ。
+
+
 #### Mosaic Field
 ![alt text](doc/mosaic.gif)  
-指定オブジェクトをモザイク領域化するシェーダです。
+指定オブジェクトをモザイク領域化するシェーダ。
 
 <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>.
