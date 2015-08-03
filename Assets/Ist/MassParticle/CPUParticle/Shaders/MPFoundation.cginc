@@ -1,7 +1,7 @@
 #ifndef MPFoundation_h
 #define MPFoundation_h
 
-#include "Assets//BatchRenderer/Shaders/Math.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
 
 int         g_batch_begin;
 sampler2D   g_instance_data;

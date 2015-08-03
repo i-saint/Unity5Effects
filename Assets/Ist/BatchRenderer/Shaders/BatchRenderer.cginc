@@ -1,8 +1,8 @@
 #ifndef BatchRenderer_h
 #define BatchRenderer_h
 
-#include "Assets/BatchRenderer/Shaders/Math.cginc"
-#include "Assets/BatchRenderer/Shaders/Geometry.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
 
 
 

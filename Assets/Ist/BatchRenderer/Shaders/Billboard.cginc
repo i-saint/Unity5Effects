@@ -2,7 +2,7 @@
 #define BRBillboard_h
 
 #include "UnityCG.cginc"
-#include "Assets/BatchRenderer/Shaders/BatchRenderer.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/BatchRenderer.cginc"
 
 
 void ApplyBillboardTransform(float2 id, inout float4 vertex, inout float3 normal, inout float2 texcoord, inout float4 color)
