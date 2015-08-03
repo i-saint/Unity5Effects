@@ -15,7 +15,7 @@ CGINCLUDE
 #include "UnityPBSLighting.cginc"
 #include "UnityDeferredLibrary.cginc"
 #include "MPGPFoundation.cginc"
-#include "Assets/IstEffects/GBufferUtils/Shaders/GBufferUtils.cginc"
+#include "Assets/Ist/GBufferUtils/Shaders/GBufferUtils.cginc"
 
 
 

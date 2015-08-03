@@ -8,12 +8,12 @@ using UnityEditor;
 
 public class Packaging
 {
-    [MenuItem("Assets/IstEffects/MakePackages")]
+    [MenuItem("Assets/Ist/MakePackages")]
     public static void MakePackages()
     {
         string[] files = new string[]
         {
-"Assets/IstEffects",
+"Assets/Ist",
         };
         AssetDatabase.ExportPackage(files, "IstEffects.unitypackage", ExportPackageOptions.Recurse);
     }
