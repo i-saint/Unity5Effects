@@ -114,7 +114,7 @@ public class MPGPLightRenderer : BatchRendererBase
             m_cb.name = "MPGPLightRenderer";
             foreach(var c in m_cameras)
             {
-                c.AddCommandBuffer(CameraEvent.AfterLighting, m_cb);
+                if(c!=null) c.AddCommandBuffer(CameraEvent.AfterLighting, m_cb);
             }
 
             m_mpb = new MaterialPropertyBlock();
@@ -167,6 +167,18 @@ public class MPGPLightRenderer : BatchRendererBase
     {
         base.OnDisable();
         ReleaseGPUResources();
+
+        foreach (var c in m_cameras)
+        {
+            if (c != null) c.RemoveCommandBuffer(CameraEvent.AfterLighting, m_cb);
+        }
+        m_cameras = null;
+
+        if(m_cb!=null)
+        {
+            m_cb.Release();
+            m_cb = null;
+        }
     }
 
     public override void LateUpdate()

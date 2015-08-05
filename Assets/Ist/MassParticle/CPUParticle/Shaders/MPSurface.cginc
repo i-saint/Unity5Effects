@@ -11,6 +11,10 @@
 #include "UnityCG.cginc"
 #include "MPFoundation.cginc"
 
+float _HeatThreshold;
+float _HeatIntensity;
+float4 _HeatColor;
+
 
 #ifdef MP_DEPTH_PREPASS
     #define MP_SHADOW_CASTER
@@ -52,11 +56,11 @@
     {
         o.Albedo = _Color * tex2D(_MainTex, data.uv_MainTex);
 
-    #ifdef MP_ENABLE_HEAT_EMISSION
-        float speed = data.velocity.w;
-        float ei = max(speed-2.0, 0.0) * 1.0;
-        o.Emission = float3(0.25, 0.05, 0.025)*ei;
-    #endif // MP_ENABLE_HEAT_EMISSION
+#ifdef MP_ENABLE_HEAT_EMISSION
+        float speed = IN.velocity.w;
+        float ei = max(speed - _HeatThreshold, 0.0) * _HeatIntensity;
+        o.Emission += _HeatColor.rgb*ei;
+#endif // MP_ENABLE_HEAT_EMISSION
     }
 #endif // MP_SURFACE
 
@@ -75,11 +79,11 @@
         o.Smoothness = _Glossiness;
         o.Alpha = c.a;
 
-    #ifdef MP_ENABLE_HEAT_EMISSION
+#ifdef MP_ENABLE_HEAT_EMISSION
         float speed = IN.velocity.w;
-        float ei = max(speed-2.0, 0.0) * 1.0;
-        o.Emission += float3(0.25, 0.05, 0.025)*ei;
-    #endif // MP_ENABLE_HEAT_EMISSION
+        float ei = max(speed - _HeatThreshold, 0.0) * _HeatIntensity;
+        o.Emission += _HeatColor.rgb*ei;
+#endif // MP_ENABLE_HEAT_EMISSION
     }
 #endif // MP_STANDARD
 

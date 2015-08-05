@@ -57,14 +57,14 @@ int ParticleTransform(inout appdata_full v)
 
 #if defined(MPGP_STANDARD) || defined(MPGP_SURFACE)
     sampler2D _MainTex;
-    fixed4 _Color;
-    fixed4 _Emission;
+    half4 _Color;
+    half4 _Emission;
 
     struct Input {
         float2 uv_MainTex;
-    #ifdef MPGP_ENABLE_HEAT_EMISSION
+#ifdef MPGP_ENABLE_HEAT_EMISSION
         float4 velocity;
-    #endif // MPGP_ENABLE_HEAT_EMISSION
+#endif // MPGP_ENABLE_HEAT_EMISSION
     };
 
     void vert(inout appdata_full v, out Input data)
@@ -73,9 +73,9 @@ int ParticleTransform(inout appdata_full v)
 
         int iid = ParticleTransform(v);
     #ifdef MPGP_WITH_STRUCTURED_BUFFER
-    #ifdef MPGP_ENABLE_HEAT_EMISSION
+#ifdef MPGP_ENABLE_HEAT_EMISSION
         data.velocity = float4(particles[iid].velocity, particles[iid].speed);
-    #endif // MPGP_ENABLE_HEAT_EMISSION
+#endif // MPGP_ENABLE_HEAT_EMISSION
     #endif // MPGP_WITH_STRUCTURED_BUFFER
     }
 #endif // defined(MPGP_STANDARD) || defined(MPGP_SURFACE)
@@ -89,11 +89,11 @@ int ParticleTransform(inout appdata_full v)
         o.Albedo = _Color * tex2D(_MainTex, IN.uv_MainTex);
         o.Emission += _Emission;
 
-    #ifdef MPGP_ENABLE_HEAT_EMISSION
+#ifdef MPGP_ENABLE_HEAT_EMISSION
         float speed = IN.velocity.w;
         float ei = max(speed - _HeatThreshold, 0.0) * _HeatIntensity;
         o.Emission += _HeatColor.rgb*ei;
-    #endif // MPGP_ENABLE_HEAT_EMISSION
+#endif // MPGP_ENABLE_HEAT_EMISSION
     }
 #endif // MPGP_SURFACE
 
@@ -113,11 +113,11 @@ int ParticleTransform(inout appdata_full v)
         o.Alpha = c.a;
         o.Emission += _Emission;
 
-    #ifdef MPGP_ENABLE_HEAT_EMISSION
+#ifdef MPGP_ENABLE_HEAT_EMISSION
         float speed = IN.velocity.w;
         float ei = max(speed - _HeatThreshold, 0.0) * _HeatIntensity;
         o.Emission += _HeatColor.rgb*ei;
-    #endif // MPGP_ENABLE_HEAT_EMISSION
+#endif // MPGP_ENABLE_HEAT_EMISSION
     }
 #endif // MPGP_STANDARD
 
@@ -168,6 +168,38 @@ int ParticleTransform(inout appdata_full v)
     }
 #endif // MPGP_SHADOW_COLLECTOR
 
+
+
+// transparent
+#if defined(MPGP_TRANSPARENT)
+    half4 _Color;
+
+    struct vs_out
+    {
+        float4 vertex : SV_Position;
+    };
+
+    struct ps_out
+    {
+        half4 color : SV_Target;
+    };
+
+    vs_out vert( appdata_full v )
+    {
+        int iid = ParticleTransform(v);
+
+        vs_out o;
+        o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+        return o;
+    }
+        
+    ps_out frag(vs_out i)
+    {
+        ps_out o;
+        o.color = _Color;
+        return o;
+    }
+#endif
 
 
 #if defined(MPGP_BILLBOARD) || defined(MPGP_FIXED_BILLBOARD)
