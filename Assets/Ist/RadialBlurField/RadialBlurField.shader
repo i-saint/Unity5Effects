@@ -49,7 +49,7 @@ vs_out vert (ia_out I)
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.world_pos = mul(_Object2World, I.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition(), 1)));
-    O.normal = normalize(mul(_Object2World, float4(I.normal.xyz, 0)).xyz);
+    O.normal = normalize(mul(_Object2World, float4(-I.normal.xyz, 0)).xyz);
     return O;
 }
     
@@ -59,8 +59,8 @@ ps_out frag (vs_out I)
     float2 center = I.center.xy / I.center.w;
     float3 eye = normalize(I.world_pos.xyz - _WorldSpaceCameraPos.xyz);
     float opacity = abs(dot(eye, I.normal));
-    opacity = lerp(opacity, 1- opacity, _Reverse);
-    opacity = saturate(pow(opacity + _AttenuationBias, _AttenuationPow));
+    opacity = lerp(opacity, 1-opacity, _Reverse);
+    opacity = pow(saturate(opacity + _AttenuationBias), _AttenuationPow);
 
 
     float2 dir = normalize(coord - center);
@@ -80,6 +80,9 @@ ps_out frag (vs_out I)
     ps_out O;
     O.color.rgb = color.rgb * _ColorBias.rgb;
     O.color.a = opacity;
+
+    //O.color = opacity;
+    //O.color.a = 1;
     return O;
 }
 ENDCG
@@ -87,7 +90,7 @@ ENDCG
 Subshader {
     Tags { "Queue"="Overlay+90" "RenderType"="Opaque" }
     Fog { Mode off }
-    Cull Off
+    Cull Front
     ZTest Off
     ZWrite Off
     Blend SrcAlpha OneMinusSrcAlpha

@@ -27,7 +27,7 @@ StructuredBuffer<Cell>				cells;
 RWStructuredBuffer<Particle>		particles;
 StructuredBuffer<Particle>			particles_to_add;
 RWStructuredBuffer<ParticleIData>	pimd;
-Texture2D							gbuffer_position;
+Texture2D							gbuffer_depth;
 Texture2D							gbuffer_normal;
 StructuredBuffer<SphereCollider>	sphere_colliders;
 StructuredBuffer<CapsuleCollider>	capsule_colliders;
@@ -404,11 +404,16 @@ void ProcessGBufferCollision(uint3 dtid : SV_DispatchThreadID)
     float3 ppos = particles[tid].position;
 
     float4 tpos4 = mul(wd.view_proj, float4(ppos, 1.0));
-    float2 tpos = (tpos4.xy/tpos4.w + 1.0) * 0.5;
-    tpos = tpos*wd.rt_size;
+    float2 tcoord = tpos4.xy / tpos4.w;
+    float2 tpos = (tcoord * 0.5 + 0.5) * wd.rt_size;
 
-    float4 fpos4 = gbuffer_position[tpos];
-    if(fpos4.w!=0.0) {
+    float depth = gbuffer_depth[tpos].x;
+    if(depth < 1.0) {
+        pimd[tid].accel.y += 5;
+
+        float4 fpos4 = mul(wd.inv_view_proj, float4(tcoord, depth, 1));
+        fpos4 /= fpos4.w;
+
         float3 fnormal = gbuffer_normal[tpos].xyz;
         float r = 0.2;
         //float penetration = min(fpos4.w-tpos4.z-wd.particle_size, 0.0);

@@ -121,7 +121,7 @@ public struct MPGPWorldIData
 
 public struct MPGPWorldData
 {
-    public const int size = 224;
+    public const int size = 288;
 
     public float timestep;
     public float particle_size;
@@ -151,6 +151,7 @@ public struct MPGPWorldData
     public Vector3 rcp_world_cellsize;
     public Vector2 rt_size;
     public Matrix4x4 view_proj;
+    public Matrix4x4 inv_view_proj;
     public float rcp_particle_size2;
     public Vector3 coord_scaler;
 

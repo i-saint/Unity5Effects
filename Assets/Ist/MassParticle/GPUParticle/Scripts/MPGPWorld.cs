@@ -77,6 +77,8 @@ public class MPGPWorld : MonoBehaviour
     public bool m_writeback_to_cpu = false;
     public ParticleHandler handler;
 
+    public Ist.GBufferUtils m_gbuffer_data;
+
     public ComputeShader m_cs_core;
     public ComputeShader m_cs_sort;
     public ComputeShader m_cs_hashgrid;
@@ -297,6 +299,11 @@ public class MPGPWorld : MonoBehaviour
         m_world_data[0].coord_scaler = m_coord_scaler;
         m_world_data[0].pressure_stiffness = m_pressure_stiffness;
         m_world_data[0].wall_stiffness = m_wall_stiffness;
+        if( m_gbuffer_data != null)
+        {
+            m_world_data[0].inv_view_proj = m_gbuffer_data.matrix_inv_vp;
+        }
+
 
         m_sph_params[0].smooth_len = m_sph_smoothlen;
         m_sph_params[0].particle_mass = m_sph_particleMass;
@@ -453,17 +460,21 @@ public class MPGPWorld : MonoBehaviour
         }
 
         // gbuffer collision
-        if (m_process_gbuffer_collision)
+        if (m_process_gbuffer_collision && m_gbuffer_data!=null)
         {
-            ComputeShader cs = m_cs_core;
-            int kernel = kProcessGBufferCollision;
-            // todo: copy gbuffer and assign
-            //cs.SetTexture(kernel, "gbuffer_normal", rtNormalBufferCopy);
-            //cs.SetTexture(kernel, "gbuffer_position", rtPositionBufferCopy);
-            cs.SetBuffer(kernel, "world_data", m_buf_world_data);
-            cs.SetBuffer(kernel, "particles", m_buf_particles[0]);
-            cs.SetBuffer(kernel, "pimd", m_buf_imd);
-            cs.Dispatch(kernel, num_active_blocks, 1, 1);
+            var depth = m_gbuffer_data.gbuffer_prev_depth;
+            var normal = m_gbuffer_data.gbuffer_prev_normal;
+            if(depth!=null && normal!=null)
+            {
+                ComputeShader cs = m_cs_core;
+                int kernel = kProcessGBufferCollision;
+                cs.SetTexture(kernel, "gbuffer_normal", normal);
+                cs.SetTexture(kernel, "gbuffer_depth", depth);
+                cs.SetBuffer(kernel, "world_data", m_buf_world_data);
+                cs.SetBuffer(kernel, "particles", m_buf_particles[0]);
+                cs.SetBuffer(kernel, "pimd", m_buf_imd);
+                cs.Dispatch(kernel, num_active_blocks, 1, 1);
+            }
         }
 
         // colliders

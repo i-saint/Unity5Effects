@@ -36,6 +36,7 @@ struct WorldData
     float3 rcp_world_cellsize;
     float2 rt_size;
     float4x4 view_proj;
+    float4x4 inv_view_proj;
     float rcp_particle_size2;
     float3 coord_scaler;
 };
