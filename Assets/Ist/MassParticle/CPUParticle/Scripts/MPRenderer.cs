@@ -12,17 +12,14 @@ using UnityEditor;
 public class MPRenderer : BatchRendererBase
 {
     MPWorld m_world;
-    RenderTexture m_instance_texture;
     Bounds m_bounds;
 
-
-    public RenderTexture GetInstanceTexture() { return m_instance_texture; }
 
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/BatchRenderer/Meshes/cube.asset", typeof(Mesh)) as Mesh;
-        m_material = AssetDatabase.LoadAssetAtPath("Assets/MassParticle/CPUParticle/Materials/MPStandard.mat", typeof(Material)) as Material;
+        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/BatchRenderer/Meshes/cube.asset", typeof(Mesh)) as Mesh;
+        m_material = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/CPUParticle/Materials/MPStandard.mat", typeof(Material)) as Material;
         m_bounds_size = Vector3.one * 2.0f;
     }
 #endif
@@ -30,15 +27,17 @@ public class MPRenderer : BatchRendererBase
 
     public override Material CloneMaterial(Material src, int nth)
     {
+        var instance_texture = m_world.GetInstanceTexture();
+
         Material m = new Material(src);
         m.SetInt("g_batch_begin", nth * m_instances_par_batch);
-        m.SetTexture("g_instance_data", m_instance_texture);
+        m.SetTexture("g_instance_data", instance_texture);
 
         Vector4 ts = new Vector4(
-            1.0f / m_instance_texture.width,
-            1.0f / m_instance_texture.height,
-            m_instance_texture.width,
-            m_instance_texture.height);
+            1.0f / instance_texture.width,
+            1.0f / instance_texture.height,
+            instance_texture.width,
+            instance_texture.height);
         m.SetVector("g_instance_data_size", ts);
 
         // fix rendering order for transparent objects
@@ -52,22 +51,12 @@ public class MPRenderer : BatchRendererBase
 
     public virtual void ReleaseGPUResources()
     {
-        if (m_instance_texture != null)
-        {
-            m_instance_texture.Release();
-            m_instance_texture = null;
-        }
         ClearMaterials();
     }
 
     public virtual void ResetGPUResoures()
     {
         ReleaseGPUResources();
-
-        m_instance_texture = new RenderTexture(MPWorld.DataTextureWidth, MPWorld.DataTextureHeight, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Default);
-        m_instance_texture.filterMode = FilterMode.Point;
-        m_instance_texture.Create();
-
         UpdateGPUResources();
     }
 
@@ -75,7 +64,7 @@ public class MPRenderer : BatchRendererBase
     {
         if (m_world != null)
         {
-            m_world.UpdateDataTexture(m_instance_texture);
+            m_world.UpdateInstanceTexture();
         }
 
         ForEachEveryMaterials((v) =>

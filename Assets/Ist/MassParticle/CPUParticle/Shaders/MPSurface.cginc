@@ -52,9 +52,9 @@ float4 _HeatColor;
 
 // legacy surface shader
 #ifdef MP_SURFACE
-    void surf(Input data, inout SurfaceOutput o)
+    void surf(Input IN, inout SurfaceOutput o)
     {
-        o.Albedo = _Color * tex2D(_MainTex, data.uv_MainTex);
+        o.Albedo = _Color * tex2D(_MainTex, IN.uv_MainTex);
 
 #ifdef MP_ENABLE_HEAT_EMISSION
         float speed = IN.velocity.w;

@@ -48,8 +48,11 @@ public class MPWorld : MonoBehaviour
     public Vector3 m_active_region_extent = Vector3.zero;
     public int m_particle_num = 0;
     public int m_context = 0;
+
     List<Action> m_actions = new List<Action>();
     List<Action> m_onetime_actions = new List<Action>();
+    RenderTexture m_instance_texture;
+    bool m_texture_needs_update;
 
 
 
@@ -58,10 +61,25 @@ public class MPWorld : MonoBehaviour
     public void RemoveUpdateRoutine(Action a) { m_actions.Remove(a); }
     public void AddOneTimeAction(Action a) { m_onetime_actions.Add(a); }
 
-
-    public void UpdateDataTexture(RenderTexture rt)
+    public RenderTexture GetInstanceTexture()
     {
-        MPAPI.mpUpdateDataTexture(GetContext(), rt.GetNativeTexturePtr());
+        UpdateInstanceTexture();
+        return m_instance_texture;
+    }
+
+    public void UpdateInstanceTexture()
+    {
+        if (m_instance_texture == null)
+        {
+            m_instance_texture = new RenderTexture(MPWorld.DataTextureWidth, MPWorld.DataTextureHeight, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Default);
+            m_instance_texture.filterMode = FilterMode.Point;
+            m_instance_texture.Create();
+        }
+        if (m_texture_needs_update)
+        {
+            m_texture_needs_update = false;
+            MPAPI.mpUpdateDataTexture(GetContext(), m_instance_texture.GetNativeTexturePtr());
+        }
     }
 
 
@@ -83,6 +101,11 @@ public class MPWorld : MonoBehaviour
     void OnDestroy()
     {
         MPAPI.mpDestroyContext(GetContext());
+        if(m_instance_texture!=null)
+        {
+            m_instance_texture.Release();
+            m_instance_texture = null;
+        }
     }
 
     void OnEnable()
@@ -188,6 +211,8 @@ public class MPWorld : MonoBehaviour
 
     void UpdateKernelParams()
     {
+        m_texture_needs_update = true;
+
         m_particle_num = MPAPI.mpGetNumParticles(GetContext());
 
         MPKernelParams p = MPAPI.mpGetKernelParams(GetContext());

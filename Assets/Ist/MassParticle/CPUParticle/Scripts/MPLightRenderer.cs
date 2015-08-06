@@ -7,9 +7,9 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("GPUParticle/Renderer")]
-[RequireComponent(typeof(MPGPWorld))]
-public class MPGPLightRenderer : BatchRendererBase
+[AddComponentMenu("MassParticle/LightRenderer")]
+[RequireComponent(typeof(MPWorld))]
+public class MPLightRenderer : BatchRendererBase
 {
     public enum Sample
     {
@@ -24,7 +24,7 @@ public class MPGPLightRenderer : BatchRendererBase
     public Sample m_sample = Sample.Fast;
     public float m_occulusion_strength = 0.2f;
 
-    MPGPWorld m_world;
+    MPWorld m_world;
     MaterialPropertyBlock m_mpb;
     CommandBuffer m_cb;
     Camera[] m_cameras;
@@ -34,7 +34,7 @@ public class MPGPLightRenderer : BatchRendererBase
     void Reset()
     {
         m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/BatchRenderer/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
-        m_material = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/GPUParticle/Materials/MPGPPointLight.mat", typeof(Material)) as Material;
+        m_material = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/CPUParticle/Materials/MPPointLight.mat", typeof(Material)) as Material;
         m_bounds_size = Vector3.one * 2.0f;
     }
 #endif // UNITY_EDITOR
@@ -50,11 +50,22 @@ public class MPGPLightRenderer : BatchRendererBase
         );
     }
 
+
     public override Material CloneMaterial(Material src, int nth)
     {
+        var instance_texture = m_world.GetInstanceTexture();
+
         Material m = new Material(src);
         m.SetInt("g_batch_begin", nth * m_instances_par_batch);
-        m.SetBuffer("particles", m_world.GetParticleBuffer());
+        m.SetTexture("g_instance_data", instance_texture);
+
+        Vector4 ts = new Vector4(
+            1.0f / instance_texture.width,
+            1.0f / instance_texture.height,
+            instance_texture.width,
+            instance_texture.height);
+        m.SetVector("g_instance_data_size", ts);
+
         if (m_hdr)
         {
             m.SetInt("_SrcBlend", (int)BlendMode.One);
@@ -65,6 +76,7 @@ public class MPGPLightRenderer : BatchRendererBase
             m.SetInt("_SrcBlend", (int)BlendMode.DstColor);
             m.SetInt("_DstBlend", (int)BlendMode.Zero);
         }
+
         if(m_enable_shadow)
         {
             m.EnableKeyword("ENABLE_SHADOW");
@@ -93,12 +105,16 @@ public class MPGPLightRenderer : BatchRendererBase
     public virtual void ResetGPUResoures()
     {
         ReleaseGPUResources();
-
         UpdateGPUResources();
     }
 
     public override void UpdateGPUResources()
     {
+        if (m_world != null)
+        {
+            m_world.UpdateInstanceTexture();
+        }
+
         ForEachEveryMaterials((v) =>
         {
             v.SetInt("g_num_max_instances", m_max_instances);
@@ -111,7 +127,7 @@ public class MPGPLightRenderer : BatchRendererBase
         if(m_cb==null)
         {
             m_cb = new CommandBuffer();
-            m_cb.name = "MPGPLightRenderer";
+            m_cb.name = "MPLightRenderer";
             foreach(var c in m_cameras)
             {
                 if(c!=null) c.AddCommandBuffer(CameraEvent.AfterLighting, m_cb);
@@ -150,8 +166,8 @@ public class MPGPLightRenderer : BatchRendererBase
 
     public override void OnEnable()
     {
-        m_world = GetComponent<MPGPWorld>();
-        m_max_instances = m_world.GetNumMaxParticles();
+        m_world = GetComponent<MPWorld>();
+        m_max_instances = m_world.m_max_particle_num;
         m_cameras = m_camera == null ? Camera.allCameras : new Camera[] { m_camera };
 
         if(m_cameras.Length > 0)

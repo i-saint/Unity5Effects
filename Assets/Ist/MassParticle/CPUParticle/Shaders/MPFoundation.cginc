@@ -32,26 +32,28 @@ void GetParticleParams(int iid, out float4 o_pos, out float4 o_vel, out float4 o
     o_params= tex2Dlod(g_instance_data, t + pitch*2.0);
 }
 
-void ParticleTransform(inout appdata_full v, out float4 pos, out float4 vel, out float4 params)
+// o_pos: w=ID
+// o_params: y=lifetime, z=fade scale
+void ParticleTransform(inout appdata_full v, out float4 o_pos, out float4 o_vel, out float4 o_params)
 {
     int iid = v.texcoord1.x + g_batch_begin;
-    GetParticleParams(iid, pos, vel, params);
-    float lifetime = params.y;
+    GetParticleParams(iid, o_pos, o_vel, o_params);
+    float lifetime = o_params.y;
+    float fade = min(1.0, lifetime / g_fade_time);
+    o_params.z = fade;
 
     v.vertex.xyz *= g_size;
-    v.vertex.xyz *= min(1.0, lifetime/g_fade_time);
-    if(lifetime<=0.0) {
-        v.vertex.xyz = 0.0;
-    }
+    v.vertex.xyz *= fade;
+    v.vertex.xyz *= saturate(lifetime * 10000000); // 0 if dead
 #ifdef MP_ENABLE_SPIN
     if(g_spin != 0.0) {
-        float ang = (dot(pos.xyz, 1.0) * min(1.0, vel.w*0.02)) * g_spin;
-        float3x3 rot = rotation_matrix33(normalize(iq_rand(pos.www)), ang);
+        float ang = (dot(o_pos.xyz, 1.0) * min(1.0, o_vel.w*0.02)) * g_spin;
+        float3x3 rot = rotation_matrix33(normalize(iq_rand(o_pos.www)), ang);
         v.vertex.xyz = mul(rot, v.vertex.xyz);
         v.normal.xyz = mul(rot, v.normal.xyz);
     }
 #endif // MP_ENABLE_SPIN
-    v.vertex.xyz += pos.xyz;
+    v.vertex.xyz += o_pos.xyz;
 }
 
 
