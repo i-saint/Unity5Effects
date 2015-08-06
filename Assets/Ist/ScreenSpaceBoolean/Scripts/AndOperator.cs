@@ -20,7 +20,7 @@ namespace Ist
         void Reset()
         {
             var renderer = GetComponent<Renderer>();
-            var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/ScreenSpaceBoolean/Materials/Default_And.mat");
+            var mat = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/ScreenSpaceBoolean/Materials/Default_Boolean.mat");
             var materials = new Material[renderer.sharedMaterials.Length];
             for (int i = 0; i < materials.Length; ++i)
             {

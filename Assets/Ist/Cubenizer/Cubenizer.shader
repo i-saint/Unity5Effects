@@ -1,7 +1,7 @@
 ﻿Shader "Ist/Cubenizer" {
 Properties {
     _GridSize("Grid Size", Float) = 0.26
-    _BoxSize("Box Size", Float) = 0.22
+    _CubeSize("Cube Size", Float) = 0.22
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
     _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)
@@ -15,6 +15,8 @@ Properties {
     _OffsetPosition("OffsetPosition", Vector) = (0, 0, 0, 0)
     _Scale("Scale", Vector) = (1, 1, 1, 0)
     _CutoutDistance("Cutout Distance", Float) = 0.01
+
+    _ZTest("ZTest", Int) = 4
 }
 
 CGINCLUDE
@@ -25,7 +27,7 @@ CGINCLUDE
 
 
 float _GridSize;
-float _BoxSize;
+float _CubeSize;
 #ifdef ENABLE_FRESNEL
 float4 _FresnelColor;
 float _FresnelScale;
@@ -95,7 +97,7 @@ float map(float3 p)
     p = localize(p);
 
     float3 p1 = modc(p, _GridSize) - _GridSize*0.5;
-    float d1 = sdBox(p1, _BoxSize*0.5);
+    float d1 = sdBox(p1, _CubeSize*0.5);
     return d1;
 }
 
@@ -227,6 +229,7 @@ SubShader {
             Pass Replace
             Ref 128
         }
+        ZTest [_ZTest]
         Cull Back
 CGPROGRAM
 #pragma target 3.0

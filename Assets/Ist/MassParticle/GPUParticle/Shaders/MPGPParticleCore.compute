@@ -412,7 +412,7 @@ void ProcessGBufferCollision(uint3 dtid : SV_DispatchThreadID)
         fpos /= fpos.w;
         float3 fnormal = gbuffer_normal.Load(puv).xyz*2-1;
         float penetration = abs(min(length(fpos.xyz-ppos.xyz)-wd.particle_size-wd.gbuffer_thickness, 0.0));
-        pimd[tid].accel += fnormal * (penetration * wd.wall_stiffness);
+        pimd[tid].accel += fnormal * (penetration * wd.gbuffer_stiffness);
     }
 }
 

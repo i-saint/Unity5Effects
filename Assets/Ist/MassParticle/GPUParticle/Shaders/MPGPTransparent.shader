@@ -1,9 +1,8 @@
 ﻿Shader "GPUParticle/Transparent" {
 
 Properties {
-    _SrcBlend("", Int) = 1
-    _DstBlend("", Int) = 1
-
+    _SrcBlend("SrcBlend", Int) = 1
+    _DstBlend("DstBlend", Int) = 1
 
     _MainTex ("Albedo", 2D) = "white" {}
     _Color("Albedo Color", Color) = (0.8, 0.8, 0.8, 1.0)
@@ -21,7 +20,7 @@ Properties {
 }
 
 SubShader {
-    Tags { "RenderType"="Transparent" "Queue"="Transparent+1" }
+    Tags { "RenderType"="Transparent" "Queue"="Transparent" }
     Blend[_SrcBlend][_DstBlend]
     Cull Front
 

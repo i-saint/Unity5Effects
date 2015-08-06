@@ -1,6 +1,6 @@
 ﻿Shader "Hidden/Ist/WaterSurface" {
 SubShader {
-    Tags { "Queue"="Transparent-200" "RenderType"="Transparent" }
+    Tags { "Queue"="Transparent+100" "RenderType"="Transparent" }
     Blend Off
     ZTest Less
     ZWrite Off
