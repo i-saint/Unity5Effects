@@ -11,9 +11,9 @@
 #include "UnityCG.cginc"
 #include "MPFoundation.cginc"
 
+float4 _HeatColor;
 float _HeatThreshold;
 float _HeatIntensity;
-float4 _HeatColor;
 
 
 #ifdef MP_DEPTH_PREPASS

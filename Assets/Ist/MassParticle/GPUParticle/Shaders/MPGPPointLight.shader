@@ -3,7 +3,12 @@
 Properties {
     _SrcBlend("Src Blend", Int) = 1
     _DstBlend("Dst Blend", Int) = 1
+
     _Color("Color ", Vector) = (1,1,1,1)
+
+    _HeatColor("Heat Color", Color) = (0.25, 0.05, 0.025, 0.0)
+    _HeatThreshold("Heat Threshold", Float) = 2.0
+
     g_size("Particle Size", Float) = 0.5
     g_fade_time("Fade Time", Float) = 0.3
 }
@@ -26,14 +31,18 @@ CGINCLUDE
 #ifdef MPGP_WITH_STRUCTURED_BUFFER
 StructuredBuffer<Particle> particles;
 #endif // MPGP_WITH_STRUCTURED_BUFFER
-int         g_batch_begin;
-float       g_size;
-float       g_fade_time;
-float4      _Color;
-float       _OcculusionStrength;
+int     g_batch_begin;
+float   g_size;
+float   g_fade_time;
+
+float4  _Color;
+float   _OcculusionStrength;
+
+float4  _HeatColor;
+float   _HeatThreshold;
 
 
-int ParticleTransform(inout appdata_full v, out float4 pos)
+int ParticleTransform(inout appdata_full v, out float4 o_pos, out float4 o_vel)
 {
     int iid = v.texcoord1.x + g_batch_begin;
 #ifdef MPGP_WITH_STRUCTURED_BUFFER
@@ -47,7 +56,8 @@ int ParticleTransform(inout appdata_full v, out float4 pos)
     v.vertex.xyz += p.position.xyz;
     float range = size * 0.5;
     float range_inv_sq = 1.0 / (range*range);
-    pos = float4(p.position.xyz, range_inv_sq);
+    o_pos = float4(p.position.xyz, range_inv_sq);
+    o_vel = float4(p.velocity, p.speed);
 #endif // MPGP_WITH_STRUCTURED_BUFFER
     return iid;
 }
@@ -58,6 +68,7 @@ struct vs_out
     float4 vertex : SV_POSITION;
     float4 uv : TEXCOORD0;
     float4 instance_pos : TEXCOORD1; // w: 1.0 / (range*range)
+    float4 heat_color : TEXCOORD2;
 };
 
 struct ps_out
@@ -74,14 +85,19 @@ struct ps_out
 
 vs_out vert(appdata_full v)
 {
-    float4 ipos = 0;
-    ParticleTransform(v, ipos);
+    float4 pos = 0;
+    float4 vel = 0;
+    ParticleTransform(v, pos, vel);
 
-    vs_out o;
-    o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
-    o.uv = ComputeScreenPos(o.vertex);
-    o.instance_pos = ipos;
-    return o;
+    vs_out O;
+    O.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+    O.uv = ComputeScreenPos(O.vertex);
+    O.instance_pos = pos;
+
+    float speed = vel.w;
+    O.heat_color = _HeatColor * max(speed - _HeatThreshold, 0.0);
+
+    return O;
 }
 
 
@@ -121,13 +137,13 @@ float Jitter(float3 p)
     #define MAX_MARCH 8
 #endif
 
-ps_out frag(vs_out i)
+ps_out frag(vs_out I)
 {
-    int instance_id = i.instance_pos.w;
-    float2 uv = i.uv.xy / i.uv.w;
+    int instance_id = I.instance_pos.w;
+    float2 uv = I.uv.xy / I.uv.w;
     float3 wpos = GetPosition(uv).xyz;
-    float3 lightPos = i.instance_pos.xyz;
-    float range_inv_sq = i.instance_pos.w;
+    float3 lightPos = I.instance_pos.xyz;
+    float range_inv_sq = I.instance_pos.w;
 
     float atten, fadeDist;
     UnityLight light = (UnityLight)0;
@@ -177,7 +193,7 @@ ps_out frag(vs_out i)
 #endif
 
 
-    light.color = _Color.rgb * atten;
+    light.color = (_Color.rgb + I.heat_color) * atten;
     half3 baseColor = gbuffer0.rgb;
     half3 specColor = gbuffer1.rgb;
     half oneMinusRoughness = gbuffer1.a;
@@ -214,6 +230,7 @@ ENDCG
 #pragma exclude_renderers nomrt
 #pragma multi_compile ___ UNITY_HDR_ON
 #pragma multi_compile ___ ENABLE_SHADOW
+#pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
 #pragma vertex vert
 #pragma fragment frag
         ENDCG

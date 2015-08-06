@@ -12,8 +12,13 @@ public class MPGPLightRendererEditor : Editor
     SerializedProperty m_camera;
 
     SerializedProperty m_color;
-    SerializedProperty m_size;
     SerializedProperty m_intensity;
+
+    SerializedProperty m_heat_color;
+    SerializedProperty m_heat_intensity;
+    SerializedProperty m_heat_threshold;
+
+    SerializedProperty m_size;
     SerializedProperty m_enable_shadow;
     SerializedProperty m_sample;
     SerializedProperty m_occulusion_strength;
@@ -28,8 +33,13 @@ public class MPGPLightRendererEditor : Editor
         m_camera = m_obj.FindProperty("m_camera");
 
         m_color = m_obj.FindProperty("m_color");
-        m_size = m_obj.FindProperty("m_size");
         m_intensity = m_obj.FindProperty("m_intensity");
+
+        m_heat_color = m_obj.FindProperty("m_heat_color");
+        m_heat_intensity = m_obj.FindProperty("m_heat_intensity");
+        m_heat_threshold = m_obj.FindProperty("m_heat_threshold");
+
+        m_size = m_obj.FindProperty("m_size");
         m_enable_shadow = m_obj.FindProperty("m_enable_shadow");
         m_sample = m_obj.FindProperty("m_sample");
         m_occulusion_strength = m_obj.FindProperty("m_occulusion_strength");
@@ -46,8 +56,13 @@ public class MPGPLightRendererEditor : Editor
         EditorGUILayout.PropertyField(m_camera, new GUIContent("Camera"));
 
         EditorGUILayout.PropertyField(m_color, new GUIContent("Color"));
-        EditorGUILayout.PropertyField(m_size, new GUIContent("Size"));
         EditorGUILayout.PropertyField(m_intensity, new GUIContent("Intensity"));
+
+        EditorGUILayout.PropertyField(m_heat_color, new GUIContent("Heat Color"));
+        EditorGUILayout.PropertyField(m_heat_intensity, new GUIContent("Heat Intensity"));
+        EditorGUILayout.PropertyField(m_heat_threshold, new GUIContent("Heat Threshold"));
+
+        EditorGUILayout.PropertyField(m_size, new GUIContent("Size"));
         EditorGUILayout.PropertyField(m_enable_shadow, new GUIContent("Enable Shadow"));
         if(tobj.m_enable_shadow)
         {

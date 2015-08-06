@@ -18,8 +18,13 @@ public class MPLightRenderer : BatchRendererBase
         High,
     }
     public Color m_color = Color.white;
-    public float m_size = 1.25f;
     public float m_intensity = 0.9f;
+
+    public Color m_heat_color = new Color(1.0f, 0.4f, 0.2f, 0.0f);
+    public float m_heat_intensity = 0.7f;
+    public float m_heat_threshold = 2.0f;
+
+    public float m_size = 1.25f;
     public bool m_enable_shadow = false;
     public Sample m_sample = Sample.Fast;
     public float m_occulusion_strength = 0.2f;
@@ -46,6 +51,16 @@ public class MPLightRenderer : BatchRendererBase
             Mathf.GammaToLinearSpace(m_color.r * m_intensity),
             Mathf.GammaToLinearSpace(m_color.g * m_intensity),
             Mathf.GammaToLinearSpace(m_color.b * m_intensity),
+            1.0f
+        );
+    }
+
+    public Vector4 GetLinearHeatColor()
+    {
+        return new Vector4(
+            Mathf.GammaToLinearSpace(m_heat_color.r * m_heat_intensity),
+            Mathf.GammaToLinearSpace(m_heat_color.g * m_heat_intensity),
+            Mathf.GammaToLinearSpace(m_heat_color.b * m_heat_intensity),
             1.0f
         );
     }
@@ -150,7 +165,8 @@ public class MPLightRenderer : BatchRendererBase
         m_mpb.SetColor("_Color", GetLinearColor());
         m_mpb.SetFloat("g_size", m_size);
         m_mpb.SetFloat("_OcculusionStrength", m_occulusion_strength);
-
+        m_mpb.SetColor("_HeatColor", GetLinearHeatColor());
+        m_mpb.SetFloat("_HeatThreshold", m_heat_threshold);
 
         Matrix4x4 matrix = Matrix4x4.identity;
         m_actual_materials.ForEach(a =>
