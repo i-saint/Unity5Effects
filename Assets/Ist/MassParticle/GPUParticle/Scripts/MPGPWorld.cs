@@ -63,6 +63,8 @@ public class MPGPWorld : MonoBehaviour
     public float m_advection = 0.5f;
     public float m_pressure_stiffness = 500.0f;
     public float m_wall_stiffness = 1000.0f;
+    public float m_gbuffer_stiffness = 1000.0f;
+    public float m_gbuffer_thickness = 0.1f;
     public Vector3 m_coord_scaler = Vector3.one;
 
     public float m_sph_smoothlen = 0.2f;
@@ -297,11 +299,16 @@ public class MPGPWorld : MonoBehaviour
         m_world_data[0].damping = m_damping;
         m_world_data[0].advection = m_advection;
         m_world_data[0].coord_scaler = m_coord_scaler;
-        m_world_data[0].pressure_stiffness = m_pressure_stiffness;
         m_world_data[0].wall_stiffness = m_wall_stiffness;
+        m_world_data[0].gbuffer_stiffness = m_gbuffer_stiffness;
+        m_world_data[0].gbuffer_thickness = m_gbuffer_thickness;
+        m_world_data[0].pressure_stiffness = m_pressure_stiffness;
         if( m_gbuffer_data != null)
         {
-            m_world_data[0].inv_view_proj = m_gbuffer_data.matrix_inv_vp;
+            var cam = m_gbuffer_data.GetCamera();
+            m_world_data[0].view_proj = m_gbuffer_data.GetMatrix_VP();
+            m_world_data[0].inv_view_proj = m_gbuffer_data.GetMatrix_InvVP();
+            m_world_data[0].rt_size = new Vector2(cam.pixelWidth, cam.pixelHeight);
         }
 
 
@@ -462,8 +469,8 @@ public class MPGPWorld : MonoBehaviour
         // gbuffer collision
         if (m_process_gbuffer_collision && m_gbuffer_data!=null)
         {
-            var depth = m_gbuffer_data.gbuffer_prev_depth;
-            var normal = m_gbuffer_data.gbuffer_prev_normal;
+            var depth = m_gbuffer_data.GetGBuffer_Depth();
+            var normal = m_gbuffer_data.GetGBuffer_Normal();
             if(depth!=null && normal!=null)
             {
                 ComputeShader cs = m_cs_core;
@@ -474,6 +481,12 @@ public class MPGPWorld : MonoBehaviour
                 cs.SetBuffer(kernel, "particles", m_buf_particles[0]);
                 cs.SetBuffer(kernel, "pimd", m_buf_imd);
                 cs.Dispatch(kernel, num_active_blocks, 1, 1);
+            }
+            else
+            {
+                m_gbuffer_data.m_enable_inv_matrices = true;
+                m_gbuffer_data.m_enable_prev_depth = true;
+                m_gbuffer_data.m_enable_prev_normal = true;
             }
         }
 

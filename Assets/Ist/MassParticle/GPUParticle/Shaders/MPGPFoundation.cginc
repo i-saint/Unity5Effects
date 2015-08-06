@@ -17,8 +17,10 @@ struct WorldData
     float timestep;
     float particle_size;
     float particle_lifetime;
-    float wall_stiffness;
     float pressure_stiffness;
+    float wall_stiffness;
+    float gbuffer_stiffness;
+    float gbuffer_thickness;
     float damping;
     float advection;
     int num_max_particles;

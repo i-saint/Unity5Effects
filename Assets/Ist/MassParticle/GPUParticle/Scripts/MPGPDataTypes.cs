@@ -121,13 +121,15 @@ public struct MPGPWorldIData
 
 public struct MPGPWorldData
 {
-    public const int size = 288;
+    public const int size = 296;
 
     public float timestep;
     public float particle_size;
     public float particle_lifetime;
-    public float wall_stiffness;
     public float pressure_stiffness;
+    public float wall_stiffness;
+    public float gbuffer_stiffness;
+    public float gbuffer_thickness;
     public float damping;
     public float advection;
     public int num_max_particles;

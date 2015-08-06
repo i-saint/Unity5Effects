@@ -18,8 +18,10 @@ namespace Ist
         public bool m_enable_prev_normal;
         public bool m_enable_prev_emission;
         public bool m_enable_prev_depth;
+        public bool m_enable_uav;
         public Shader m_sh_gbuffer_copy;
         public Mesh m_quad;
+        Camera m_camera;
         Material m_mat_gbuffer_copy;
         Matrix4x4 m_vp;
         Matrix4x4 m_inv_vp;
@@ -30,17 +32,18 @@ namespace Ist
         RenderTexture m_depth;
         RenderBuffer[] m_gbuffer_rb = new RenderBuffer[4];
 
+        public Camera GetCamera() { return m_camera; }
 
-        public Matrix4x4 matrix_vp { get { return m_vp; } }
-        public Matrix4x4 matrix_inv_vp { get { return m_inv_vp; } }
-        public Matrix4x4 matrix_prev_vp { get { return m_prev_vp; } }
-        public Matrix4x4 matrix_prev_inv_vp { get { return m_prev_inv_vp; } }
+        public Matrix4x4 GetMatrix_VP() { return m_vp; }
+        public Matrix4x4 GetMatrix_InvVP() { return m_inv_vp; }
+        public Matrix4x4 GetMatrix_PrevVP() { return m_prev_vp; }
+        public Matrix4x4 GetMatrix_PrevInvVP() { return m_prev_inv_vp; }
 
-        public RenderTexture gbuffer_prev_albedo { get { return m_gbuffer_rt[0]; } }
-        public RenderTexture gbuffer_prev_specular { get { return m_gbuffer_rt[1]; } }
-        public RenderTexture gbuffer_prev_normal { get { return m_gbuffer_rt[2]; } }
-        public RenderTexture gbuffer_prev_emission { get { return m_gbuffer_rt[3]; } }
-        public RenderTexture gbuffer_prev_depth { get { return m_depth; } }
+        public RenderTexture GetGBuffer_Albedo() { return m_gbuffer_rt[0]; }
+        public RenderTexture GetGBuffer_Specular() { return m_gbuffer_rt[1]; }
+        public RenderTexture GetGBuffer_Normal() { return m_gbuffer_rt[2]; }
+        public RenderTexture GetGBuffer_Emission() { return m_gbuffer_rt[3]; }
+        public RenderTexture GetGBuffer_Depth() { return m_depth; }
 
         public bool prev_color_buffers_enabled
         { get { return m_enable_prev_albedo || m_enable_prev_specular || m_enable_prev_normal || m_enable_prev_emission; } }
@@ -71,12 +74,16 @@ namespace Ist
             }
         }
 
+        void OnEnable()
+        {
+            m_camera = GetComponent<Camera>();
+        }
+
         void OnDisable()
         {
-            var cam = GetComponent<Camera>();
             if (m_cb_framebuffer != null)
             {
-                cam.RemoveCommandBuffer(CameraEvent.AfterSkybox, m_cb_framebuffer);
+                m_camera.RemoveCommandBuffer(CameraEvent.AfterSkybox, m_cb_framebuffer);
                 m_cb_framebuffer.Release();
                 m_cb_framebuffer = null;
             }
@@ -87,12 +94,10 @@ namespace Ist
             var act = gameObject.activeInHierarchy && enabled;
             if (!act) return;
 
-            var cam = GetComponent<Camera>();
-
             if (m_enable_inv_matrices)
             {
-                Matrix4x4 view = cam.worldToCameraMatrix;
-                Matrix4x4 proj = cam.projectionMatrix;
+                Matrix4x4 view = m_camera.worldToCameraMatrix;
+                Matrix4x4 proj = m_camera.projectionMatrix;
                 // Unity internally modify projection matrix like this.
                 // GL.GetGPUProjectionMatrix() seems doing similar things, but it is different on some (OpenGL etc) platforms. 
                 proj[2, 0] = proj[2, 0] * 0.5f + proj[3, 0] * 0.5f;
@@ -128,13 +133,13 @@ namespace Ist
         }
 
 
-        RenderTexture CreateGBufferRT(RenderTextureFormat format)
+        RenderTexture CreateGBufferRT(RenderTextureFormat format, int depth=0)
         {
-            var cam = GetComponent<Camera>();
-            var ret = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, format);
+            var ret = new RenderTexture(m_camera.pixelWidth, m_camera.pixelHeight, depth, format);
             ret.filterMode = FilterMode.Point;
             ret.useMipMap = false;
             ret.generateMips = false;
+            ret.enableRandomWrite = m_enable_uav;
             ret.Create();
             return ret;
         }
@@ -142,8 +147,6 @@ namespace Ist
         IEnumerator OnPostRender()
         {
             yield return new WaitForEndOfFrame();
-
-            var cam = GetComponent<Camera>();
 
             if (prev_color_buffers_enabled)
             {
@@ -155,8 +158,8 @@ namespace Ist
                 {
                     m_gbuffer_rt[0] = CreateGBufferRT(RenderTextureFormat.ARGB32);
                     m_gbuffer_rt[1] = CreateGBufferRT(RenderTextureFormat.ARGB32);
-                    m_gbuffer_rt[2] = CreateGBufferRT(RenderTextureFormat.ARGB2101010);
-                    m_gbuffer_rt[3] = CreateGBufferRT(cam.hdr ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32);
+                    m_gbuffer_rt[2] = CreateGBufferRT(m_enable_uav ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB2101010);
+                    m_gbuffer_rt[3] = CreateGBufferRT(m_camera.hdr ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32);
                     m_gbuffer_rb[0] = m_gbuffer_rt[0].colorBuffer;
                     m_gbuffer_rb[1] = m_gbuffer_rt[1].colorBuffer;
                     m_gbuffer_rb[2] = m_gbuffer_rt[2].colorBuffer;

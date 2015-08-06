@@ -20,19 +20,19 @@
 
 #define BLOCK_SIZE 512
 
-StructuredBuffer<WorldData>			world_data;
-RWStructuredBuffer<WorldIData>		world_idata;
-StructuredBuffer<SPHParams>			sph_params;
-StructuredBuffer<Cell>				cells;
-RWStructuredBuffer<Particle>		particles;
-StructuredBuffer<Particle>			particles_to_add;
-RWStructuredBuffer<ParticleIData>	pimd;
-Texture2D							gbuffer_depth;
-Texture2D							gbuffer_normal;
-StructuredBuffer<SphereCollider>	sphere_colliders;
-StructuredBuffer<CapsuleCollider>	capsule_colliders;
-StructuredBuffer<BoxCollider>		box_colliders;
-StructuredBuffer<Force>				forces;
+StructuredBuffer<WorldData>         world_data;
+RWStructuredBuffer<WorldIData>      world_idata;
+StructuredBuffer<SPHParams>         sph_params;
+StructuredBuffer<Cell>              cells;
+RWStructuredBuffer<Particle>        particles;
+StructuredBuffer<Particle>          particles_to_add;
+RWStructuredBuffer<ParticleIData>   pimd;
+Texture2D                           gbuffer_depth;
+Texture2D                           gbuffer_normal;
+StructuredBuffer<SphereCollider>    sphere_colliders;
+StructuredBuffer<CapsuleCollider>   capsule_colliders;
+StructuredBuffer<BoxCollider>       box_colliders;
+StructuredBuffer<Force>             forces;
 
 SamplerState samplergbuffer_position
 {
@@ -402,25 +402,17 @@ void ProcessGBufferCollision(uint3 dtid : SV_DispatchThreadID)
     WorldData wd = world_data[0];
 
     float3 ppos = particles[tid].position;
+    float4 pscreen_pos = mul(wd.view_proj, float4(ppos, 1.0));
+    pscreen_pos /= pscreen_pos.w;
+    int3 puv = int3((pscreen_pos.xy * 0.5 + 0.5) * wd.rt_size, 0);
 
-    float4 tpos4 = mul(wd.view_proj, float4(ppos, 1.0));
-    float2 tcoord = tpos4.xy / tpos4.w;
-    float2 tpos = (tcoord * 0.5 + 0.5) * wd.rt_size;
-
-    float depth = gbuffer_depth[tpos].x;
-    if(depth < 1.0) {
-        pimd[tid].accel.y += 5;
-
-        float4 fpos4 = mul(wd.inv_view_proj, float4(tcoord, depth, 1));
-        fpos4 /= fpos4.w;
-
-        float3 fnormal = gbuffer_normal[tpos].xyz;
-        float r = 0.2;
-        //float penetration = min(fpos4.w-tpos4.z-wd.particle_size, 0.0);
-        float penetration = min(length(fpos4.xyz-ppos.xyz)-wd.particle_size-r, 0.0);
-        {
-            pimd[tid].accel += fnormal * (-penetration * wd.wall_stiffness);
-        }
+    float depth = gbuffer_depth.Load(puv).x;
+    if(depth>0 && depth < 1) {
+        float4 fpos = mul(wd.inv_view_proj, float4(pscreen_pos.xy, depth, 1));
+        fpos /= fpos.w;
+        float3 fnormal = gbuffer_normal.Load(puv).xyz*2-1;
+        float penetration = abs(min(length(fpos.xyz-ppos.xyz)-wd.particle_size-wd.gbuffer_thickness, 0.0));
+        pimd[tid].accel += fnormal * (penetration * wd.wall_stiffness);
     }
 }
 
