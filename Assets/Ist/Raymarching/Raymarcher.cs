@@ -88,7 +88,7 @@ public class Raymarcher : MonoBehaviour
 #if UNITY_EDITOR
     void Reset()
     {
-        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Raymarching/Raymarcher.mat");
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/Raymarching/Raymarcher.mat");
     }
 #endif // UNITY_EDITOR
 
