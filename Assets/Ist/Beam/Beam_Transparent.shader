@@ -1,18 +1,20 @@
-Shader "Examples/Beam"
-{
+Shader "Ist/Beam/Transparent" {
 Properties {
-    _Color ("Color", Color) = (0,0,0)
-    _ColorToMultiply ("Color To Multiply", Vector) = (1,1,1,1)
+    _SrcBlend("SrcBlend", Int) = 1
+    _DstBlend("DstBlend", Int) = 1
+    _ZWrite("ZWrite", Int) = 0
+
+    _Color("Color", Color) = (0.5, 0.5, 0.5, 1)
+    _BeamDirection("Beam Direction", Vector) = (0, 0, 1, 1)
 }
 
 SubShader
 {
-    Tags { "RenderType"="Transparent" "Queue"="Transparent" }
+    Tags { "RenderType"="Transparent" "Queue"="Transparent" "DisableBatching" = "True" }
 
 CGINCLUDE
 
 float4 _Color;
-float4 _ColorToMultiply;
 float4 _BeamDirection; // xyz: direction w: length
 
 struct ia_out
@@ -29,16 +31,17 @@ struct vs_out
 
 struct ps_out
 {
-    float4 color : SV_Target;
+    half4 color : SV_Target;
 };
 
 
 vs_out vert(ia_out v)
 {
     float3 pos1 = mul(_Object2World, v.vertex).xyz;
-    float3 pos2 = pos1 + _BeamDirection.xyz * _BeamDirection.w;
+    float3 pos2 = pos1 + normalize(_BeamDirection.xyz) * _BeamDirection.w;
     float3 n = normalize(mul(_Object2World, float4(v.normal.xyz,0.0)).xyz);
-    float3 pos = dot(-_BeamDirection.xyz, n.xyz)>0.0 ? pos1 : pos2;
+    float t = saturate(dot(-_BeamDirection.xyz, n.xyz) * 1000000);
+    float3 pos = lerp(pos2, pos1, t);
 
     vs_out o;
     o.vertex = mul(UNITY_MATRIX_VP, float4(pos, 1.0));
@@ -48,15 +51,14 @@ vs_out vert(ia_out v)
 ps_out frag(vs_out i)
 {
     ps_out r;
-    r.color = _Color * _ColorToMultiply;
+    r.color = _Color;
     return r;
 }
 ENDCG
 
     Pass {
-        Cull Back
-        ZTest LEqual
-        ZWrite Off
+        Blend[_SrcBlend][_DstBlend]
+        ZWrite [_ZWrite]
 
         CGPROGRAM
         #pragma vertex vert

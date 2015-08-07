@@ -22,7 +22,6 @@ Properties {
 SubShader {
     Tags { "RenderType"="Transparent" "Queue"="Transparent" }
     Blend[_SrcBlend][_DstBlend]
-    Cull Front
 
     Pass {
 CGPROGRAM
