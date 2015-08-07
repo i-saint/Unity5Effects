@@ -14,7 +14,7 @@ public class Packaging
         string[] files = new string[]
         {
 "Assets/Ist",
-"Assets/Editor/Ist",
+"Assets/smcs.rsp",
         };
         AssetDatabase.ExportPackage(files, "IstEffects.unitypackage", ExportPackageOptions.Recurse);
     }
