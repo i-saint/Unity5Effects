@@ -34,6 +34,8 @@ namespace Ist
         public float m_attenuation = 0.1f;
         public Color m_falloff_color = Color.black;
 
+        public int m_render_queue = 0;
+
         public Shader m_shader;
         Material m_material;
 
@@ -59,6 +61,8 @@ namespace Ist
             {
                 var renderer = GetComponent<Renderer>();
                 m_material = new Material(m_shader);
+                if(m_render_queue==0) { m_render_queue = m_material.renderQueue; }
+                m_material.renderQueue = m_render_queue;
                 renderer.sharedMaterial = m_material;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
