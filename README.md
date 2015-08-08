@@ -35,14 +35,14 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 水面は G-Buffer をレイマーチすることで屈折をエミュレートしています。コースティクスは 3 次元ノイズで明るくしてそれっぽく見せかけています。
 
 
-### Light Particle
-![alt text](doc/LightParticle.jpg)  
-一粒一粒を Point Light として扱うパーティクルレンダラ。MassParticle の拡張。
-
-
 ### Cubenizer
 ![alt text](doc/Cubenizer.jpg)  
 Cube の集合に見せかけるシェーダ。
+
+
+### Light Particle
+![alt text](doc/LightParticle.jpg)  
+一粒一粒を Point Light として扱うパーティクルレンダラ。MassParticle の拡張。
 
 
 #### Mosaic Field
