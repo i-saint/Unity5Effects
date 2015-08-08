@@ -38,7 +38,7 @@ public class MPGPLightRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/BatchRenderer/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
+        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/Utilities/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
         m_material = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/GPUParticle/Materials/MPGPPointLight.mat", typeof(Material)) as Material;
         m_bounds_size = Vector3.one * 2.0f;
     }
@@ -70,6 +70,7 @@ public class MPGPLightRenderer : BatchRendererBase
         Material m = new Material(src);
         m.SetInt("g_batch_begin", nth * m_instances_par_batch);
         m.SetBuffer("particles", m_world.GetParticleBuffer());
+
         if (m_hdr)
         {
             m.SetInt("_SrcBlend", (int)BlendMode.One);
@@ -80,22 +81,34 @@ public class MPGPLightRenderer : BatchRendererBase
             m.SetInt("_SrcBlend", (int)BlendMode.DstColor);
             m.SetInt("_DstBlend", (int)BlendMode.Zero);
         }
+
         if(m_enable_shadow)
         {
             m.EnableKeyword("ENABLE_SHADOW");
             switch (m_sample)
             {
                 case Sample.Fast:
-                    m.EnableKeyword("QUALITY_FAST");
+                    m.EnableKeyword ("QUALITY_FAST");
+                    m.DisableKeyword("QUALITY_MEDIUM");
+                    m.DisableKeyword("QUALITY_HIGH");
                     break;
                 case Sample.Medium:
-                    m.EnableKeyword("QUALITY_MEDIUM");
+                    m.DisableKeyword("QUALITY_FAST");
+                    m.EnableKeyword ("QUALITY_MEDIUM");
+                    m.DisableKeyword("QUALITY_HIGH");
                     break;
                 case Sample.High:
-                    m.EnableKeyword("QUALITY_HIGH");
+                    m.DisableKeyword("QUALITY_FAST");
+                    m.DisableKeyword("QUALITY_MEDIUM");
+                    m.EnableKeyword ("QUALITY_HIGH");
                     break;
             }
         }
+        else
+        {
+            m.DisableKeyword("ENABLE_SHADOW");
+        }
+
         return m;
     }
 

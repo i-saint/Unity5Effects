@@ -4,12 +4,6 @@ Properties {
     _DstBlend("", Int) = 1
 }
 SubShader {
-    Tags { "RenderType"="Opaque" }
-    Fog{ Mode Off }
-    ZWrite Off
-    ZTest Greater
-    Blend[_SrcBlend][_DstBlend]
-    Cull Front
 
 CGINCLUDE
 #if QUALITY_FAST
@@ -33,7 +27,6 @@ float4 _Params1;
 #define _RangeInvSq         (1.0/(_Range*_Range))
 #define _InnerRadius        _Params1.x
 #define _CapsuleLength      _Params1.y
-#define _LightType          _Params1.z
 #define _OcculusionStrength _Params1.w
 
 
@@ -60,7 +53,7 @@ struct ps_out
 };
 
 
-unity_v2f_deferred vert_point(ia_out v)
+unity_v2f_deferred vert(ia_out v)
 {
     unity_v2f_deferred o;
     o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
@@ -70,25 +63,19 @@ unity_v2f_deferred vert_point(ia_out v)
 }
 
 
-unity_v2f_deferred vert_line(ia_out v)
-{
-    return vert_point(v);
-}
 
-
-
-half3 CalcSphereLightToLight(float3 pos, float3 lightPos, float3 eyeVec, half3 normal, float sphereRad, out float3 closestPoint)
+half3 CalcSphereLightToLight(float3 pos, float3 lightPos, float3 eyeVec, half3 normal, float sphereRad)
 {
     half3 viewDir = -eyeVec;
     half3 r = reflect (viewDir, normal);
 
     float3 L = lightPos - pos;
     float3 centerToRay = dot (L, r) * r - L;
-    closestPoint = L + centerToRay * saturate(sphereRad / length(centerToRay));
+    float3 closestPoint = L + centerToRay * saturate(sphereRad / length(centerToRay));
     return normalize(closestPoint);
 }
 
-half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 eyeVec, half3 normal, float tubeRad, out float3 closestPoint)
+half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 eyeVec, half3 normal, float tubeRad)
 {
     half3 N = normal;
     half3 viewDir = -eyeVec;
@@ -112,7 +99,7 @@ half3 CalcTubeLightToLight(float3 pos, float3 tubeStart, float3 tubeEnd, float3 
     float t			= ( RoL0 * RoLd - L0oLd ) 
                     / ( distLd * distLd - RoLd * RoLd );
     
-    closestPoint	= L0 + Ld * clamp( t, 0.0, 1.0 );
+    float3 closestPoint	= L0 + Ld * clamp( t, 0.0, 1.0 );
     float3 centerToRay	= dot( closestPoint, r ) * r - closestPoint;
     closestPoint		= closestPoint + centerToRay * clamp( tubeRad / length( centerToRay ), 0.0, 1.0 );
     float3 l				= normalize( closestPoint );
@@ -181,7 +168,8 @@ void distance_point_capsule(float3 ppos, float3 pos1, float3 pos2, float radius,
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
 #define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
 
-ps_out frag_point(unity_v2f_deferred i)
+
+ps_out frag(unity_v2f_deferred i)
 {
     float3 wpos;
     float2 uv;
@@ -190,9 +178,6 @@ ps_out frag_point(unity_v2f_deferred i)
     DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
     
     float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
-    float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
-    float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
-    float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
 
     half4 gbuffer0 = tex2D (_CameraGBufferTexture0, uv);
     half4 gbuffer1 = tex2D (_CameraGBufferTexture1, uv);
@@ -201,17 +186,14 @@ ps_out frag_point(unity_v2f_deferred i)
     normalWorld = normalize(normalWorld);
     float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
 
-    float3 lightClosestPoint;
-    if (_LightType == 1)
-    {
-        // tube light
-        light.dir = CalcTubeLightToLight (wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
-    }
-    else
-    {
-        // Sphere light
-        light.dir = CalcSphereLightToLight (wpos, lightPos, eyeVec, normalWorld, _InnerRadius, lightClosestPoint);
-    }
+#if LINE_LIGHT
+    float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
+    float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
+    float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
+    light.dir = CalcTubeLightToLight(wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius);
+#else // POINT_LIGHT
+    light.dir = CalcSphereLightToLight(wpos, lightPos, eyeVec, normalWorld, _InnerRadius);
+#endif
     light.ndotl = LambertTerm (normalWorld, light.dir);
     if(dot(gbuffer2.xyz, 1.0) * light.ndotl <= 0.0) { discard; }
 
@@ -221,17 +203,14 @@ ps_out frag_point(unity_v2f_deferred i)
         float distance;
         float3 ray_dir;
         float occulusion_par_march = _OcculusionStrength / MAX_MARCH;
-        if (_LightType == 0)
-        {
-            float3 diff = wpos.xyz - lightPos.xyz;
-            distance = length(diff);
-            ray_dir = normalize(diff);
-        }
-        else
-        {
-            distance_point_capsule(wpos, lightPos1, lightPos2, 0.0,
-                lightPos, ray_dir, distance);
-        }
+#if LINE_LIGHT
+        distance_point_capsule(wpos, lightPos1, lightPos2, 0.0,
+            lightPos, ray_dir, distance);
+#else // POINT_LIGHT
+        float3 diff = wpos.xyz - lightPos.xyz;
+        distance = length(diff);
+        ray_dir = normalize(diff);
+#endif
         distance -= _InnerRadius;
         float3 begin_pos = lightPos + ray_dir * _InnerRadius;
         float march_step = distance / MAX_MARCH;
@@ -276,35 +255,24 @@ ps_out frag_point(unity_v2f_deferred i)
     return r;
 }
 
-ps_out frag_line(unity_v2f_deferred i)
-{
-    return frag_point(i); // todo
-}
+
 ENDCG
 
-    // point light
     Pass {
-        CGPROGRAM
-        #pragma target 3.0
-        #pragma exclude_renderers nomrt
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
-        #pragma multi_compile ___ ENABLE_SHADOW
-        #pragma multi_compile ___ UNITY_HDR_ON
-        #pragma vertex vert_point
-        #pragma fragment frag_point
-        ENDCG
-    }
+        Cull Front
+        ZTest GEqual
+        ZWrite Off
+        Blend[_SrcBlend][_DstBlend]
 
-    // line light
-    Pass {
         CGPROGRAM
         #pragma target 3.0
         #pragma exclude_renderers nomrt
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma multi_compile POINT_LIGHT LINE_LIGHT
         #pragma multi_compile ___ ENABLE_SHADOW
         #pragma multi_compile ___ UNITY_HDR_ON
-        #pragma vertex vert_line
-        #pragma fragment frag_line
+        #pragma vertex vert
+        #pragma fragment frag
         ENDCG
     }
 }

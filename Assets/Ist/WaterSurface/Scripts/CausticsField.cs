@@ -60,15 +60,22 @@ namespace Ist
             m_material.SetVector("_Color", m_color);
             m_material.SetVector("_Params1", new Vector4(m_scroll_speed, m_scale, m_intensity, m_wave_pow));
             m_material.SetVector("_Params2", new Vector4(m_attenuation, m_attenuation_pow, 0.0f, 0.0f));
-            switch(m_attenuation_model)
+
+            switch (m_attenuation_model)
             {
                 case AttenuationModel.None:
                     m_material.EnableKeyword("ATTENUATION_NONE");
+                    m_material.DisableKeyword("ATTENUATION_DIRECTIONAL");
+                    m_material.DisableKeyword("ATTENUATION_RADIAL");
                     break;
                 case AttenuationModel.Directional:
+                    m_material.DisableKeyword("ATTENUATION_NONE");
                     m_material.EnableKeyword("ATTENUATION_DIRECTIONAL");
+                    m_material.DisableKeyword("ATTENUATION_RADIAL");
                     break;
                 case AttenuationModel.Radial:
+                    m_material.DisableKeyword("ATTENUATION_NONE");
+                    m_material.DisableKeyword("ATTENUATION_DIRECTIONAL");
                     m_material.EnableKeyword("ATTENUATION_RADIAL");
                     break;
             }

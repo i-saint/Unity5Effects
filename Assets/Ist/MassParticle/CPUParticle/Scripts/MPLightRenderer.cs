@@ -38,7 +38,7 @@ public class MPLightRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/BatchRenderer/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
+        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/Utilities/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
         m_material = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/CPUParticle/Materials/MPPointLight.mat", typeof(Material)) as Material;
         m_bounds_size = Vector3.one * 2.0f;
     }
@@ -92,22 +92,33 @@ public class MPLightRenderer : BatchRendererBase
             m.SetInt("_DstBlend", (int)BlendMode.Zero);
         }
 
-        if(m_enable_shadow)
+        if (m_enable_shadow)
         {
             m.EnableKeyword("ENABLE_SHADOW");
             switch (m_sample)
             {
                 case Sample.Fast:
-                    m.EnableKeyword("QUALITY_FAST");
+                    m.EnableKeyword ("QUALITY_FAST");
+                    m.DisableKeyword("QUALITY_MEDIUM");
+                    m.DisableKeyword("QUALITY_HIGH");
                     break;
                 case Sample.Medium:
-                    m.EnableKeyword("QUALITY_MEDIUM");
+                    m.DisableKeyword("QUALITY_FAST");
+                    m.EnableKeyword ("QUALITY_MEDIUM");
+                    m.DisableKeyword("QUALITY_HIGH");
                     break;
                 case Sample.High:
-                    m.EnableKeyword("QUALITY_HIGH");
+                    m.DisableKeyword("QUALITY_FAST");
+                    m.DisableKeyword("QUALITY_MEDIUM");
+                    m.EnableKeyword ("QUALITY_HIGH");
                     break;
             }
         }
+        else
+        {
+            m.DisableKeyword("ENABLE_SHADOW");
+        }
+
         return m;
     }
 

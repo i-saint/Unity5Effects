@@ -8,6 +8,7 @@ using UnityEditor;
 
 namespace Ist
 {
+    // MeshRenderer is needed to handle OnWillRenderObject()
     [AddComponentMenu("Ist/ScreenSpaceShadow/Light")]
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
@@ -78,28 +79,48 @@ namespace Ist
             {
                 m_light_material.SetInt("_SrcBlend", (int)BlendMode.One);
                 m_light_material.SetInt("_DstBlend", (int)BlendMode.One);
-                commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
             }
             else
             {
                 m_light_material.SetInt("_SrcBlend", (int)BlendMode.DstColor);
                 m_light_material.SetInt("_DstBlend", (int)BlendMode.Zero);
-                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
             }
 
+            // set light type
+            {
+                switch (m_type)
+                {
+                    case Type.Point:
+                        m_light_material.EnableKeyword ("POINT_LIGHT");
+                        m_light_material.DisableKeyword("LINE_LIGHT");
+                        break;
+                    case Type.Line:
+                        m_light_material.DisableKeyword("POINT_LIGHT");
+                        m_light_material.EnableKeyword ("LINE_LIGHT");
+                        break;
+                }
+            }
+
+            // set shadow settings
             if (m_cast_shadow)
             {
                 m_light_material.EnableKeyword("ENABLE_SHADOW");
                 switch (m_sample)
                 {
                     case LightWithScreenSpaceShadow.Sample.Fast:
-                        m_light_material.EnableKeyword("QUALITY_FAST");
+                        m_light_material.EnableKeyword ("QUALITY_FAST");
+                        m_light_material.DisableKeyword("QUALITY_MEDIUM");
+                        m_light_material.DisableKeyword("QUALITY_HIGH");
                         break;
                     case LightWithScreenSpaceShadow.Sample.Medium:
-                        m_light_material.EnableKeyword("QUALITY_MEDIUM");
+                        m_light_material.DisableKeyword("QUALITY_FAST");
+                        m_light_material.EnableKeyword ("QUALITY_MEDIUM");
+                        m_light_material.DisableKeyword("QUALITY_HIGH");
                         break;
                     case LightWithScreenSpaceShadow.Sample.High:
-                        m_light_material.EnableKeyword("QUALITY_HIGH");
+                        m_light_material.DisableKeyword("QUALITY_FAST");
+                        m_light_material.DisableKeyword("QUALITY_MEDIUM");
+                        m_light_material.EnableKeyword ("QUALITY_HIGH");
                         break;
                 }
             }
@@ -114,7 +135,7 @@ namespace Ist
             commands.SetGlobalVector(id_pos, GetPositionAndRadius());
             commands.SetGlobalVector(id_color, GetLinearColor());
             commands.SetGlobalVector(id_params, GetParams());
-            commands.DrawMesh(GetMesh(), GetTRS(), m_light_material, 0, (int)m_type);
+            commands.DrawMesh(GetMesh(), GetTRS(), m_light_material, 0, 0);
         }
 
 
@@ -122,7 +143,7 @@ namespace Ist
         void Reset()
         {
             m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/ScreenSpaceShadows/Shaders/Light.shader");
-            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/Sphere.asset");
+            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphere.asset");
             GetComponent<MeshRenderer>().sharedMaterials = new Material[0];
         }
 #endif // UNITY_EDITOR
@@ -184,18 +205,12 @@ namespace Ist
         protected override void UpdateCommandBuffer(CommandBuffer commands)
         {
             Camera cam = Camera.current;
+            var rt_default = cam.hdr ? BuiltinRenderTextureType.CameraTarget : BuiltinRenderTextureType.GBuffer3;
+            var rt_default_depth = BuiltinRenderTextureType.CameraTarget;
 
             commands.Clear();
-            if (cam.hdr)
-            {
-                commands.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
-            }
-            else
-            {
-                commands.SetRenderTarget(BuiltinRenderTextureType.GBuffer3);
-            }
-
-            foreach (var light in LightWithScreenSpaceShadow.GetInstances())
+            commands.SetRenderTarget(rt_default, rt_default_depth);
+            foreach (var light in GetInstances())
             {
                 light.IssueDrawCall(commands);
             }

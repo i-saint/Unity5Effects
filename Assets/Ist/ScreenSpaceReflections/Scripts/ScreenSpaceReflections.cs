@@ -141,10 +141,30 @@ namespace Ist
 
             switch (m_quality)
             {
-                case Quality.Fast: m_material.EnableKeyword("QUALITY_FAST"); break;
-                case Quality.Medium: m_material.EnableKeyword("QUALITY_MEDIUM"); break;
-                case Quality.High: m_material.EnableKeyword("QUALITY_HIGH"); break;
-                case Quality.VeryHigh: m_material.EnableKeyword("QUALITY_ULTRA"); break;
+                case Quality.Fast:
+                    m_material.EnableKeyword ("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
+                    m_material.DisableKeyword("QUALITY_ULTRA");
+                    break;
+                case Quality.Medium:
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.EnableKeyword ("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
+                    m_material.DisableKeyword("QUALITY_ULTRA");
+                    break;
+                case Quality.High:
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.EnableKeyword ("QUALITY_HIGH");
+                    m_material.DisableKeyword("QUALITY_ULTRA");
+                    break;
+                case Quality.VeryHigh:
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
+                    m_material.EnableKeyword ("QUALITY_ULTRA");
+                    break;
             }
 
             m_reflection_buffers[1].filterMode = FilterMode.Point;

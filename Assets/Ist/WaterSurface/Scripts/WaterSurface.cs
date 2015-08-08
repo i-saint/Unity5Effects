@@ -70,13 +70,19 @@ namespace Ist
             switch (m_sample)
             {
                 case Sample.Fast:
-                    m_material.EnableKeyword("QUALITY_FAST");
+                    m_material.EnableKeyword ("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
                     break;
                 case Sample.Medium:
-                    m_material.EnableKeyword("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.EnableKeyword ("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
                     break;
                 case Sample.High:
-                    m_material.EnableKeyword("QUALITY_HIGH");
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.EnableKeyword ("QUALITY_HIGH");
                     break;
             }
 

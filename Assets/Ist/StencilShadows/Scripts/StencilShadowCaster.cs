@@ -35,10 +35,12 @@ namespace Ist
             switch(light.m_type)
             {
                 case LightWithStencilShadow.Type.Point:
-                    m_stencil_materials[0].EnableKeyword("PROJECTION_POINT");
+                    m_stencil_materials[0].EnableKeyword ("PROJECTION_POINT");
+                    m_stencil_materials[0].DisableKeyword("PROJECTION_LINE");
                     break;
                 case LightWithStencilShadow.Type.Line:
-                    m_stencil_materials[0].EnableKeyword("PROJECTION_LINE");
+                    m_stencil_materials[0].DisableKeyword("PROJECTION_POINT");
+                    m_stencil_materials[0].EnableKeyword ("PROJECTION_LINE");
                     break;
             }
 
