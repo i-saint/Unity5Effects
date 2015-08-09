@@ -15,10 +15,10 @@ sampler2D _FrameBuffer_RadialBlur;
 float4 _Params1;
 
 #define _Radius             _Params1.x
-#define _AttenuationBias    _Params1.y
-#define _AttenuationPow     _Params1.z
-#define _Reverse            _Params1.w
+#define _AttenuationPow     _Params1.y
+#define _Reverse            _Params1.z
 
+float4 _Scale;
 float4 _OffsetCenter;
 half4 _ColorBias;
 half4 _BloomThreshold;
@@ -38,9 +38,8 @@ struct vs_out
 {
     float4 vertex : SV_POSITION;
     float4 screen_pos : TEXCOORD0;
-    float4 world_pos : TEXCOORD1;
-    float4 center : TEXCOORD2;
-    float3 normal : TEXCOORD3;
+    float4 center : TEXCOORD1;
+    float4 params : TEXCOORD2;
 };
 struct ps_out
 {
@@ -52,24 +51,30 @@ vs_out vert (ia_out I)
     vs_out O;
     O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
-    O.world_pos = mul(_Object2World, I.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
-    O.normal = normalize(mul(_Object2World, float4(-I.normal.xyz, 0)).xyz);
+    O.params = 0;
+
+#if ENABLE_ATTENUATION
+    float3 obj_pos = GetObjectPosition();
+    float4 world_pos = mul(_Object2World, float4(I.vertex.xyz / _Scale.xyz, 1));
+    float3 camera_dir = normalize(_WorldSpaceCameraPos.xyz - world_pos.xyz);
+    float3 pos_rel = world_pos.xyz - obj_pos;
+    float s_dist = dot(pos_rel, camera_dir);
+    float3 pos_proj = world_pos.xyz - s_dist*camera_dir;
+    float opacity = saturate(1 - length(pos_proj - obj_pos)*2);
+    opacity = pow(opacity, _AttenuationPow);
+    O.params.x = opacity;
+#else
+    O.params.x = 1;
+#endif
     return O;
 }
-    
+
 ps_out frag (vs_out I)
 {
     float2 coord = I.screen_pos.xy / I.screen_pos.w;
     float2 center = I.center.xy / I.center.w;
-    float3 eye = normalize(I.world_pos.xyz - _WorldSpaceCameraPos.xyz);
-    float opacity = 1;
-#if ENABLE_ATTENUATION
-    opacity = abs(dot(eye, I.normal));
-    opacity = lerp(opacity, 1-opacity, _Reverse);
-    opacity = pow(saturate(opacity + _AttenuationBias), _AttenuationPow);
-#endif
-
+    float opacity = I.params.x;
 
     float2 dir = normalize(coord - center);
     float step = length(coord - center)*_Radius / ITERATION;
@@ -98,8 +103,10 @@ ps_out frag (vs_out I)
     O.color.rgb = color.rgb * _ColorBias.rgb;
     O.color.a = opacity;
 
-    //O.color = opacity;
-    //O.color.a = 1;
+#if ENABLE_DEBUG
+    O.color.rgb = opacity;
+    O.color.a = 1;
+#endif
     return O;
 }
 ENDCG
@@ -122,6 +129,7 @@ Subshader {
         #pragma multi_compile ___ ENABLE_ATTENUATION
         #pragma multi_compile ___ ENABLE_BLUR
         #pragma multi_compile ___ ENABLE_BLOOM
+        #pragma multi_compile ___ ENABLE_DEBUG
         ENDCG
     }
 }

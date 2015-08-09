@@ -20,8 +20,7 @@ public class RadialBlurField : MonoBehaviour
 
     public Sample m_sample = Sample.Medium;
     public float m_radius = 0.5f;
-    public float m_attenuation_bias = 0.0f;
-    public float m_attenuation_pow = 2.0f;
+    public float m_attenuation_pow = 0.5f;
     public Vector3 m_offset_center = Vector3.zero;
     public Vector3 m_color_bias = Vector3.one;
     public Vector3 m_bloom_threshold = new Vector3(0.5f, 0.5f, 0.5f);
@@ -31,6 +30,7 @@ public class RadialBlurField : MonoBehaviour
     public bool m_blur = true;
     public bool m_bloom = true;
     public bool m_attenuation = true;
+    public bool m_debug = false;
     public Shader m_shader;
 
     Material m_material;
@@ -45,8 +45,6 @@ public class RadialBlurField : MonoBehaviour
 
     void Update()
     {
-        if(!m_blur && !m_bloom) { return; } // nothing needs to do
-
         if (m_material == null)
         {
             m_material = new Material(m_shader);
@@ -80,8 +78,12 @@ public class RadialBlurField : MonoBehaviour
 
         if(m_attenuation)   { m_material.EnableKeyword ("ENABLE_ATTENUATION"); }
         else                { m_material.DisableKeyword("ENABLE_ATTENUATION"); }
+        
+        if(m_debug) { m_material.EnableKeyword ("ENABLE_DEBUG"); }
+        else        { m_material.DisableKeyword("ENABLE_DEBUG"); }
 
-        m_material.SetVector("_Params1", new Vector4(m_radius, m_attenuation_bias, m_attenuation_pow, m_reverse));
+        m_material.SetVector("_Params1", new Vector4(m_radius, m_attenuation_pow, m_reverse, 0));
+        m_material.SetVector("_Scale", GetComponent<Transform>().localScale);
         m_material.SetVector("_OffsetCenter", m_offset_center);
         m_material.SetVector("_ColorBias", m_color_bias);
         m_material.SetVector("_BloomThreshold", m_bloom_threshold);
