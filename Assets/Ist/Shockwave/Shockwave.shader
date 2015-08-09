@@ -3,7 +3,6 @@ Shader "Ist/Shockwave" {
 CGINCLUDE
 #include "UnityCG.cginc"
 
-
 sampler2D _FrameBuffer_Shockwave;
 float4 _Params1;
 
@@ -31,7 +30,8 @@ struct vs_out
     float4 vertex : SV_POSITION;
     float4 screen_pos : TEXCOORD0;
     float4 center : TEXCOORD1;
-    float4 params : TEXCOORD2;
+    float4 world_pos : TEXCOORD2;
+    float4 local_pos : TEXCOORD3;
 };
 struct ps_out
 {
@@ -44,18 +44,8 @@ vs_out vert (ia_out I)
     O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
-    O.params = 0;
-
-    float3 obj_pos = GetObjectPosition();
-    float4 world_pos = mul(_Object2World, float4(I.vertex.xyz / _Scale.xyz, 1));
-    float3 camera_dir = normalize(_WorldSpaceCameraPos.xyz - world_pos.xyz);
-    float3 pos_rel = world_pos.xyz - obj_pos;
-    float s_dist = dot(pos_rel, camera_dir);
-    float3 pos_proj = world_pos.xyz - s_dist*camera_dir;
-    float opacity = saturate(1 - length(pos_proj - world_pos)*2);
-    opacity = pow(opacity, _AttenuationPow);
-    opacity = lerp(opacity, 1 - opacity, _Reverse);
-    O.params.x = opacity;
+    O.world_pos = mul(_Object2World, float4(I.vertex.xyz / _Scale.xyz, 1));
+    O.local_pos = float4(GetObjectPosition() + _OffsetCenter.xyz, 1);
     return O;
 }
 
@@ -63,9 +53,19 @@ ps_out frag (vs_out I)
 {
     float2 coord = I.screen_pos.xy / I.screen_pos.w;
     float2 center = I.center.xy / I.center.w;
-    float opacity = I.params.x;
 
-    float2 dir = (coord - center);
+    float3 local_pos = I.local_pos;
+    float4 world_pos = I.world_pos;
+    float3 camera_dir = normalize(_WorldSpaceCameraPos.xyz - world_pos.xyz);
+    float3 pos_rel = world_pos.xyz - local_pos;
+    float s_dist = dot(pos_rel, camera_dir);
+    float3 pos_proj = world_pos.xyz - s_dist*camera_dir;
+    float dist = length(pos_proj - local_pos);
+    float opacity = 1 - dist * 2;
+    opacity = pow(opacity, _AttenuationPow);
+    opacity = lerp(opacity, 1 - opacity, _Reverse);
+
+    float2 dir = (coord - center) * opacity;
     float4 color = tex2D(_FrameBuffer_Shockwave, coord - dir*(_Radius*opacity));
     float h = lerp(1 + opacity, 1 + (1 - opacity), _Reverse);
 
@@ -83,8 +83,8 @@ ENDCG
 
 Subshader {
     Tags { "Queue"="Overlay+80" "RenderType"="Opaque" }
-    //Cull Front
-    //ZTest Off
+    Cull Front
+    ZTest Off
     ZWrite Off
 
     GrabPass {
