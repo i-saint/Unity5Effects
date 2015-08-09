@@ -10,6 +10,7 @@ float4 _Params1;
 #define _Radius             _Params1.x
 #define _AttenuationPow     _Params1.y
 #define _Reverse            _Params1.z
+#define _Highlighting       _Params1.w
 
 float4 _Scale;
 float4 _OffsetCenter;
@@ -66,9 +67,10 @@ ps_out frag (vs_out I)
 
     float2 dir = (coord - center);
     float4 color = tex2D(_FrameBuffer_Shockwave, coord - dir*(_Radius*opacity));
+    float h = lerp(1 + opacity, 1 + (1 - opacity), _Reverse);
 
     ps_out O;
-    O.color.rgb = color.rgb * _ColorBias.rgb;
+    O.color.rgb = color.rgb * lerp(1, h, _Highlighting);
     O.color.a = 1;
 
 #if ENABLE_DEBUG
@@ -82,9 +84,8 @@ ENDCG
 Subshader {
     Tags { "Queue"="Overlay+80" "RenderType"="Opaque" }
     //Cull Front
-    ZTest Off
+    //ZTest Off
     ZWrite Off
-    Blend SrcAlpha OneMinusSrcAlpha
 
     GrabPass {
         "_FrameBuffer_Shockwave"

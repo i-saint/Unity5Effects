@@ -14,9 +14,9 @@ public class Shockwave : MonoBehaviour
     [Range(-0.5f, 0.5f)] public float m_radius = 0.5f;
     public float m_attenuation_pow = 0.5f;
     public Vector3 m_offset_center = Vector3.zero;
-    public Vector3 m_color_bias = Vector3.one;
 
     public float m_reverse = 0.0f;
+    public float m_highlighting = 1.0f;
     public bool m_debug = false;
     public Shader m_shader;
 
@@ -41,9 +41,8 @@ public class Shockwave : MonoBehaviour
         if(m_debug) { m_material.EnableKeyword ("ENABLE_DEBUG"); }
         else        { m_material.DisableKeyword("ENABLE_DEBUG"); }
 
-        m_material.SetVector("_Params1", new Vector4(m_radius, m_attenuation_pow, m_reverse, 0));
+        m_material.SetVector("_Params1", new Vector4(m_radius, m_attenuation_pow, m_reverse, m_highlighting));
         m_material.SetVector("_Scale", GetComponent<Transform>().localScale);
         m_material.SetVector("_OffsetCenter", m_offset_center);
-        m_material.SetVector("_ColorBias", m_color_bias);
     }
 }
