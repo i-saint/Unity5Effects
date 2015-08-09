@@ -107,17 +107,17 @@ namespace Ist
                 m_light_material.EnableKeyword("ENABLE_SHADOW");
                 switch (m_sample)
                 {
-                    case LightWithScreenSpaceShadow.Sample.Fast:
+                    case Sample.Fast:
                         m_light_material.EnableKeyword ("QUALITY_FAST");
                         m_light_material.DisableKeyword("QUALITY_MEDIUM");
                         m_light_material.DisableKeyword("QUALITY_HIGH");
                         break;
-                    case LightWithScreenSpaceShadow.Sample.Medium:
+                    case Sample.Medium:
                         m_light_material.DisableKeyword("QUALITY_FAST");
                         m_light_material.EnableKeyword ("QUALITY_MEDIUM");
                         m_light_material.DisableKeyword("QUALITY_HIGH");
                         break;
-                    case LightWithScreenSpaceShadow.Sample.High:
+                    case Sample.High:
                         m_light_material.DisableKeyword("QUALITY_FAST");
                         m_light_material.DisableKeyword("QUALITY_MEDIUM");
                         m_light_material.EnableKeyword ("QUALITY_HIGH");

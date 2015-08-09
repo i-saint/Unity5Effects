@@ -67,7 +67,7 @@ public static class IcoSphere
         List<Vector3> vertList = new List<Vector3>();
         Dictionary<long, int> middlePointIndexCache = new Dictionary<long, int>();
 
-        int recursionLevel = 1;
+        int recursionLevel = 3;
         float radius = 0.5f;
 
         // create 12 vertices of a icosahedron

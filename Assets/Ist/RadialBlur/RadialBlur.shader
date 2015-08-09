@@ -1,23 +1,28 @@
-Shader "Ist/RadialBlurField" {
-Properties {
-    _Radius("Radius", Float) = 0.5
-    _AttenuationBias("Attenuation Bias", Float) = 0.0
-    _AttenuationPow("Attenuation Pow", Float) = 2.0
-    _Reverse("Reverse", Float) = 0
-    _ColorBias("Color Bias", Color) = (1,1,1,1)
-}
+Shader "Ist/RadialBlur" {
 
 CGINCLUDE
 #include "UnityCG.cginc"
 
-#define ITERATION 32
+#if QUALITY_FAST
+    #define ITERATION 16
+#elif QUALITY_HIGH
+    #define ITERATION 48
+#else // QUALITY_MEDIUM
+    #define ITERATION 32
+#endif
 
-sampler2D _FrameBuffer1;
-float _Radius;
-float _AttenuationBias;
-float _AttenuationPow;
-float _Reverse;
+sampler2D _FrameBuffer_RadialBlur;
+float4 _Params1;
+
+#define _Radius             _Params1.x
+#define _AttenuationBias    _Params1.y
+#define _AttenuationPow     _Params1.z
+#define _Reverse            _Params1.w
+
+float4 _OffsetCenter;
 half4 _ColorBias;
+half4 _BloomThreshold;
+half4 _BloomIntensity;
 
 float3 GetObjectPosition()
 {
@@ -48,7 +53,7 @@ vs_out vert (ia_out I)
     O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.world_pos = mul(_Object2World, I.vertex);
-    O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition(), 1)));
+    O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
     O.normal = normalize(mul(_Object2World, float4(-I.normal.xyz, 0)).xyz);
     return O;
 }
@@ -58,23 +63,35 @@ ps_out frag (vs_out I)
     float2 coord = I.screen_pos.xy / I.screen_pos.w;
     float2 center = I.center.xy / I.center.w;
     float3 eye = normalize(I.world_pos.xyz - _WorldSpaceCameraPos.xyz);
-    float opacity = abs(dot(eye, I.normal));
+    float opacity = 1;
+#if ENABLE_ATTENUATION
+    opacity = abs(dot(eye, I.normal));
     opacity = lerp(opacity, 1-opacity, _Reverse);
     opacity = pow(saturate(opacity + _AttenuationBias), _AttenuationPow);
+#endif
 
 
     float2 dir = normalize(coord - center);
     float step = length(coord - center)*_Radius / ITERATION;
 
-    float4 ref_color = tex2D(_FrameBuffer1, coord);
     float4 color = 0.0;
     float blend_rate = 0.0;
     for (int k = 0; k<ITERATION; ++k) {
         float r = 1.0 - (1.0 / ITERATION * k);
         blend_rate += r;
-        color.rgb += tex2D(_FrameBuffer1, coord - dir*(step*k)).rgb * r;
+        float4 c = tex2D(_FrameBuffer_RadialBlur, coord - dir*(step*k));
+#if ENABLE_BLUR
+        color.rgb += c.rgb * r;
+#endif
+#if ENABLE_BLOOM
+        color.rgb += (max(c.rgb - _BloomThreshold.rgb, 0) * _BloomIntensity.rgb) * r;
+#endif
     }
     color.rgb /= blend_rate;
+#if ENABLE_BLUR
+#else
+    color += tex2D(_FrameBuffer_RadialBlur, coord);
+#endif
 
 
     ps_out O;
@@ -89,19 +106,22 @@ ENDCG
 
 Subshader {
     Tags { "Queue"="Overlay+90" "RenderType"="Opaque" }
-    Fog { Mode off }
     Cull Front
     ZTest Off
     ZWrite Off
     Blend SrcAlpha OneMinusSrcAlpha
 
     GrabPass {
-        "_FrameBuffer1"
+        "_FrameBuffer_RadialBlur"
     }
     Pass {
         CGPROGRAM
         #pragma vertex vert
         #pragma fragment frag
+        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma multi_compile ___ ENABLE_ATTENUATION
+        #pragma multi_compile ___ ENABLE_BLUR
+        #pragma multi_compile ___ ENABLE_BLOOM
         ENDCG
     }
 }
