@@ -1,17 +1,10 @@
-Shader "Ist/RadialBlur" {
+Shader "Ist/Shockwave" {
 
 CGINCLUDE
 #include "UnityCG.cginc"
 
-#if QUALITY_FAST
-    #define ITERATION 16
-#elif QUALITY_HIGH
-    #define ITERATION 48
-#else // QUALITY_MEDIUM
-    #define ITERATION 32
-#endif
 
-sampler2D _FrameBuffer_RadialBlur;
+sampler2D _FrameBuffer_Shockwave;
 float4 _Params1;
 
 #define _Radius             _Params1.x
@@ -21,8 +14,6 @@ float4 _Params1;
 float4 _Scale;
 float4 _OffsetCenter;
 half4 _ColorBias;
-half4 _BloomThreshold;
-half4 _BloomIntensity;
 
 float3 GetObjectPosition()
 {
@@ -54,20 +45,16 @@ vs_out vert (ia_out I)
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
     O.params = 0;
 
-#if ENABLE_ATTENUATION
     float3 obj_pos = GetObjectPosition();
     float4 world_pos = mul(_Object2World, float4(I.vertex.xyz / _Scale.xyz, 1));
     float3 camera_dir = normalize(_WorldSpaceCameraPos.xyz - world_pos.xyz);
     float3 pos_rel = world_pos.xyz - obj_pos;
     float s_dist = dot(pos_rel, camera_dir);
     float3 pos_proj = world_pos.xyz - s_dist*camera_dir;
-    float opacity = saturate(1 - length(pos_proj - obj_pos)*2);
+    float opacity = saturate(1 - length(pos_proj - world_pos)*2);
     opacity = pow(opacity, _AttenuationPow);
-    opacity = lerp(opacity, 1-opacity, _Reverse);
+    opacity = lerp(opacity, 1 - opacity, _Reverse);
     O.params.x = opacity;
-#else
-    O.params.x = 1;
-#endif
     return O;
 }
 
@@ -77,32 +64,12 @@ ps_out frag (vs_out I)
     float2 center = I.center.xy / I.center.w;
     float opacity = I.params.x;
 
-    float2 dir = normalize(coord - center);
-    float step = length(coord - center)*_Radius / ITERATION;
-
-    float4 color = 0.0;
-    float blend_rate = 0.0;
-    for (int k = 0; k<ITERATION; ++k) {
-        float r = 1.0 - (1.0 / ITERATION * k);
-        blend_rate += r;
-        float4 c = tex2D(_FrameBuffer_RadialBlur, coord - dir*(step*k));
-#if ENABLE_BLUR
-        color.rgb += c.rgb * r;
-#endif
-#if ENABLE_BLOOM
-        color.rgb += (max(c.rgb - _BloomThreshold.rgb, 0) * _BloomIntensity.rgb) * r;
-#endif
-    }
-    color.rgb /= blend_rate;
-#if ENABLE_BLUR
-#else
-    color += tex2D(_FrameBuffer_RadialBlur, coord);
-#endif
-
+    float2 dir = (coord - center);
+    float4 color = tex2D(_FrameBuffer_Shockwave, coord - dir*(_Radius*opacity));
 
     ps_out O;
     O.color.rgb = color.rgb * _ColorBias.rgb;
-    O.color.a = opacity;
+    O.color.a = 1;
 
 #if ENABLE_DEBUG
     O.color.rgb = opacity;
@@ -113,23 +80,19 @@ ps_out frag (vs_out I)
 ENDCG
 
 Subshader {
-    Tags { "Queue"="Overlay+90" "RenderType"="Opaque" }
-    Cull Front
+    Tags { "Queue"="Overlay+80" "RenderType"="Opaque" }
+    //Cull Front
     ZTest Off
     ZWrite Off
     Blend SrcAlpha OneMinusSrcAlpha
 
     GrabPass {
-        "_FrameBuffer_RadialBlur"
+        "_FrameBuffer_Shockwave"
     }
     Pass {
         CGPROGRAM
         #pragma vertex vert
         #pragma fragment frag
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
-        #pragma multi_compile ___ ENABLE_ATTENUATION
-        #pragma multi_compile ___ ENABLE_BLUR
-        #pragma multi_compile ___ ENABLE_BLOOM
         #pragma multi_compile ___ ENABLE_DEBUG
         ENDCG
     }
