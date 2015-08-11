@@ -121,16 +121,16 @@ float DistancePointPlane(Plane plane, float3 pos)
     return dot(pos, plane.normal) + plane.distance;
 }
 
-float3 IntersectionRayPlane(Plane plane, Ray ray)
-{
-    float t = (-dot(ray.origin, plane.normal) - plane.distance) / dot(plane.normal, ray.direction);
-    return ray.origin + ray.direction * t;
-}
-
 float3 ProjectToPlane(Plane plane, float3 pos)
 {
     float d = DistancePointPlane(plane, pos);
     return pos - d*plane.normal;
+}
+
+float3 IntersectionRayPlane(Ray ray, Plane plane)
+{
+    float t = (-dot(ray.origin, plane.normal) - plane.distance) / dot(plane.normal, ray.direction);
+    return ray.origin + ray.direction * t;
 }
 
 #endif // BRGeometry_h

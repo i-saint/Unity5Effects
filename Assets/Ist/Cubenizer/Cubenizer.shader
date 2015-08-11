@@ -21,6 +21,9 @@ Properties {
 
 CGINCLUDE
 #include "UnityStandardCore.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
 
 #define MAX_MARCH_SINGLE_GBUFFER_PASS 5
 //#define ENABLE_FRESNEL
@@ -42,17 +45,6 @@ float4 _Scale;
 float4 _OffsetPosition;
 float _CutoutDistance;
 
-
-float  modc(float  a, float  b) { return a - b * floor(a / b); }
-float2 modc(float2 a, float2 b) { return a - b * floor(a / b); }
-float3 modc(float3 a, float3 b) { return a - b * floor(a / b); }
-float4 modc(float4 a, float4 b) { return a - b * floor(a / b); }
-
-float3 GetCameraPosition()      { return _WorldSpaceCameraPos; }
-float3 GetCameraForward()       { return -UNITY_MATRIX_V[2].xyz; }
-float3 GetCameraUp()            { return UNITY_MATRIX_V[1].xyz; }
-float3 GetCameraRight()         { return UNITY_MATRIX_V[0].xyz; }
-float  GetCameraFocalLength()   { return abs(UNITY_MATRIX_P[1][1]); }
 
 float sdBox(float3 p, float3 b)
 {
@@ -77,13 +69,14 @@ struct vs_out
 };
 
 
-vs_out vert(ia_out v)
+vs_out vert(ia_out I)
 {
-    vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
-    o.world_pos = mul(_Object2World, v.vertex);
-    o.world_normal = mul(_Object2World, float4(v.normal, 0.0));
-    return o;
+    vs_out O;
+    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
+    O.screen_pos = ComputeScreenPos(O.vertex);
+    O.world_pos = mul(_Object2World, I.vertex);
+    O.world_normal = mul(_Object2World, float4(I.normal, 0.0));
+    return O;
 }
 
 
@@ -110,14 +103,10 @@ float3 guess_normal(float3 p)
         map(p+float3(0.0,0.0,  d))-map(p+float3(0.0,0.0, -d)) ));
 }
 
-void raymarching(float2 pos2, float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
+void raymarching(float2 uv, float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
 {
-    float3 cam_pos      = GetCameraPosition();
-    float3 cam_forward  = GetCameraForward();
-    float3 cam_up       = GetCameraUp();
-    float3 cam_right    = GetCameraRight();
-    float  cam_focal_len= GetCameraFocalLength();
-    float3 ray_dir = normalize(cam_right*pos2.x + cam_up*pos2.y + cam_forward*cam_focal_len);
+    Ray camera_ray = GetCameraRay(uv);
+    float3 ray_dir = camera_ray.direction;
     float3 ray_pos = pos3 + ray_dir * o_total_distance;
 
     o_num_steps = 0.0;
@@ -146,22 +135,18 @@ struct gbuffer_out
 };
 
 
-gbuffer_out frag_gbuffer(vs_out v)
+gbuffer_out frag_gbuffer(vs_out I)
 {
-#if UNITY_UV_STARTS_AT_TOP
-    v.screen_pos.y *= -1.0;
-#endif
-    float2 screen_pos = v.screen_pos.xy;
-    screen_pos.x *= _ScreenParams.x / _ScreenParams.y;
-    float3 world_pos = v.world_pos.xyz;
+    float2 coord = I.screen_pos.xy / I.screen_pos.w;
+    float3 world_pos = I.world_pos.xyz;
 
     float num_steps = 1.0;
     float last_distance = 0.0;
     float total_distance = 0;
     float3 ray_pos = world_pos;
-    raymarching(screen_pos, world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
+    raymarching(coord, world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
     float3 normal = guess_normal(ray_pos);
-    normal = lerp(v.world_normal, normal, saturate((total_distance-_CutoutDistance)*1000000));
+    normal = lerp(I.world_normal, normal, saturate((total_distance-_CutoutDistance)*1000000));
 
 
     gbuffer_out o;
@@ -192,10 +177,10 @@ struct v2f_shadow {
     LIGHTING_COORDS(0, 1)
 };
 
-v2f_shadow vert_shadow(appdata_full v)
+v2f_shadow vert_shadow(appdata_full I)
 {
     v2f_shadow o;
-    o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.pos = mul(UNITY_MATRIX_MVP, I.vertex);
     TRANSFER_VERTEX_TO_FRAGMENT(o);
     return o;
 }
