@@ -2,6 +2,7 @@
 #define IstMath_h
 
 #define PI 3.1415926535897932384626433832795
+#define INV_PI 0.3183098861837907
 
 float  modc(float  a, float  b) { return a - b * floor(a/b); }
 float2 modc(float2 a, float2 b) { return a - b * floor(a/b); }

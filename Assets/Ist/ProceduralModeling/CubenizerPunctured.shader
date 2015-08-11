@@ -3,6 +3,7 @@ Properties {
     _GridSize("Grid Size", Float) = 0.26
     _CubeSize("Cube Size", Float) = 0.22
     _BumpHeight("Bump Height", Float) = 0.15
+    _AnimationSpeed("Animation Speed", Float) = 1.0
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
     _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)

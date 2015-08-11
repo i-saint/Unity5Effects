@@ -89,10 +89,12 @@ gbuffer_out frag_gbuffer(vs_out I)
     float3 world_pos = I.world_pos.xyz;
 
     raymarch_data rmd;
-    rmd.num_steps = 0.0;
-    rmd.last_distance = 0.0;
-    rmd.total_distance = 0.0;
+    UNITY_INITIALIZE_OUTPUT(raymarch_data,rmd);
     rmd.ray_pos = world_pos;
+
+#if ENABLE_BEFORERAYMARCH
+    before_raymarch(rmd);
+#endif
 
     raymarching(rmd);
     float3 normal = I.world_normal;
