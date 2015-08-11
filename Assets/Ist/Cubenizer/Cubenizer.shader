@@ -80,6 +80,14 @@ vs_out vert(ia_out I)
 }
 
 
+float2 iq_rand(float2 p)
+{
+    p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
+    return frac(sin(p)*43758.5453);
+}
+
+
+
 float3 localize(float3 p)
 {
     return mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
@@ -89,9 +97,23 @@ float map(float3 p)
 {
     p = localize(p);
 
+//#define ENABLE_BUMP 1
+#if ENABLE_BUMP
+    float bump = 0.25;
+    float r = iq_rand(floor((p.xz) / _GridSize)).x;
+    p.y -= _GridSize*bump*r + _GridSize*(1.0-bump);
+#endif // ENABLE_BUMP
+
     float3 p1 = modc(p, _GridSize) - _GridSize*0.5;
     float d1 = sdBox(p1, _CubeSize*0.5);
-    return d1;
+    float d2 = 0.0;
+#if ENABLE_BUMP
+    d1 = max(d1, p.y - _GridSize*0.9);
+    //d1 = min(d1, p.y + _GridSize*0.9);
+    //d2 = (_GridSize - dot(abs(p1), 1.0))*0.9;
+#endif // ENABLE_BUMP
+
+    return d1 + smoothstep(0.0, 1.0, d2);
 }
 
 float3 guess_normal(float3 p)
@@ -105,7 +127,7 @@ float3 guess_normal(float3 p)
 
 void raymarching(float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
 {
-    float3 ray_dir = normalize(pos3- GetCameraPosition());
+    float3 ray_dir = normalize(pos3-GetCameraPosition());
     float3 ray_pos = pos3 + ray_dir * o_total_distance;
 
     o_num_steps = 0.0;
