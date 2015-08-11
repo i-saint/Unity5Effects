@@ -133,4 +133,13 @@ float3 IntersectionRayPlane(Ray ray, Plane plane)
     return ray.origin + ray.direction * t;
 }
 
+float ComputeDepth(float4 clippos)
+{
+#if defined(SHADER_TARGET_GLSL) || defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
+    return (clippos.z / clippos.w) * 0.5 + 0.5;
+#else
+    return clippos.z / clippos.w;
+#endif
+}
+
 #endif // BRGeometry_h
