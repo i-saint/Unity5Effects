@@ -48,7 +48,7 @@ void ParticleTransform(inout appdata_full v, out float4 o_pos, out float4 o_vel,
 #ifdef MP_ENABLE_SPIN
     if(g_spin != 0.0) {
         float ang = (dot(o_pos.xyz, 1.0) * min(1.0, o_vel.w*0.02)) * g_spin;
-        float3x3 rot = rotation_matrix33(normalize(iq_rand(o_pos.www)), ang);
+        float3x3 rot = axis_rotation_matrix33(normalize(iq_rand(o_pos.www)), ang);
         v.vertex.xyz = mul(rot, v.vertex.xyz);
         v.normal.xyz = mul(rot, v.normal.xyz);
     }

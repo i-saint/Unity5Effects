@@ -1,3 +1,4 @@
+#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
 
 // G-Buffers (Unity internals)
 sampler2D _CameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
@@ -57,14 +58,4 @@ float4 GetPrevPosition(float2 uv)
     float depth = GetPrevDepth(uv);
     float4 pos4 = mul(_PrevInvViewProj, float4(screen_position, depth, 1.0));
     return pos4 / pos4.w;
-}
-
-
-float ComputeDepth(float4 clippos)
-{
-#if defined(SHADER_TARGET_GLSL) || defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
-    return (clippos.z / clippos.w) * 0.5 + 0.5;
-#else
-    return clippos.z / clippos.w;
-#endif
 }

@@ -1,7 +1,7 @@
-﻿Shader "Ist/ProceduralModeling/Cubenizer" {
+﻿Shader "Ist/ProceduralModeling/Hexnizer" {
 Properties {
-    _GridSize("Grid Size", Float) = 0.26
-    _CubeSize("Cube Size", Float) = 0.22
+    _GridSize("Grid Size", Float) = 1.2
+    _HexRadius("Hex Radius", Float) = 0.35
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
     _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)
@@ -24,19 +24,22 @@ CGINCLUDE
 
 #define MAX_MARCH_STEPS 8
 
-//#define ENABLE_BOX_CLIPPING 1
+//#define ENABLE_TRACEBACK 1
+//#define MAX_TRACEBACK_STEPS 16
+
+#define ENABLE_BOX_CLIPPING 1
 //#define ENABLE_SPHERE_CLIPPING 1
 
-//#define ENABLE_DEPTH_OUTPUT 1
+#define ENABLE_DEPTH_OUTPUT 1
 
-//#define ENABLE_PUNCTURE 1
-//#define ENABLE_BUMP 1
-#define BUMP_DIR y
-#define BUMP_PLANE xz
-#define BUMP_STRENGTH 0.25
+#define HEX_PLANE xz
+#define HEX_DIR y
+
+#define ENABLE_BUMP 1
+#define BUMP_STRENGTH 0.5
 
 float _GridSize;
-float _CubeSize;
+float _HexRadius;
 
 
 float map(float3 pg)
@@ -44,24 +47,27 @@ float map(float3 pg)
     float3 pl = localize(pg);
     float3 p = pl;
 
+    float2 grid = float2(0.692, 0.4) * _GridSize;
+    float2 grid_half = grid*0.5;
+    float radius = 0.22 * _HexRadius;
+
+    float2 p1 = modc(p.HEX_PLANE, grid) - grid_half;
+    float2 p2 = modc(p.HEX_PLANE +grid_half, grid) - float2(grid_half);
+    float h1 = sdHex(float2(p1.x,p1.y), radius);
+    float h2 = sdHex(float2(p2.x,p2.y), radius);
+
 #if ENABLE_BUMP
-    float bump = BUMP_STRENGTH;
-    float r = iq_rand(floor((p.BUMP_PLANE) / _GridSize)).x;
-    p.BUMP_DIR -= _GridSize*bump*r + _GridSize*(1.0-bump);
+    float2 g1 = float2(ceil(p.HEX_PLANE / grid));
+    float2 g2 = float2(ceil((p.HEX_PLANE + grid_half) / grid));
+    float rxz = iq_rand(g1).x;
+    float ryz = iq_rand(g2).x;
+    float d1 = p.HEX_DIR - _Scale.HEX_DIR*0.5 + rxz*BUMP_STRENGTH;
+    float d2 = p.HEX_DIR - _Scale.HEX_DIR*0.5 + ryz*BUMP_STRENGTH;
+    h1 = max(h1, d1);
+    h2 = max(h2, d2);
 #endif // ENABLE_BUMP
 
-    float3 p1 = modc(p, _GridSize) - _GridSize*0.5;
-    float d1 = sdBox(p1, _CubeSize*0.5);
-#if ENABLE_PUNCTURE
-    d1 = max(d1, -sdBox(p1, float3(_CubeSize.xx*0.25, 1.0)));
-    d1 = max(d1, -sdBox(p1, float3(1.0, _CubeSize.xx*0.25)));
-    d1 = max(d1, -sdBox(p1, float3(_CubeSize.x*0.25, 1.0, _CubeSize.x*0.25)));
-#endif
-#if ENABLE_BUMP
-    d1 = max(d1, p.BUMP_DIR - _GridSize*0.9);
-#endif // ENABLE_BUMP
-
-    return max(d1, 0.0);
+    return max(min(h1, h2), 0.0);
 }
 
 #include "Framework.cginc"

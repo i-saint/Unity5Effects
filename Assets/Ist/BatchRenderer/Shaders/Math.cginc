@@ -1,5 +1,5 @@
-#ifndef BRMath_h
-#define BRMath_h
+#ifndef IstMath_h
+#define IstMath_h
 
 #define PI 3.1415926535897932384626433832795
 
@@ -208,4 +208,4 @@ float3 extract_position(float4x4 m)
     return float3(m[0][3], m[1][3], m[2][3]);
 }
 
-#endif // BRMath_h
+#endif // IstMath_h

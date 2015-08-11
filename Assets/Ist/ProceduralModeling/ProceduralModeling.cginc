@@ -14,12 +14,25 @@ float sdSphere(float3 p, float radius)
     return length(p) - radius;
 }
 
+float sdHex(float2 p, float2 h)
+{
+    float2 q = abs(p);
+    return max(q.x - h.y, max(q.x + q.y*0.57735, q.y*1.1547) - h.x);
+}
+
 float2 iq_rand(float2 p)
 {
     p = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
     return frac(sin(p)*43758.5453);
 }
 
+float3 nrand3(float2 co)
+{
+    float3 a = frac(cos(co.x*8.3e-3 + co.y)*float3(1.3e5, 4.7e5, 2.9e5));
+    float3 b = frac(sin(co.x*0.3e-3 + co.y)*float3(8.1e5, 1.0e5, 0.1e5));
+    float3 c = lerp(a, b, 0.5);
+    return c;
+}
 
 
 float3 localize(float3 p)

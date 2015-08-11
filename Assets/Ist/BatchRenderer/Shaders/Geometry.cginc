@@ -1,5 +1,5 @@
-#ifndef BRGeometry_h
-#define BRGeometry_h
+#ifndef IstGeometry_h
+#define IstGeometry_h
 
 struct Plane
 {
@@ -142,4 +142,4 @@ float ComputeDepth(float4 clippos)
 #endif
 }
 
-#endif // BRGeometry_h
+#endif // IstGeometry_h

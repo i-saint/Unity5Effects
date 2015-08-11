@@ -46,13 +46,29 @@ void raymarching(float3 pos3, const int num_steps, inout float o_total_distance,
 
     o_num_steps = 0.0;
     o_last_distance = 0.0;
+    float prev = 0.0;
     for (int i = 0; i<num_steps; ++i) {
+        prev = o_last_distance;
         o_last_distance = map(ray_pos);
         o_total_distance += o_last_distance;
         ray_pos += ray_dir * o_last_distance;
         o_num_steps += 1.0;
         if (o_last_distance < 0.001) { break; }
     }
+
+#if ENABLE_TRACEBACK
+    if (o_last_distance == 0.0) {
+        float step = -prev / MAX_TRACEBACK_STEPS;
+        for (int i = 0; i<MAX_TRACEBACK_STEPS; ++i) {
+            o_last_distance = map(ray_pos);
+            o_total_distance += step;
+            ray_pos += ray_dir * step;
+            if (o_last_distance > 0) { break; }
+        }
+    }
+#endif // ENABLE_TRACEBACK
+
+
     o_raypos = pos3 + ray_dir * o_total_distance;
 
 

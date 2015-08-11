@@ -43,7 +43,7 @@ int ParticleTransform(inout appdata_full v)
     #ifdef MPGP_ENABLE_SPIN
     if(g_spin != 0.0) {
         float ang = (dot(p.position.xyz, 1.0) * min(1.0, p.speed*0.02)) * g_spin;
-        float3x3 rot = rotation_matrix33(normalize(iq_rand(p.id)), ang);
+        float3x3 rot = axis_rotation_matrix33(normalize(iq_rand(p.id.xxx)), ang);
         v.vertex.xyz = mul(rot, v.vertex.xyz);
         v.normal.xyz = mul(rot, v.normal.xyz);
     }
