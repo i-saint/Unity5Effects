@@ -86,11 +86,11 @@ public class MPCollider : MonoBehaviour
     public unsafe void PropagateHit(ref MPParticle particle)
     {
         Vector3 f = MPAPI.mpGetIntermediateData(MPWorld.GetCurrentContext())->accel * MPWorld.GetCurrent().m_particle_mass;
-        if (m_rigid3d)
+        if (m_rigid3d != null)
         {
             m_rigid3d.AddForceAtPosition(f, particle.position);
         }
-        if (m_rigid2d)
+        if (m_rigid2d != null)
         {
             m_rigid2d.AddForceAtPosition(f, particle.position);
         }
@@ -98,15 +98,14 @@ public class MPCollider : MonoBehaviour
 
     public void PropagateForce(ref MPParticleForce force)
     {
-        //Debug.Log("PropagateForce");
         Vector3 pos = force.position_average;
         Vector3 f = force.force * MPWorld.GetCurrent().m_particle_mass;
 
-        if (m_rigid3d)
+        if (m_rigid3d != null)
         {
             m_rigid3d.AddForceAtPosition(f, pos);
         }
-        if (m_rigid2d)
+        if (m_rigid2d != null)
         {
             m_rigid2d.AddForceAtPosition(f, pos);
         }
