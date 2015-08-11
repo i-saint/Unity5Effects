@@ -15,8 +15,10 @@
 #   define DEPTH SV_Depth
 #endif
 
-#if (defined(SHADER_API_D3D11) || defined(SHADER_API_PSSL)) && !defined(ALWAYS_USE_TEXTURE_DATA_SOURCE)
-    #define WITH_STRUCTURED_BUFFER
+#if (defined(SHADER_API_D3D11) || defined(SHADER_API_PSSL)) && !defined(FORCE_INSTANCE_TEXTURE)
+#ifdef ENABLE_INSTANCE_BUFFER
+    #define USE_STRUCTURED_BUFFER
+#endif
 #endif
 
 
@@ -57,7 +59,7 @@ float4  GetInstanceColorT(int i)        { return tex2Dlod(g_instance_texture_col
 float4  GetInstanceEmissionT(int i)     { return tex2Dlod(g_instance_texture_emission, InstanceTexcoord(i)); }
 float4  GetInstanceUVOffsetT(int i)     { return tex2Dlod(g_instance_texture_uv, InstanceTexcoord(i));       }
 
-#ifdef WITH_STRUCTURED_BUFFER
+#ifdef USE_STRUCTURED_BUFFER
 
 StructuredBuffer<float3>        g_instance_buffer_t;
 StructuredBuffer<float4>        g_instance_buffer_r;
@@ -73,11 +75,11 @@ float4  GetInstanceColorB(int i)         { return g_instance_buffer_color[i];   
 float4  GetInstanceEmissionB(int i)      { return g_instance_buffer_emission[i];}
 float4  GetInstanceUVOffsetB(int i)      { return g_instance_buffer_uv[i];      }
 
-#endif // WITH_STRUCTURED_BUFFER
+#endif // USE_STRUCTURED_BUFFER
 
 
 
-#if defined(WITH_STRUCTURED_BUFFER) && defined(USE_INSTANCE_BUFFER)
+#ifdef USE_STRUCTURED_BUFFER
 
 float3  GetInstanceTranslation(int i)   { return GetInstanceTranslationB(i); }
 float4  GetInstanceRotation(int i)      { return GetInstanceRotationB(i);    }
