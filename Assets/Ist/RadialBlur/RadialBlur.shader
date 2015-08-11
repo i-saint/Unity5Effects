@@ -2,6 +2,7 @@ Shader "Ist/RadialBlur" {
 
 CGINCLUDE
 #include "UnityCG.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
 #include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
 #include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
 
@@ -42,7 +43,8 @@ struct vs_out
     float4 screen_pos : TEXCOORD0;
     float4 center : TEXCOORD1;
 #if ENABLE_ATTENUATION
-    float4 obj_pos : TEXCOORD2;
+    float4 world_pos : TEXCOORD2;
+    float4 obj_pos : TEXCOORD3;
 #endif
 };
 struct ps_out
@@ -58,6 +60,7 @@ vs_out vert (ia_out I)
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
 
 #if ENABLE_ATTENUATION
+    O.world_pos = mul(_Object2World, I.vertex);
     O.obj_pos = float4(GetObjectPosition() + _OffsetCenter.xyz, 1);
 #endif
     return O;
@@ -71,7 +74,7 @@ ps_out frag (vs_out I)
     float opacity = 1.0;
 
 #if ENABLE_ATTENUATION
-    float3 hit = IntersectionEyeViewPlane(coord, I.obj_pos.xyz);
+    float3 hit = IntersectionEyeViewPlane(I.world_pos.xyz, I.obj_pos.xyz);
     float dist = length((hit - I.obj_pos.xyz) / _Scale.xyz);
     opacity = saturate(1 - dist * 2);
     //if (opacity <= 0) { discard; }

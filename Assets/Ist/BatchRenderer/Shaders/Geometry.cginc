@@ -116,14 +116,14 @@ DistanceData DistancePointBox(float3 ppos, Box shape)
     return ret;
 }
 
-float DistancePointPlane(Plane plane, float3 pos)
+float DistancePointPlane(float3 pos, Plane plane)
 {
     return dot(pos, plane.normal) + plane.distance;
 }
 
-float3 ProjectToPlane(Plane plane, float3 pos)
+float3 ProjectToPlane(float3 pos, Plane plane)
 {
-    float d = DistancePointPlane(plane, pos);
+    float d = DistancePointPlane(pos, plane);
     return pos - d*plane.normal;
 }
 

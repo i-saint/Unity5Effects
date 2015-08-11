@@ -103,10 +103,9 @@ float3 guess_normal(float3 p)
         map(p+float3(0.0,0.0,  d))-map(p+float3(0.0,0.0, -d)) ));
 }
 
-void raymarching(float2 uv, float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
+void raymarching(float3 pos3, const int num_steps, inout float o_total_distance, out float o_num_steps, out float o_last_distance, out float3 o_raypos)
 {
-    Ray camera_ray = GetCameraRay(uv);
-    float3 ray_dir = camera_ray.direction;
+    float3 ray_dir = normalize(pos3- GetCameraPosition());
     float3 ray_pos = pos3 + ray_dir * o_total_distance;
 
     o_num_steps = 0.0;
@@ -144,7 +143,7 @@ gbuffer_out frag_gbuffer(vs_out I)
     float last_distance = 0.0;
     float total_distance = 0;
     float3 ray_pos = world_pos;
-    raymarching(coord, world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
+    raymarching(world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
     float3 normal = guess_normal(ray_pos);
     normal = lerp(I.world_normal, normal, saturate((total_distance-_CutoutDistance)*1000000));
 

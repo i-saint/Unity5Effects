@@ -62,7 +62,7 @@ bool ApplyViewPlaneProjection(inout float4 vertex, float3 pos)
     float3 camera_pos = _WorldSpaceCameraPos.xyz;
     float3 look = normalize(camera_pos-pos);
     Plane view_plane = {look, 1.0};
-    pos = camera_pos + ProjectToPlane(view_plane, pos-camera_pos);
+    pos = camera_pos + ProjectToPlane(pos-camera_pos, view_plane);
     vertex.y *= -aspect;
     vertex.xy += vp.xy / vp.w;
     vertex.zw = float2(0.0, 1.0);

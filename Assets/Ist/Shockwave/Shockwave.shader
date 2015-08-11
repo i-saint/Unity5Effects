@@ -32,7 +32,8 @@ struct vs_out
     float4 vertex : SV_POSITION;
     float4 screen_pos : TEXCOORD0;
     float4 center : TEXCOORD1;
-    float4 obj_pos : TEXCOORD2;
+    float4 world_pos : TEXCOORD2;
+    float4 obj_pos : TEXCOORD3;
 };
 struct ps_out
 {
@@ -45,6 +46,7 @@ vs_out vert (ia_out I)
     O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
+    O.world_pos = mul(_Object2World, I.vertex);
     O.obj_pos = float4(GetObjectPosition() + _OffsetCenter.xyz, 1);
     return O;
 }
@@ -55,7 +57,7 @@ ps_out frag (vs_out I)
     float2 center = I.center.xy / I.center.w;
     float opacity = 1.0;
 
-    float3 hit = IntersectionEyeViewPlane(coord, I.obj_pos.xyz);
+    float3 hit = IntersectionEyeViewPlane(I.world_pos.xyz, I.obj_pos.xyz);
     float dist = length((hit - I.obj_pos.xyz) / _Scale.xyz);
     opacity = saturate(1 - dist * 2);
     if (opacity <= 0) { discard; }

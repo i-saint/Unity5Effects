@@ -27,3 +27,11 @@ float3 IntersectionEyeViewPlane(float2 uv, float3 plane_pos)
     Ray ray = GetCameraRay(uv);
     return IntersectionRayPlane(ray, plane);
 }
+
+float3 IntersectionEyeViewPlane(float3 world_pos, float3 plane_pos)
+{
+    float3 camera_dir = normalize(_WorldSpaceCameraPos.xyz - plane_pos);
+    Plane plane = { camera_dir, dot(plane_pos, -camera_dir) };
+    Ray ray = { _WorldSpaceCameraPos.xyz , normalize(world_pos-_WorldSpaceCameraPos.xyz)};
+    return IntersectionRayPlane(ray, plane);
+}
