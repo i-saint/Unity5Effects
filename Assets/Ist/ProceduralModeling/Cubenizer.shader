@@ -1,4 +1,4 @@
-﻿Shader "Ist/Cubenizer" {
+﻿Shader "Ist/ProceduralModeling/Cubenizer" {
 Properties {
     _GridSize("Grid Size", Float) = 0.26
     _CubeSize("Cube Size", Float) = 0.22
@@ -51,7 +51,10 @@ float sdBox(float3 p, float3 b)
     float3 d = abs(p) - b;
     return min(max(d.x, max(d.y, d.z)), 0.0) + length(max(d, 0.0));
 }
-
+float sdSphere(float3 p, float radius)
+{
+    return length(p) - radius;
+}
 
 
 struct ia_out
@@ -93,11 +96,12 @@ float3 localize(float3 p)
     return mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
 }
 
-float map(float3 p)
+float map(float3 pg)
 {
-    p = localize(p);
+    float3 pl = localize(pg);
+    float3 p = pl;
 
-//#define ENABLE_BUMP 1
+#define ENABLE_BUMP 1
 #if ENABLE_BUMP
     float bump = 0.25;
     float r = iq_rand(floor((p.xz) / _GridSize)).x;
@@ -108,12 +112,12 @@ float map(float3 p)
     float d1 = sdBox(p1, _CubeSize*0.5);
     float d2 = 0.0;
 #if ENABLE_BUMP
+    d1 = max(d1, sdBox(pl, _Scale*0.4));
     d1 = max(d1, p.y - _GridSize*0.9);
-    //d1 = min(d1, p.y + _GridSize*0.9);
-    //d2 = (_GridSize - dot(abs(p1), 1.0))*0.9;
+    d2 = (_GridSize - length(abs(p1)))*0.9;
 #endif // ENABLE_BUMP
 
-    return d1 + smoothstep(0.0, 1.0, d2);
+    return max(d1, 0.0) - smoothstep(0.0, 1.0, d2);
 }
 
 float3 guess_normal(float3 p)
@@ -140,6 +144,23 @@ void raymarching(float3 pos3, const int num_steps, inout float o_total_distance,
         if(o_last_distance < 0.001) { break; }
     }
     o_raypos = pos3 + ray_dir * o_total_distance;
+
+#define ENABLE_BOX_CLIPPING 1
+
+#if ENABLE_BOX_CLIPPING
+    {
+        float3 pl = localize(o_raypos);
+        float d = sdBox(pl, _Scale*0.5);
+        if (d > _CutoutDistance) { discard; }
+    }
+#endif
+#if ENABLE_SPHERE_CLIPPING
+    {
+        float3 pl = localize(o_raypos);
+        float d = sdSphere(pl, _Scale.x*0.5);
+        if (d > _CutoutDistance) { discard; }
+    }
+#endif
 }
 
 
@@ -166,8 +187,10 @@ gbuffer_out frag_gbuffer(vs_out I)
     float total_distance = 0;
     float3 ray_pos = world_pos;
     raymarching(world_pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
-    float3 normal = guess_normal(ray_pos);
-    normal = lerp(I.world_normal, normal, saturate((total_distance-_CutoutDistance)*1000000));
+    float3 normal = I.world_normal;
+    if (total_distance > 0.0) {
+        normal = guess_normal(ray_pos);
+    }
 
 
     gbuffer_out o;
