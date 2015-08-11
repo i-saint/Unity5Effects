@@ -16,19 +16,12 @@ Properties {
 }
 
 CGINCLUDE
-#include "UnityStandardCore.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
-#include "ProceduralModeling.cginc"
 
 #define MAX_MARCH_STEPS 8
-
-//#define ENABLE_BOX_CLIPPING 1
 #define ENABLE_SPHERE_CLIPPING 1
-
 #define ENABLE_DEPTH_OUTPUT 1
 
+#include "ProceduralModeling.cginc"
 
 
 float map(float3 pg)

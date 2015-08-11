@@ -1,7 +1,41 @@
+#ifndef IstProceduralModeling_h
+#define IstProceduralModeling_h
+
+#include "UnityStandardCore.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
+
+struct gbuffer_out
+{
+    half4 diffuse           : SV_Target0; // RT0: diffuse color (rgb), occlusion (a)
+    half4 spec_smoothness   : SV_Target1; // RT1: spec color (rgb), smoothness (a)
+    half4 normal            : SV_Target2; // RT2: normal (rgb), --unused, very low precision-- (a) 
+    half4 emission          : SV_Target3; // RT3: emission (rgb), --unused-- (a)
+#if ENABLE_DEPTH_OUTPUT
+    float depth :
+    #if SHADER_TARGET >= 50
+        SV_DepthGreaterEqual;
+    #else
+        SV_Depth;
+    #endif
+#endif
+};
+
+struct raymarch_data
+{
+    float3 ray_pos;
+    float num_steps;
+    float total_distance;
+    float last_distance;
+};
+
+
 float4 _Position;
 float4 _Rotation;
 float4 _Scale;
 float4 _OffsetPosition;
+float _LocalTime;
 
 
 float sdBox(float3 p, float3 b)
@@ -39,3 +73,5 @@ float3 localize(float3 p)
 {
     return mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
 }
+
+#endif // IstProceduralModeling_h
