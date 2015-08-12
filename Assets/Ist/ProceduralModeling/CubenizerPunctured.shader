@@ -4,6 +4,8 @@ Properties {
     _CubeSize("Cube Size", Float) = 0.22
     _BumpHeight("Bump Height", Float) = 0.15
     _AnimationSpeed("Animation Speed", Float) = 1.0
+    _PuncturePattern("Puncture Pattern", Int) = 1
+    _AnimationPattern("Animation Pattern", Int) = 0
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
     _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)
@@ -23,11 +25,8 @@ CGINCLUDE
 #define ENABLE_BOX_CLIPPING 1
 #define ENABLE_DEPTH_OUTPUT 1
 
-#define ENABLE_PUNCTURE 1
-#define ENABLE_BUMP 1
 #define BUMP_DIR y
 #define BUMP_PLANE xz
-#define BUMP_STRENGTH 0.25
 
 #include "Cubenizer.cginc"
 ENDCG

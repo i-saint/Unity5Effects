@@ -5,6 +5,7 @@ Properties {
     _BumpHeight("Bump Height", Float) = 0.15
     _EdgeWidth("Edge Width", Float) = 0.025
     _EdgeHeight("Edge Height", Float) = 0.25
+    _EdgeChopping("Edge Chopping", Int) = 1
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
     _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)
@@ -21,14 +22,12 @@ Properties {
 CGINCLUDE
 #define MAX_MARCH_STEPS 8
 //#define ENABLE_TRACEBACK 1
-//#define MAX_TRACEBACK_STEPS 16
+//#define MAX_TRACEBACK_STEPS 32
 #define ENABLE_BOX_CLIPPING 1
 #define ENABLE_DEPTH_OUTPUT 1
 
-#define HEX_PLANE xz
 #define HEX_DIR y
-#define ENABLE_BUMP 1
-#define ENABLE_POSTEFFECT 1
+#define HEX_PLANE xz
 
 #include "ProceduralModeling.cginc"
 
@@ -37,31 +36,50 @@ float _HexRadius;
 float _BumpHeight;
 float _EdgeWidth;
 float _EdgeHeight;
+int _EdgeChopping;
 
+
+float2 grid;
+float2 grid_rcp;
+float2 grid_half;
+float radius;
+
+void initialize(inout raymarch_data rmd)
+{
+    grid = float2(0.692, 0.4) * _GridSize;
+    grid_rcp = rcp(grid);
+    grid_half = grid*0.5;
+    radius = 0.22 * _HexRadius;
+}
 
 float map(float3 pg)
 {
     float3 p = localize(pg);
 
-    float2 grid = float2(0.692, 0.4) * _GridSize;
-    float2 grid_half = grid*0.5;
-    float radius = 0.22 * _HexRadius;
-
     float2 p1 = modc(p.HEX_PLANE, grid) - grid_half;
-    float2 p2 = modc(p.HEX_PLANE +grid_half, grid) - float2(grid_half);
+    float2 p2 = modc(p.HEX_PLANE + grid_half, grid) - grid_half;
     float h1 = sdHex(float2(p1.x,p1.y), radius);
     float h2 = sdHex(float2(p2.x,p2.y), radius);
     float e1 = max(min(h1, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
     float e2 = max(min(h2, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
 
-#if ENABLE_BUMP
-    float2 g1 = float2(ceil(p.HEX_PLANE / grid));
-    float2 g2 = float2(ceil((p.HEX_PLANE + grid_half) / grid));
-    float rxz = iq_rand(g1).x;
-    float ryz = iq_rand(g2).x;
-    e1 += rxz*_BumpHeight;
-    e2 += ryz*_BumpHeight;
-#endif // ENABLE_BUMP
+    float2 g1 = float2(floor(p.HEX_PLANE * grid_rcp));
+    float2 g2 = float2(floor((p.HEX_PLANE + grid_half) * grid_rcp));
+
+    if(_EdgeChopping) {
+        float2 s = _Scale.HEX_PLANE;
+        float2 f1 = (abs(g1) + step(0.0, g1)) * grid;
+        float2 f2 = abs(g2) * grid + grid_half;
+        if (f1.x > s.x*0.5 || f1.y > s.y*0.5) { h1 += grid_half*0.98; }
+        if (f2.x > s.x*0.5 || f2.y > s.y*0.5) { h2 += grid_half*0.98; }
+    }
+
+    if (_BumpHeight != 0.0) {
+        float rxz = iq_rand(g1).x;
+        float ryz = iq_rand(g2).x;
+        e1 += rxz*_BumpHeight;
+        e2 += ryz*_BumpHeight;
+    }
 
     h1 = max(h1, p.HEX_DIR - _Scale.HEX_DIR*0.5 + e1);
     h2 = max(h2, p.HEX_DIR - _Scale.HEX_DIR*0.5 + e2);
@@ -71,7 +89,6 @@ float map(float3 pg)
 
 void posteffect(inout gbuffer_out go, inout raymarch_data rmd)
 {
-    //go.emission.rgb += float3(0.2,0.2,0.8)*rmd.total_distance*3.0;
 }
 
 #include "Framework.cginc"

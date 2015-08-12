@@ -92,9 +92,7 @@ gbuffer_out frag_gbuffer(vs_out I)
     UNITY_INITIALIZE_OUTPUT(raymarch_data,rmd);
     rmd.ray_pos = world_pos;
 
-#if ENABLE_BEFORERAYMARCH
-    before_raymarch(rmd);
-#endif
+    initialize(rmd);
 
     raymarching(rmd);
     float3 normal = I.world_normal;
@@ -111,9 +109,7 @@ gbuffer_out frag_gbuffer(vs_out I)
     O.depth = ComputeDepth(mul(UNITY_MATRIX_VP, float4(rmd.ray_pos, 1.0)));
 #endif
 
-#ifdef ENABLE_POSTEFFECT
     posteffect(O, rmd);
-#endif
 
 #ifndef UNITY_HDR_ON
     O.emission = exp2(-O.emission);

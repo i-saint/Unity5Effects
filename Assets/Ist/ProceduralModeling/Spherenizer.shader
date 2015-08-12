@@ -24,6 +24,10 @@ CGINCLUDE
 #include "ProceduralModeling.cginc"
 
 
+void initialize(inout raymarch_data rmd)
+{
+}
+
 float map(float3 pg)
 {
     float3 pl = localize(pg);
@@ -37,6 +41,10 @@ float map(float3 pg)
     float d2 = length(cell)*1.25;
 
     return d1 - smoothstep(0.0, 1.0, d2);
+}
+
+void posteffect(inout gbuffer_out go, inout raymarch_data rmd)
+{
 }
 
 #include "Framework.cginc"
