@@ -35,9 +35,10 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 水面は G-Buffer をレイマーチすることで屈折をエミュレートしています。コースティクスは 3 次元ノイズで明るくしてそれっぽく見せかけています。
 
 
-### Cubenizer
-![alt text](doc/Cubenizer.jpg)  
-Cube の集合に見せかけるシェーダ。
+### Procedural Modeling
+![alt text](doc/ProceduralModeling.jpg)  
+Mesh の表面を開始点としてレイマーチ (sphere tracing) することで、オブジェクトスペースで distance function をレンダリングする代物。
+上の画像は Unity ちゃん以外の背景オブジェクトは全て Cube をピクセルシェーダで加工したものです。
 
 
 ### Light Particle
