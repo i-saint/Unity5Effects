@@ -11,7 +11,7 @@ namespace Ist
     [AddComponentMenu("Ist/Screen Space Reflections")]
     [RequireComponent(typeof(Camera))]
     [RequireComponent(typeof(GBufferUtils))]
-    //[ExecuteInEditMode]
+    [ExecuteInEditMode]
     public class ScreenSpaceReflections : MonoBehaviour
     {
         public enum Quality

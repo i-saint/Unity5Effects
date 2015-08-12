@@ -2,6 +2,7 @@
 float4 _SpecularColor;
 float _Smoothness;
 float _CutoutDistance;
+int _Clipping;
 
 
 struct ia_out
@@ -57,28 +58,25 @@ void raymarching(inout raymarch_data rmd)
     if (rmd.last_distance == 0.0) {
         float step = -prev / MAX_TRACEBACK_STEPS;
         for (int i = 0; i<MAX_TRACEBACK_STEPS; ++i) {
-            rmd.last_distance = map(rmd.ray_pos);
             rmd.total_distance += step;
             rmd.ray_pos += ray_dir * step;
+            rmd.last_distance = map(rmd.ray_pos);
             if (rmd.last_distance > 0) { break; }
         }
     }
 #endif // ENABLE_TRACEBACK
 
 
-#if ENABLE_BOX_CLIPPING
-    {
+    if (_Clipping == 1) {
         float3 pl = localize(rmd.ray_pos);
         float d = sdBox(pl, _Scale*0.5);
         if (d > _CutoutDistance) { discard; }
     }
-#elif ENABLE_SPHERE_CLIPPING
-    {
+    else if (_Clipping == 2) {
         float3 pl = localize(rmd.ray_pos);
         float d = sdSphere(pl, _Scale.x*0.5);
         if (d > _CutoutDistance) { discard; }
     }
-#endif
 }
 
 

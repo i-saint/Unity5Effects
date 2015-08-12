@@ -36,6 +36,7 @@ float4 _Rotation;
 float4 _Scale;
 float4 _OffsetPosition;
 float _LocalTime;
+float _ObjectID;
 
 
 float sdBox(float3 p, float3 b)

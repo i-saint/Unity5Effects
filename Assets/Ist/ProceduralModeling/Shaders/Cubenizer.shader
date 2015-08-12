@@ -6,6 +6,7 @@ Properties {
     _AnimationSpeed("Animation Speed", Float) = 0.0
     _PuncturePattern("Puncture Pattern", Int) = 0
     _AnimationPattern("Animation Pattern", Int) = 0
+    _Clipping("Clipping", Int) = 1
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
     _SpecularColor("Specular", Color) = (0.2, 0.2, 0.2, 1.0)
@@ -22,9 +23,6 @@ Properties {
 CGINCLUDE
 
 #define MAX_MARCH_STEPS 8
-
-//#define ENABLE_BOX_CLIPPING 1
-//#define ENABLE_SPHERE_CLIPPING 1
 
 //#define ENABLE_DEPTH_OUTPUT 1
 
