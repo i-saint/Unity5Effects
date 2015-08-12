@@ -51,7 +51,7 @@ float sdSphere(float3 p, float radius)
 float sdHex(float2 p, float2 h)
 {
     float2 q = abs(p);
-    return max(q.x - h.y, max(q.x + q.y*0.57735, q.y*1.1547) - h.x);
+    return max(q.x + q.y*0.57735, q.y*1.1547) - h.x;
 }
 
 float2 iq_rand(float2 p)

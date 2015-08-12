@@ -29,11 +29,17 @@ float map(float3 pg)
 
     float2 p1 = modc(p.HEX_PLANE, grid) - grid_half;
     float2 p2 = modc(p.HEX_PLANE + grid_half, grid) - grid_half;
+    float d1 = sdHex(p1, radius);
+    float d2 = sdHex(p2, radius);
+
+    // todo
+    //float sel = step(d2, d1);
+
     float2 pi1 = float2(floor(p.HEX_PLANE * grid_rcp));
     float2 pi2 = float2(floor((p.HEX_PLANE + grid_half) * grid_rcp));
 
-    float d1 = sdHex(float2(p1.x,p1.y), radius);
-    float d2 = sdHex(float2(p2.x,p2.y), radius);
+    float dz1 = max(abs(d1), 0.1); // fix me!
+    float dz2 = max(abs(d2), 0.1); // 
     float e1 = max(min(d1, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
     float e2 = max(min(d2, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
 
@@ -42,23 +48,23 @@ float map(float3 pg)
         float pr2 = frac(dot(pi2, float2(1.2, 60.3)));
         float pf1 = saturate((pr1 - _Fade) * 20.0f);
         float pf2 = saturate((pr2 - _Fade) * 20.0f);
-        d1 += lerp(grid_half - d1*0.5, 0.0, pf1);
-        d2 += lerp(grid_half - d2*0.5, 0.0, pf2);
+        d1 = lerp(dz1, d1, pf1);
+        d2 = lerp(dz2, d2, pf2);
     }
 
     if(_EdgeChopping == 1) {
         float2 s = _Scale.HEX_PLANE;
         float2 f1 = (abs(pi1) + step(0.0, pi1)) * grid;
         float2 f2 = abs(pi2) * grid + grid_half;
-        if (f1.x > s.x*0.5 || f1.y > s.y*0.5) { d1 += grid_half - d1*0.5; }
-        if (f2.x > s.x*0.5 || f2.y > s.y*0.5) { d2 += grid_half - d2*0.5; }
+        if (f1.x > s.x*0.5 || f1.y > s.y*0.5) { d1 = dz1; }
+        if (f2.x > s.x*0.5 || f2.y > s.y*0.5) { d2 = dz2; }
     }
     else if (_EdgeChopping == 2) {
         float2 s = _Scale.HEX_PLANE;
         float2 f1 = (abs(pi1) + step(0.0, pi1)) * grid;
         float2 f2 = abs(pi2) * grid + grid_half;
-        if (length(f1) > s.x*0.5) { d1 += grid_half - d1*0.5; }
-        if (length(f2) > s.x*0.5) { d2 += grid_half - d2*0.5; }
+        if (length(f1) > s.x*0.5) { d1 = dz1; }
+        if (length(f2) > s.x*0.5) { d2 = dz2; }
     }
 
     if (_BumpHeight != 0.0) {
