@@ -49,7 +49,7 @@ float radius;
 void initialize(inout raymarch_data rmd)
 {
     grid = float2(0.692, 0.4) * _GridSize;
-    grid_rcp = rcp(grid);
+    grid_rcp = 1.0 / grid;
     grid_half = grid*0.5;
     radius = 0.22 * _HexRadius;
 }
