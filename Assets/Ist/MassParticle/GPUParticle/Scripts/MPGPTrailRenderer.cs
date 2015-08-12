@@ -9,7 +9,7 @@ using UnityEditor;
 
 
 
-[AddComponentMenu("GPUParticle/TrailRenderer")]
+[AddComponentMenu("MassParticle/GPU Particle/Trail Renderer")]
 [RequireComponent(typeof(MPGPWorld))]
 public class MPGPTrailRenderer : BatchRendererBase
 {

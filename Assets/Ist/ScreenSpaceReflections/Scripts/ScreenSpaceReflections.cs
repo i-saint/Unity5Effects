@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace Ist
 {
-    [AddComponentMenu("Ist/ScreenSpaceReflections")]
+    [AddComponentMenu("Ist/Screen Space Reflections")]
     [RequireComponent(typeof(Camera))]
     [RequireComponent(typeof(GBufferUtils))]
     //[ExecuteInEditMode]

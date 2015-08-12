@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[AddComponentMenu("MassParticle/SphereCollider")]
+[AddComponentMenu("MassParticle/CPU Particle/Sphere Collider")]
 public class MPSphereCollider : MPCollider
 {
     public Vector3 m_center;

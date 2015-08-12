@@ -9,7 +9,7 @@ using UnityEditor;
 
 namespace Ist
 {
-    [AddComponentMenu("Ist/ScreenSpaceBoolean/SubOperator")]
+    [AddComponentMenu("Ist/Screen Space Boolean/Sub Operator")]
     [RequireComponent(typeof(Renderer))]
     [ExecuteInEditMode]
     public class SubOperator : ISubOperator

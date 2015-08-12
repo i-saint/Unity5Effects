@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[AddComponentMenu("MassParticle/CapsuleCollider")]
+[AddComponentMenu("MassParticle/CPU Particle/Capsule Collider")]
 public class MPCapsuleCollider : MPCollider
 {
     public enum Direction

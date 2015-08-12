@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Ist
 {
 
-    [AddComponentMenu("Ist/ScreenSpaceBoolean/AndRenderer")]
+    [AddComponentMenu("Ist/Screen Space Boolean/And Renderer")]
     [ExecuteInEditMode]
     public class AndRenderer : ICommandBufferRenderer<AndRenderer>
     {

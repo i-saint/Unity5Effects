@@ -10,7 +10,7 @@ using UnityEditor;
 namespace Ist
 {
 
-    [AddComponentMenu("Ist/ScreenSpaceBoolean/AndReceiver")]
+    [AddComponentMenu("Ist/Screen Space Boolean/And Receiver")]
     [RequireComponent(typeof(Renderer))]
     [ExecuteInEditMode]
     public class AndReceiver : IAndReceiver

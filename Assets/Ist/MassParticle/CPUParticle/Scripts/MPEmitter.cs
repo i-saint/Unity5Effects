@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 
-[AddComponentMenu("MassParticle/Emitter")]
+[AddComponentMenu("MassParticle/CPU Particle/Emitter")]
 public class MPEmitter : MonoBehaviour
 {
 

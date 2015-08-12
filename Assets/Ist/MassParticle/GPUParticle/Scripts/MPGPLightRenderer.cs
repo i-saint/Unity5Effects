@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("GPUParticle/Renderer")]
+[AddComponentMenu("MassParticle/GPU Particle/Light Renderer")]
 [RequireComponent(typeof(MPGPWorld))]
 public class MPGPLightRenderer : BatchRendererBase
 {

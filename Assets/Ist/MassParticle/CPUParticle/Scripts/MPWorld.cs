@@ -7,7 +7,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 
 
-[AddComponentMenu("MassParticle/World")]
+[AddComponentMenu("MassParticle/CPU Particle/World")]
 public class MPWorld : MonoBehaviour
 {
     public static List<MPWorld> s_instances = new List<MPWorld>();

@@ -9,7 +9,7 @@ using UnityEditor;
 
 
 
-[AddComponentMenu("GPUParticle/World")]
+[AddComponentMenu("MassParticle/GPU Particle/World")]
 public class MPGPWorld : MonoBehaviour
 {
     static List<MPGPWorld> s_instances;

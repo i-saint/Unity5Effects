@@ -7,7 +7,7 @@ using UnityEditor;
 #endif // UNITY_EDITOR
 
 
-[AddComponentMenu("MassParticle/LightRenderer")]
+[AddComponentMenu("MassParticle/CPU Particle/Light Renderer")]
 [RequireComponent(typeof(MPWorld))]
 public class MPLightRenderer : BatchRendererBase
 {

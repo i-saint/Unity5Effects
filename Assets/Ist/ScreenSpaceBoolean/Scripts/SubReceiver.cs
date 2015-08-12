@@ -9,7 +9,7 @@ using UnityEditor;
 
 namespace Ist
 {
-    [AddComponentMenu("Ist/ScreenSpaceBoolean/SubReceiver")]
+    [AddComponentMenu("Ist/Screen Space Boolean/Sub Receiver")]
     [RequireComponent(typeof(Renderer))]
     [ExecuteInEditMode]
     public class SubReceiver : ISubReceiver

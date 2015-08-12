@@ -40,7 +40,7 @@ public struct CSForce
 }
 
 
-[AddComponentMenu("GPUParticle/Force")]
+[AddComponentMenu("MassParticle/GPU Particle/Force")]
 public class MPGPForce : MonoBehaviour
 {
     static List<MPGPForce> s_instances;

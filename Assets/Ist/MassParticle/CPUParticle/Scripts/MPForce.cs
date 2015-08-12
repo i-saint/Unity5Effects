@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 
-[AddComponentMenu("MassParticle/Force")]
+[AddComponentMenu("MassParticle/CPU Particle/Force")]
 public class MPForce : MonoBehaviour
 {
 

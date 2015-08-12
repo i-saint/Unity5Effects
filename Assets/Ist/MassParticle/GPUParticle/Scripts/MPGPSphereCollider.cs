@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 
-[AddComponentMenu("GPUParticle/SphereCollider")]
+[AddComponentMenu("MassParticle/GPU Particle/Sphere Collider")]
 public class MPGPSphereCollider : MPGPColliderBase
 {
     public Vector3 m_center;

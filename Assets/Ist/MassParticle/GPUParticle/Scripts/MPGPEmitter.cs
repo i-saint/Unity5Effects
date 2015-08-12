@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-[AddComponentMenu("GPUParticle/Emitter")]
+[AddComponentMenu("MassParticle/GPU Particle/Emitter")]
 public class MPGPEmitter : MonoBehaviour
 {
     public static List<MPGPEmitter> instances = new List<MPGPEmitter>();

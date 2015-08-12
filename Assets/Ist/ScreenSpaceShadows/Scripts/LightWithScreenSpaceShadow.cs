@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Ist
 {
     // MeshRenderer is needed to handle OnWillRenderObject()
-    [AddComponentMenu("Ist/ScreenSpaceShadow/Light")]
+    [AddComponentMenu("Ist/Screen SpaceS hadow/Light")]
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     [ExecuteInEditMode]
