@@ -9,7 +9,6 @@ using UnityEditor;
 namespace Ist
 {
 
-    [AddComponentMenu("Ist/GBufferUtils/EmissionDrawer")]
     [RequireComponent(typeof(Renderer))]
     [ExecuteInEditMode]
     public class EmissionDrawer : ICommandBufferExecuter<EmissionDrawer>

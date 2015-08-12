@@ -20,7 +20,6 @@ CGINCLUDE
 
 #define MAX_MARCH_STEPS 8
 #define ENABLE_SPHERE_CLIPPING 1
-#define ENABLE_DEPTH_OUTPUT 1
 
 #include "ProceduralModeling.cginc"
 

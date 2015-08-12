@@ -23,8 +23,6 @@ Properties {
 CGINCLUDE
 #define MAX_MARCH_STEPS 8
 
-#define ENABLE_DEPTH_OUTPUT 1
-
 #define BUMP_DIR y
 #define BUMP_PLANE xz
 

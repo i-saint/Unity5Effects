@@ -9,11 +9,5 @@ public class ShaderParamsEditor : Editor
     {
         DrawDefaultInspector();
 
-        if (GUILayout.Button("Reset Material"))
-        {
-            var obj = target as ShaderParams;
-            obj.ResetMaterial();
-            SceneView.RepaintAll();
-        }
     }
 }
