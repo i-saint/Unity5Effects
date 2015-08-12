@@ -6,6 +6,7 @@ Properties {
     _EdgeWidth("Edge Width", Float) = 0.025
     _EdgeHeight("Edge Height", Float) = 0.25
     _EdgeChopping("Edge Chopping", Int) = 1
+    _AnimationSpeed("Fade", Float) = 0.0
     _Fade("Fade", Float) = 0.0
 
     _Color("Albedo", Color) = (0.75, 0.75, 0.8, 1.0)
@@ -38,6 +39,7 @@ float _BumpHeight;
 float _EdgeWidth;
 float _EdgeHeight;
 int _EdgeChopping;
+float _AnimationSpeed;
 float _Fade;
 
 
@@ -77,19 +79,28 @@ float map(float3 pg)
         d2 += lerp(grid_half*0.98, 0.0, pf2);
     }
 
-    if(_EdgeChopping) {
+    if(_EdgeChopping == 1) {
         float2 s = _Scale.HEX_PLANE;
         float2 f1 = (abs(pi1) + step(0.0, pi1)) * grid;
         float2 f2 = abs(pi2) * grid + grid_half;
         if (f1.x > s.x*0.5 || f1.y > s.y*0.5) { d1 += grid_half*0.98; }
         if (f2.x > s.x*0.5 || f2.y > s.y*0.5) { d2 += grid_half*0.98; }
     }
+    else if (_EdgeChopping == 2) {
+        float2 s = _Scale.HEX_PLANE;
+        float2 f1 = (abs(pi1) + step(0.0, pi1)) * grid;
+        float2 f2 = abs(pi2) * grid + grid_half;
+        if (length(f1) > s.x*0.5) { d1 += grid_half*0.98; }
+        if (length(f2) > s.x*0.5) { d2 += grid_half*0.98; }
+    }
 
     if (_BumpHeight != 0.0) {
-        float rxz = iq_rand(pi1).x;
-        float ryz = iq_rand(pi2).x;
-        e1 += rxz*_BumpHeight;
-        e2 += ryz*_BumpHeight;
+        float r1 = iq_rand(pi1).x;
+        float r2 = iq_rand(pi2).x;
+        float t1 = cos(r1*PI + _LocalTime*r1*_AnimationSpeed) * 0.5 + 0.5;
+        float t2 = cos(r2*PI + _LocalTime*r2*_AnimationSpeed) * 0.5 + 0.5;
+        e1 += _BumpHeight * t1;
+        e2 += _BumpHeight * t2;
     }
 
     d1 = max(d1, p.HEX_DIR - _Scale.HEX_DIR*0.5 + e1);

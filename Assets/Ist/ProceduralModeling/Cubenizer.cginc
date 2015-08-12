@@ -25,7 +25,7 @@ float map(float3 pg)
         }
         else if (_AnimationPattern == 1) {
             float t = r + _LocalTime*r*_AnimationSpeed;
-            p.BUMP_DIR -= _BumpHeight * t*2.0;
+            p.BUMP_DIR -= _BumpHeight * t*3.0;
         }
         bump = p.BUMP_DIR - _Scale.BUMP_DIR*0.5;
     }

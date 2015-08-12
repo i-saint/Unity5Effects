@@ -173,6 +173,7 @@ int ParticleTransform(inout appdata_full v)
 // transparent
 #if defined(MPGP_TRANSPARENT)
     half4 _Color;
+    half4 _Emission;
 
     struct vs_out
     {
@@ -196,7 +197,7 @@ int ParticleTransform(inout appdata_full v)
     ps_out frag(vs_out i)
     {
         ps_out o;
-        o.color = _Color;
+        o.color = _Color + _Emission;
         return o;
     }
 #endif
