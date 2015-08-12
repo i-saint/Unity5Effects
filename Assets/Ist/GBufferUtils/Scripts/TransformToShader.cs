@@ -11,6 +11,13 @@ using UnityEditor;
 public class TransformToShader : MonoBehaviour
 {
     [System.Serializable]
+    public struct StringBoolPair
+    {
+        public string key;
+        public bool value;
+    }
+
+    [System.Serializable]
     public struct StringFloatPair
     {
         public string key;
@@ -21,8 +28,10 @@ public class TransformToShader : MonoBehaviour
 
     public float m_local_time;
     public uint m_id;
+    public StringBoolPair[] m_keyworkds;
     public StringFloatPair[] m_params;
 
+    Material m_material;
     MaterialPropertyBlock m_mpb;
     Renderer m_renderer;
     Transform m_trans;
@@ -35,6 +44,8 @@ public class TransformToShader : MonoBehaviour
         }
         m_local_time += Time.deltaTime;
 
+
+
         if (m_mpb == null)
         {
             m_renderer = GetComponent<Renderer>();
@@ -45,6 +56,26 @@ public class TransformToShader : MonoBehaviour
             m_mpb.AddVector("_Scale", Vector4.one);
             m_mpb.AddFloat("_LocalTime", m_local_time);
             m_mpb.AddFloat("_ID", m_id);
+        }
+
+        if (m_keyworkds.Length > 0)
+        {
+            if (m_material == null)
+            {
+                m_material = new Material(m_renderer.sharedMaterial);
+                m_renderer.sharedMaterial = m_material;
+                for (int i = 0; i < m_keyworkds.Length; ++i)
+                {
+                    if(m_keyworkds[i].value)
+                    {
+                        m_material.EnableKeyword(m_keyworkds[i].key);
+                    }
+                    else
+                    {
+                        m_material.DisableKeyword(m_keyworkds[i].key);
+                    }
+                }
+            }
         }
 
         var rot = m_trans.rotation;
