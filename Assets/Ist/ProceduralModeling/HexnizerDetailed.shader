@@ -1,4 +1,4 @@
-﻿Shader "Ist/ProceduralModeling/Hexnizer" {
+﻿Shader "Ist/ProceduralModeling/Hexnizer Detailed" {
 Properties {
     _GridSize("Grid Size", Float) = 1.2
     _HexRadius("Hex Radius", Float) = 0.35
@@ -22,9 +22,9 @@ Properties {
 }
 
 CGINCLUDE
-#define MAX_MARCH_STEPS 8
-//#define ENABLE_TRACEBACK 1
-//#define MAX_TRACEBACK_STEPS 32
+#define MAX_MARCH_STEPS 16
+#define ENABLE_TRACEBACK 1
+#define MAX_TRACEBACK_STEPS 32
 #define ENABLE_BOX_CLIPPING 1
 #define ENABLE_DEPTH_OUTPUT 1
 

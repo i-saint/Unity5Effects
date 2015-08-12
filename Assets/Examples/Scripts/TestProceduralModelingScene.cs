@@ -12,7 +12,7 @@ public class TestProceduralModelingScene : MonoBehaviour
         {
             GameObject obj = Instantiate(m_floater);
             var t = obj.GetComponent<Transform>();
-            var v = new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-0.2f, 0.4f), Random.Range(-1.0f, 1.0f)).normalized;
+            var v = new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-0.2f, 0.3f), Random.Range(-1.0f, 1.0f)).normalized;
             t.position = v * Random.Range(5.0f, 12.0f);
         }
     }
