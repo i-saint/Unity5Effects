@@ -1,38 +1,7 @@
 
-float4 _SpecularColor;
-float _Smoothness;
-float _CutoutDistance;
-int _Clipping;
-
 #ifndef MAP_NORMAL
 #   define MAP_NORMAL map
 #endif
-
-
-struct ia_out
-{
-    float4 vertex : POSITION;
-    float3 normal : NORMAL;
-};
-
-struct vs_out
-{
-    float4 vertex : SV_POSITION;
-    float4 screen_pos : TEXCOORD0;
-    float4 world_pos : TEXCOORD1;
-    float3 world_normal: TEXCOORD2;
-};
-
-
-vs_out vert(ia_out I)
-{
-    vs_out O;
-    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
-    O.screen_pos = ComputeScreenPos(O.vertex);
-    O.world_pos = mul(_Object2World, I.vertex);
-    O.world_normal = mul(_Object2World, float4(I.normal, 0.0));
-    return O;
-}
 
 
 float3 guess_normal(float3 p)
@@ -111,7 +80,7 @@ gbuffer_out frag_gbuffer(vs_out I)
     O.depth = ComputeDepth(mul(UNITY_MATRIX_VP, float4(rmd.ray_pos, 1.0)));
 #endif
 
-    posteffect(O, rmd);
+    posteffect(O, I, rmd);
 
 #ifndef UNITY_HDR_ON
     O.emission = exp2(-O.emission);

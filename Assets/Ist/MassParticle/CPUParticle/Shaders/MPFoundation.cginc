@@ -4,6 +4,8 @@
 #include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
 
 int         g_batch_begin;
+int         g_num_max_instances;
+int         g_num_instances;
 sampler2D   g_instance_data;
 float       g_size;
 float       g_fade_time;
@@ -37,6 +39,10 @@ void GetParticleParams(int iid, out float4 o_pos, out float4 o_vel, out float4 o
 void ParticleTransform(inout appdata_full v, out float4 o_pos, out float4 o_vel, out float4 o_params)
 {
     int iid = v.texcoord1.x + g_batch_begin;
+    if (iid >= g_num_instances) {
+        v.vertex.xyz *= 0.0;
+        return;
+    }
     GetParticleParams(iid, o_pos, o_vel, o_params);
     float lifetime = o_params.y;
     float fade = min(1.0, lifetime / g_fade_time);

@@ -1,4 +1,4 @@
-﻿Shader "Custom/GSBillboard" {
+﻿Shader "MassParticle/GSBillboard" {
 Properties {
     _MainTex ("Base (RGB)", 2D) = "white" {}
     _Color ("Color", Color) = (0.8, 0.8, 0.8, 1.0)

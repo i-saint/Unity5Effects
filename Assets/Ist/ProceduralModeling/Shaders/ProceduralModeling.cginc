@@ -6,6 +6,33 @@
 #include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
 #include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
 
+#ifndef ENABLE_CUSTUM_VERTEX
+struct ia_out
+{
+    float4 vertex : POSITION;
+    float3 normal : NORMAL;
+};
+
+struct vs_out
+{
+    float4 vertex : SV_POSITION;
+    float4 screen_pos : TEXCOORD0;
+    float4 world_pos : TEXCOORD1;
+    float3 world_normal: TEXCOORD2;
+};
+
+
+vs_out vert(ia_out I)
+{
+    vs_out O;
+    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
+    O.screen_pos = ComputeScreenPos(O.vertex);
+    O.world_pos = mul(_Object2World, I.vertex);
+    O.world_normal = mul(_Object2World, float4(I.normal, 0.0));
+    return O;
+}
+#endif // ENABLE_CUSTUM_VERTEX
+
 struct gbuffer_out
 {
     half4 diffuse           : SV_Target0; // RT0: diffuse color (rgb), occlusion (a)
@@ -35,8 +62,20 @@ float4 _Position;
 float4 _Rotation;
 float4 _Scale;
 float4 _OffsetPosition;
-float _LocalTime;
-float _ObjectID;
+
+float4 _SpecularColor;
+float _Smoothness;
+float _CutoutDistance;
+int _Clipping;
+
+
+#ifndef _LocalTime
+    float _LocalTime;
+#endif
+#ifndef _ObjectID
+    float _ObjectID;
+#endif
+
 
 
 float sdBox(float3 p, float3 b)

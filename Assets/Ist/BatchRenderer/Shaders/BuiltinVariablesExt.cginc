@@ -1,4 +1,5 @@
-
+#ifndef IstBuiltinVariablesExt_h
+#define IstBuiltinVariablesExt_h
 
 float3 GetCameraPosition() { return _WorldSpaceCameraPos; }
 float3 GetCameraForward() { return -UNITY_MATRIX_V[2].xyz; }
@@ -35,3 +36,5 @@ float3 IntersectionEyeViewPlane(float3 world_pos, float3 plane_pos)
     Ray ray = { _WorldSpaceCameraPos.xyz , normalize(world_pos-_WorldSpaceCameraPos.xyz)};
     return IntersectionRayPlane(ray, plane);
 }
+
+#endif // IstBuiltinVariablesExt_h

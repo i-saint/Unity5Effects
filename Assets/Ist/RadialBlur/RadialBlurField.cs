@@ -49,7 +49,7 @@ namespace Ist
         }
 #endif // UNITY_EDITOR
 
-        public virtual void Awake()
+        public virtual void Start()
         {
             var animator = GetComponent<Animator>();
             if (animator != null)

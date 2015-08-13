@@ -24,7 +24,7 @@ CGINCLUDE
 #include "ProceduralModeling.cginc"
 
 
-void initialize(inout raymarch_data rmd)
+void initialize(inout raymarch_data R)
 {
 }
 
@@ -43,7 +43,7 @@ float map(float3 pg)
     return d1 - smoothstep(0.0, 1.0, d2);
 }
 
-void posteffect(inout gbuffer_out go, inout raymarch_data rmd)
+void posteffect(inout gbuffer_out O, vs_out I, raymarch_data R)
 {
 }
 
