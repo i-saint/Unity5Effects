@@ -35,6 +35,10 @@ public class RadialBlurField : MonoBehaviour
 
     Material m_material;
 
+
+    public void Die() { Destroy(gameObject); }
+
+
 #if UNITY_EDITOR
     void Reset()
     {

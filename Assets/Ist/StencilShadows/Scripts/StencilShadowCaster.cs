@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace Ist
 {
-    [AddComponentMenu("Ist/StencilShadow/Caster")]
+    [AddComponentMenu("Ist/Stencil Shadows/Caster")]
     [RequireComponent(typeof(Renderer))]
     [ExecuteInEditMode]
     public class StencilShadowCaster : IStencilShadowCaster

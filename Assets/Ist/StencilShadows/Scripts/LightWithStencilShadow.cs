@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace Ist
 {
-    [AddComponentMenu("Ist/ScreenSpaceShadow/Light")]
+    [AddComponentMenu("Ist/Stencil Shadows/Light")]
     [RequireComponent(typeof(MeshFilter))]
     [RequireComponent(typeof(MeshRenderer))]
     [ExecuteInEditMode]

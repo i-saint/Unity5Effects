@@ -9,15 +9,10 @@ using UnityEditor;
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
 [ExecuteInEditMode]
-public class Shockwave : MonoBehaviour
+public class Beam : MonoBehaviour
 {
-    [Range(-0.5f, 0.5f)] public float m_radius = 0.5f;
-    public float m_attenuation_pow = 0.5f;
-    public Vector3 m_offset_center = Vector3.zero;
-
-    public float m_reverse = 0.0f;
-    public float m_highlighting = 1.0f;
-    public bool m_debug = false;
+    public float m_length = 0.0f;
+    public Vector3 m_color;
     public Shader m_shader;
 
     Material m_material;
@@ -29,7 +24,7 @@ public class Shockwave : MonoBehaviour
 #if UNITY_EDITOR
     void Reset()
     {
-        m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/Shockwave/Shockwave.shader");
+        m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/Beam/Beam_Transparent.shader");
         GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphereI2.asset");
     }
 #endif // UNITY_EDITOR
@@ -42,11 +37,8 @@ public class Shockwave : MonoBehaviour
             GetComponent<MeshRenderer>().sharedMaterial = m_material;
         }
 
-        if(m_debug) { m_material.EnableKeyword ("ENABLE_DEBUG"); }
-        else        { m_material.DisableKeyword("ENABLE_DEBUG"); }
-
-        m_material.SetVector("_Params1", new Vector4(m_radius, m_attenuation_pow, m_reverse, m_highlighting));
-        m_material.SetVector("_Scale", GetComponent<Transform>().localScale);
-        m_material.SetVector("_OffsetCenter", m_offset_center);
+        var forward = GetComponent<Transform>().forward;
+        m_material.SetVector("_BeamDirection", new Vector4(forward.x, forward.y, forward.z, m_length));
+        m_material.SetVector("_Color", m_color);
     }
 }
