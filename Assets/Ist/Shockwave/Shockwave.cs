@@ -6,68 +6,72 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif // UNITY_EDITOR
 
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
-[ExecuteInEditMode]
-public class Shockwave : MonoBehaviour
+namespace Ist
 {
-    public float m_lifetime = 1.0f;
-    public float m_radius_start = 0.5f;
-    public float m_radius_end = 0.5f;
+    [RequireComponent(typeof(MeshFilter))]
+    [RequireComponent(typeof(MeshRenderer))]
+    [ExecuteInEditMode]
+    public class Shockwave : MonoBehaviour
+    {
+        public float m_lifetime = 1.0f;
+        public float m_radius_start = 0.5f;
+        public float m_radius_end = 0.5f;
 
-    [Range(-0.5f, 0.5f)] public float m_distortion_distance = 0.5f;
-    public float m_attenuation_pow = 0.5f;
-    public Vector3 m_offset_center = Vector3.zero;
+        [Range(-0.5f, 0.5f)]
+        public float m_distortion_distance = 0.5f;
+        public float m_attenuation_pow = 0.5f;
+        public Vector3 m_offset_center = Vector3.zero;
 
-    public float m_reverse = 0.0f;
+        public float m_reverse = 0.0f;
 
-    public float m_animation_radius;
-    public float m_animation_distortion;
+        public float m_animation_radius;
+        public float m_animation_distortion;
 
-    public bool m_debug = false;
-    Material m_material;
+        public bool m_debug = false;
+        Material m_material;
 
 
-    public virtual void Die() { Destroy(gameObject); }
+        public virtual void Die() { Destroy(gameObject); }
 
 
 #if UNITY_EDITOR
-    public virtual void Reset()
-    {
-        GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/Shockwave/Shockwave.mat");
-        GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphereI2.asset");
-    }
+        public virtual void Reset()
+        {
+            GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/Shockwave/Shockwave.mat");
+            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphereI2.asset");
+        }
 #endif // UNITY_EDITOR
 
-    public virtual void Awake()
-    {
-        var animator = GetComponent<Animator>();
-        if(animator != null)
+        public virtual void Awake()
         {
-            animator.speed = 1.0f / m_lifetime;
-        }
-    }
-
-    public virtual void Update()
-    {
-        var trans = GetComponent<Transform>();
-        var s = Mathf.Lerp(m_radius_start * 2.0f, m_radius_end*2.0f, m_animation_radius);
-        trans.localScale = new Vector3(s, s, s);
-    }
-
-    public virtual void OnWillRenderObject()
-    {
-        if (m_material == null)
-        {
-            m_material = new Material(GetComponent<Renderer>().sharedMaterial);
-            GetComponent<Renderer>().sharedMaterial = m_material;
+            var animator = GetComponent<Animator>();
+            if (animator != null)
+            {
+                animator.speed = 1.0f / m_lifetime;
+            }
         }
 
-        if (m_debug){ m_material.EnableKeyword ("ENABLE_DEBUG"); }
-        else        { m_material.DisableKeyword("ENABLE_DEBUG"); }
+        public virtual void Update()
+        {
+            var trans = GetComponent<Transform>();
+            var s = Mathf.Lerp(m_radius_start * 2.0f, m_radius_end * 2.0f, m_animation_radius);
+            trans.localScale = new Vector3(s, s, s);
+        }
 
-        m_material.SetVector("_Params1", new Vector4(m_distortion_distance* m_animation_distortion, m_attenuation_pow, m_reverse, 0.0f));
-        m_material.SetVector("_Scale", GetComponent<Transform>().localScale);
-        m_material.SetVector("_OffsetCenter", m_offset_center);
+        public virtual void OnWillRenderObject()
+        {
+            if (m_material == null)
+            {
+                m_material = new Material(GetComponent<Renderer>().sharedMaterial);
+                GetComponent<Renderer>().sharedMaterial = m_material;
+            }
+
+            if (m_debug) { m_material.EnableKeyword("ENABLE_DEBUG"); }
+            else { m_material.DisableKeyword("ENABLE_DEBUG"); }
+
+            m_material.SetVector("_Params1", new Vector4(m_distortion_distance * m_animation_distortion, m_attenuation_pow, m_reverse, 0.0f));
+            m_material.SetVector("_Scale", GetComponent<Transform>().localScale);
+            m_material.SetVector("_OffsetCenter", m_offset_center);
+        }
     }
 }

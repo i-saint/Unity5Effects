@@ -11,11 +11,12 @@ namespace Ist
     {
         public static Mesh GenerateQuad()
         {
+            float l = 1.0f;
             Vector3[] vertices = new Vector3[4] {
-                new Vector3( 1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f, 1.0f, 0.0f),
-                new Vector3(-1.0f,-1.0f, 0.0f),
-                new Vector3( 1.0f,-1.0f, 0.0f),
+                new Vector3( l, l, 0.0f),
+                new Vector3(-l, l, 0.0f),
+                new Vector3(-l,-l, 0.0f),
+                new Vector3( l,-l, 0.0f),
             };
             int[] indices = new int[6] { 0, 1, 2, 2, 3, 0 };
 
@@ -23,6 +24,24 @@ namespace Ist
             r.name = "Quad";
             r.vertices = vertices;
             r.triangles = indices;
+            return r;
+        }
+
+        public static Mesh GenerateLineSquare()
+        {
+            float l = 0.5f;
+            Vector3[] vertices = new Vector3[4] {
+                new Vector3( l, l, 0.0f),
+                new Vector3(-l, l, 0.0f),
+                new Vector3(-l,-l, 0.0f),
+                new Vector3( l,-l, 0.0f),
+            };
+            int[] indices = new int[] { 0, 1, 1, 2, 2, 3, 3, 0 };
+
+            Mesh r = new Mesh();
+            r.name = "Line Quad";
+            r.vertices = vertices;
+            r.SetIndices(indices, MeshTopology.Lines, 0);
             return r;
         }
 
@@ -92,6 +111,14 @@ namespace Ist
                 AssetDatabase.CreateAsset(newmesh, path + "(Reverse).asset");
             }
         }
+
+        [MenuItem("Assets/Mesh Utils/Generate Line Square")]
+        public static void GenerateLineSquare_Menu()
+        {
+            Mesh mesh = GenerateLineSquare();
+            AssetDatabase.CreateAsset(mesh, "Assets/LineSquare.asset");
+        }
+
 #endif
     }
 }
