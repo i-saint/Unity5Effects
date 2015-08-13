@@ -1,5 +1,4 @@
 Shader "Ist/RadialBlur" {
-
 CGINCLUDE
 #include "UnityCG.cginc"
 #include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
@@ -42,10 +41,8 @@ struct vs_out
     float4 vertex : SV_POSITION;
     float4 screen_pos : TEXCOORD0;
     float4 center : TEXCOORD1;
-#if ENABLE_ATTENUATION
     float4 world_pos : TEXCOORD2;
     float4 obj_pos : TEXCOORD3;
-#endif
 };
 struct ps_out
 {
@@ -59,10 +56,8 @@ vs_out vert (ia_out I)
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
 
-#if ENABLE_ATTENUATION
     O.world_pos = mul(_Object2World, I.vertex);
     O.obj_pos = float4(GetObjectPosition() + _OffsetCenter.xyz, 1);
-#endif
     return O;
 }
 
@@ -73,14 +68,12 @@ ps_out frag (vs_out I)
     float2 center = I.center.xy / I.center.w;
     float opacity = 1.0;
 
-#if ENABLE_ATTENUATION
     float3 hit = IntersectionEyeViewPlane(I.world_pos.xyz, I.obj_pos.xyz);
     float dist = length((hit - I.obj_pos.xyz) / _Scale.xyz);
     opacity = saturate(1 - dist * 2);
     //if (opacity <= 0) { discard; }
     opacity = pow(opacity, _AttenuationPow);
     opacity = lerp(opacity, 1 - opacity, _Reverse);
-#endif
 
     float2 dir = normalize(coord - center);
     float step = length(coord - center)*_Radius / ITERATION;
@@ -91,19 +84,10 @@ ps_out frag (vs_out I)
         float r = 1.0 - (1.0 / ITERATION * k);
         blend_rate += r;
         float4 c = tex2D(_FrameBuffer_RadialBlur, coord - dir*(step*k));
-#if ENABLE_BLUR
         color.rgb += c.rgb * r;
-#endif
-#if ENABLE_BLOOM
         color.rgb += (max(c.rgb - _BloomThreshold.rgb, 0) * _BloomIntensity.rgb) * r;
-#endif
     }
     color.rgb /= blend_rate;
-#if ENABLE_BLUR
-#else
-    color += tex2D(_FrameBuffer_RadialBlur, coord);
-#endif
-
 
     ps_out O;
     O.color.rgb = color.rgb * _ColorBias.rgb;
@@ -132,9 +116,6 @@ Subshader {
         #pragma vertex vert
         #pragma fragment frag
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
-        #pragma multi_compile ___ ENABLE_ATTENUATION
-        #pragma multi_compile ___ ENABLE_BLUR
-        #pragma multi_compile ___ ENABLE_BLOOM
         #pragma multi_compile ___ ENABLE_DEBUG
         ENDCG
     }

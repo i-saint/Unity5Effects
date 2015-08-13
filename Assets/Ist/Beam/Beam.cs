@@ -8,27 +8,31 @@ using UnityEditor;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
-[ExecuteInEditMode]
+[RequireComponent(typeof(Animator))]
 public class Beam : MonoBehaviour
 {
+    public enum State
+    {
+        Charge,
+        Fire,
+        Fade,
+    }
+
     public float m_radius = 0.0f;
     public float m_length = 0.0f;
     public Color m_color = Color.white;
     public float m_intensity = 1.0f;
 
     public float m_speed = 5.0f;
-    public float m_appear_time = 0.5f;
-    public float m_go_time = 2.0f;
+    public float m_charge_time = 1.5f;
+    public float m_fire_time = 2.0f;
     public float m_fade_time = 0.5f;
 
-
-    public Shader m_shader;
-    public float m_appear = 1.0f;
-    public bool m_fired;
+    public float m_animation = 1.0f;
+    public State m_state = State.Charge;
     public float m_state_time;
 
-    Material m_material;
-    Animator m_animator;
+    protected Material m_material;
 
 
     public virtual void Die()
@@ -38,60 +42,60 @@ public class Beam : MonoBehaviour
 
     public virtual void OnStateCharge()
     {
+        m_state = State.Charge;
         m_state_time = 0.0f;
-        m_animator.speed = 1.0f / m_appear_time;
+        GetComponent<Animator>().speed = 1.0f / m_charge_time;
     }
 
     public virtual void OnStateFire()
     {
+        m_state = State.Fire;
         m_state_time = 0.0f;
-        m_fired = true;
     }
 
     public virtual void OnStateFade()
     {
+        m_state = State.Fade;
         m_state_time = 0.0f;
-        m_animator.speed = 1.0f / m_fade_time;
+        GetComponent<Animator>().speed = 1.0f / m_fade_time;
     }
-
 
 #if UNITY_EDITOR
     public virtual void Reset()
     {
-        m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/Beam/Beam_Transparent.shader");
+        GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/Beam/Beam_DefaultTransparent.mat");
         GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphereI2.asset");
     }
 #endif // UNITY_EDITOR
 
-    public virtual void Awake()
-    {
-        m_animator = GetComponent<Animator>();
-    }
 
     public virtual void Update()
     {
         float dt = Time.deltaTime;
 
-        if (m_material == null)
-        {
-            m_material = new Material(m_shader);
-            GetComponent<MeshRenderer>().sharedMaterial = m_material;
-        }
-
         m_state_time += dt;
-        if (m_fired)
+        if (m_state == State.Fire)
         {
             m_length += m_speed * dt;
-            if(m_state_time > m_go_time)
+            if(m_state_time > m_fire_time)
             {
-                m_animator.CrossFade("Fade", 0.0f);
+                GetComponent<Animator>().CrossFade("Fade", 0.0f);
             }
+        }
+    }
+
+    public virtual void OnWillRenderObject()
+    {
+        if (m_material == null)
+        {
+            m_material = new Material(GetComponent<Renderer>().sharedMaterial);
+            GetComponent<Renderer>().sharedMaterial = m_material;
         }
 
         var trans = GetComponent<Transform>();
-        float s = m_radius * 2.0f * m_appear;
-        trans.localScale = new Vector3(s, s, s);
         var forward = trans.forward;
+        var s = m_radius * 2.0f * m_animation;
+        trans.localScale = new Vector3(s, s, s);
         m_material.SetVector("_BeamDirection", new Vector4(forward.x, forward.y, forward.z, m_length));
         m_material.SetVector("_Color", new Vector4(m_color.r * m_intensity, m_color.g * m_intensity, m_color.b * m_intensity, m_color.a));
     }

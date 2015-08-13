@@ -11,7 +11,6 @@ float4 _Params1;
 #define _Radius             _Params1.x
 #define _AttenuationPow     _Params1.y
 #define _Reverse            _Params1.z
-#define _Highlighting       _Params1.w
 
 float4 _Scale;
 float4 _OffsetCenter;
@@ -69,7 +68,7 @@ ps_out frag (vs_out I)
     float h = lerp(1 + opacity, 1 + (1 - opacity), _Reverse);
 
     ps_out O;
-    O.color.rgb = color.rgb * lerp(1, h, _Highlighting);
+    O.color.rgb = color.rgb;
     O.color.a = 1;
 
 #if ENABLE_DEBUG
