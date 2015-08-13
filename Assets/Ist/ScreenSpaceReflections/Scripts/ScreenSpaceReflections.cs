@@ -14,17 +14,17 @@ namespace Ist
     [ExecuteInEditMode]
     public class ScreenSpaceReflections : MonoBehaviour
     {
-        public enum Quality
+        public enum SampleCount
         {
-            Fast,
+            Low,
             Medium,
             High,
             VeryHigh,
         }
 
-        public Quality m_quality = Quality.Medium;
-        [Range(0.1f, 1.0f)]
-        public float m_resolution_scale = 0.5f;
+        public SampleCount m_sample_count = SampleCount.Medium;
+        [Range(1,8)]
+        public int m_downsampling = 2;
         [Range(0.0f, 2.0f)]
         public float m_intensity = 1.0f;
         [Range(0.0f, 1.0f)]
@@ -105,7 +105,7 @@ namespace Ist
         {
             Camera cam = GetComponent<Camera>();
 
-            Vector2 reso = new Vector2(cam.pixelWidth, cam.pixelHeight) * m_resolution_scale;
+            Vector2 reso = new Vector2(cam.pixelWidth, cam.pixelHeight) / m_downsampling;
             if (m_reflection_buffers[0] != null && m_reflection_buffers[0].width != (int)reso.x)
             {
                 ReleaseRenderTargets();
@@ -139,27 +139,27 @@ namespace Ist
             }
             UpdateRenderTargets();
 
-            switch (m_quality)
+            switch (m_sample_count)
             {
-                case Quality.Fast:
+                case SampleCount.Low:
                     m_material.EnableKeyword ("QUALITY_FAST");
                     m_material.DisableKeyword("QUALITY_MEDIUM");
                     m_material.DisableKeyword("QUALITY_HIGH");
                     m_material.DisableKeyword("QUALITY_ULTRA");
                     break;
-                case Quality.Medium:
+                case SampleCount.Medium:
                     m_material.DisableKeyword("QUALITY_FAST");
                     m_material.EnableKeyword ("QUALITY_MEDIUM");
                     m_material.DisableKeyword("QUALITY_HIGH");
                     m_material.DisableKeyword("QUALITY_ULTRA");
                     break;
-                case Quality.High:
+                case SampleCount.High:
                     m_material.DisableKeyword("QUALITY_FAST");
                     m_material.DisableKeyword("QUALITY_MEDIUM");
                     m_material.EnableKeyword ("QUALITY_HIGH");
                     m_material.DisableKeyword("QUALITY_ULTRA");
                     break;
-                case Quality.VeryHigh:
+                case SampleCount.VeryHigh:
                     m_material.DisableKeyword("QUALITY_FAST");
                     m_material.DisableKeyword("QUALITY_MEDIUM");
                     m_material.DisableKeyword("QUALITY_HIGH");

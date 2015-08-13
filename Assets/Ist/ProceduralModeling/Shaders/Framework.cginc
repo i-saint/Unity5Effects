@@ -4,6 +4,10 @@ float _Smoothness;
 float _CutoutDistance;
 int _Clipping;
 
+#ifndef MAP_NORMAL
+#   define MAP_NORMAL map
+#endif
+
 
 struct ia_out
 {
@@ -35,9 +39,9 @@ float3 guess_normal(float3 p)
 {
     const float d = 0.001;
     return normalize(float3(
-        map(p + float3(d, 0.0, 0.0)) - map(p + float3(-d, 0.0, 0.0)),
-        map(p + float3(0.0, d, 0.0)) - map(p + float3(0.0, -d, 0.0)),
-        map(p + float3(0.0, 0.0, d)) - map(p + float3(0.0, 0.0, -d))));
+        MAP_NORMAL(p + float3(d, 0.0, 0.0)) - MAP_NORMAL(p + float3(-d, 0.0, 0.0)),
+        MAP_NORMAL(p + float3(0.0, d, 0.0)) - MAP_NORMAL(p + float3(0.0, -d, 0.0)),
+        MAP_NORMAL(p + float3(0.0, 0.0, d)) - MAP_NORMAL(p + float3(0.0, 0.0, -d))));
 }
 
 void raymarching(inout raymarch_data rmd)

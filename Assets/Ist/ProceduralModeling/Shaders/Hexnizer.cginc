@@ -37,15 +37,13 @@ float map(float3 pg)
 
     float2 pi1 = float2(floor(p.HEX_PLANE * grid_rcp));
     float2 pi2 = float2(floor((p.HEX_PLANE + grid_half) * grid_rcp));
+    float pr1 = frac(dot(pi1, float2(0.9, 50.4))); // fast pseudo-random
+    float pr2 = frac(dot(pi2, float2(1.2, 60.3))); // 
 
     float dz1 = max(abs(d1), 0.1); // fix me!
     float dz2 = max(abs(d2), 0.1); // 
-    float e1 = max(min(d1, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
-    float e2 = max(min(d2, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
 
     if (_Fade > 0.0) {
-        float pr1 = frac(dot(pi1, float2(0.9, 50.4)));
-        float pr2 = frac(dot(pi2, float2(1.2, 60.3)));
         float pf1 = saturate((pr1 - _Fade) * 20.0f);
         float pf2 = saturate((pr2 - _Fade) * 20.0f);
         d1 = lerp(dz1, d1, pf1);
@@ -67,11 +65,11 @@ float map(float3 pg)
         if (length(f2) > s.x*0.5) { d2 = dz2; }
     }
 
-    if (_BumpHeight != 0.0) {
-        float r1 = iq_rand(pi1).x;
-        float r2 = iq_rand(pi2).x;
-        float t1 = cos(r1*PI + _LocalTime*r1*_AnimationSpeed) * 0.5 + 0.5;
-        float t2 = cos(r2*PI + _LocalTime*r2*_AnimationSpeed) * 0.5 + 0.5;
+    float e1 = max(min(d1, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
+    float e2 = max(min(d2, 0.0) + _EdgeWidth, 0.0)*_EdgeHeight;
+    if (_BumpHeight > 0.0) {
+        float t1 = cos(pr1*PI + _LocalTime*pr1*_AnimationSpeed) * 0.5 + 0.5;
+        float t2 = cos(pr2*PI + _LocalTime*pr2*_AnimationSpeed) * 0.5 + 0.5;
         e1 += _BumpHeight * t1;
         e2 += _BumpHeight * t2;
     }
