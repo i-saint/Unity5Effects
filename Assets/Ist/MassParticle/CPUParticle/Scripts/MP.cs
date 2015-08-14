@@ -166,7 +166,7 @@ public class MPAPI {
 
     [DllImport ("MassParticle")] public static extern void mpGeneratePointMesh(int context, int i, ref MPMeshData md);
     [DllImport ("MassParticle")] public static extern void mpGenerateCubeMesh(int context, int i, ref MPMeshData md);
-    [DllImport ("MassParticle")] public static extern int mpUpdateDataTexture(int context, IntPtr tex);
+    [DllImport ("MassParticle")] public static extern int mpUpdateDataTexture(int context, IntPtr tex, int width, int height);
     [MethodImplAttribute(MethodImplOptions.InternalCall)]
     public static extern int mpUpdateDataBuffer(int context, ComputeBuffer buf);
 

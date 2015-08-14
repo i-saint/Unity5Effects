@@ -57,7 +57,7 @@ vs_out vert (ia_out I)
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
 
     O.world_pos = mul(_Object2World, I.vertex);
-    O.obj_pos = float4(GetObjectPosition() + _OffsetCenter.xyz, 1);
+    O.obj_pos = float4(GetObjectPosition(), 1);
     return O;
 }
 
@@ -113,6 +113,7 @@ Subshader {
     }
     Pass {
         CGPROGRAM
+        #pragma target 3.0
         #pragma vertex vert
         #pragma fragment frag
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH

@@ -23,6 +23,7 @@ float4 _Params1;
 #define _FalloffDistance    _Params0.w
 #define _MaxAccumulation    _Params1.x
 #define _RayHitRadius       _Params1.y
+#define _RayStepBoost       _Params1.z
 
 // on OpenGL ES platforms, shader compiler goes infinite loop (?) without this workaround...
 #if defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
@@ -116,6 +117,7 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
 
     for(int k=0; k<MAX_MARCH; ++k) {
         adv = march_step * k + jitter;
+        march_step *= (1.0+_RayStepBoost);
         ray_pos = p.xyz + refdir * adv;
         float4 ray_pos4 = mul(UNITY_MATRIX_MVP, float4(ray_pos, 1.0));
         ray_pos4.y *= _ProjectionParams.x;

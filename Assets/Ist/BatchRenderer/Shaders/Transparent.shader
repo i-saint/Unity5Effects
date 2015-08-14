@@ -17,19 +17,14 @@ Category {
     SubShader {
         Pass {
 CGPROGRAM
-#if defined(SHADER_API_D3D9)
-    #pragma target 3.0
-#else
-    #pragma target 4.0
-#endif
+#pragma target 3.0
 #define ENABLE_INSTANCE_BUFFER
-#define ENABLE_INSTANCE_SCALE
 #define ENABLE_INSTANCE_ROTATION
-#define ENABLE_INSTANCE_UVOFFSET
-#define ENABLE_INSTANCE_EMISSION
-#if SHADER_TARGET > 40
-    // this will exceed max interpolator counts on shader model 3.0
-    #define ENABLE_INSTANCE_COLOR
+#define ENABLE_INSTANCE_SCALE
+#define ENABLE_INSTANCE_COLOR
+#if SHADER_TARGET > 30
+    #define ENABLE_INSTANCE_UVOFFSET
+    #define ENABLE_INSTANCE_EMISSION
 #endif
 
 #pragma vertex vert

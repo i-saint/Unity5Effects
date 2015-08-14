@@ -46,7 +46,7 @@ vs_out vert (ia_out I)
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
     O.world_pos = mul(_Object2World, I.vertex);
-    O.obj_pos = float4(GetObjectPosition() + _OffsetCenter.xyz, 1);
+    O.obj_pos = float4(GetObjectPosition(), 1);
     return O;
 }
 

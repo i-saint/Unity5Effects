@@ -36,6 +36,7 @@ namespace Ist
         public float m_animation;
 
         protected Material m_material;
+        protected Animator m_animator;
 
 
         public virtual void Die() { Destroy(gameObject); }
@@ -51,10 +52,10 @@ namespace Ist
 
         public virtual void Start()
         {
-            var animator = GetComponent<Animator>();
-            if (animator != null)
+            m_animator = GetComponent<Animator>();
+            if (m_animator != null)
             {
-                animator.speed = 1.0f / m_lifetime;
+                m_animator.speed = 1.0f / m_lifetime;
             }
         }
 
@@ -63,6 +64,11 @@ namespace Ist
             var trans = GetComponent<Transform>();
             var s = m_radius * 2.0f;
             trans.localScale = new Vector3(s, s, s);
+
+            if(m_animator!=null && m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1.0f)
+            {
+                Die();
+            }
         }
 
         public virtual void OnWillRenderObject()

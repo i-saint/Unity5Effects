@@ -78,7 +78,7 @@ public class MPWorld : MonoBehaviour
         if (m_texture_needs_update)
         {
             m_texture_needs_update = false;
-            MPAPI.mpUpdateDataTexture(GetContext(), m_instance_texture.GetNativeTexturePtr());
+            MPAPI.mpUpdateDataTexture(GetContext(), m_instance_texture.GetNativeTexturePtr(), m_instance_texture.width, m_instance_texture.height);
         }
     }
 

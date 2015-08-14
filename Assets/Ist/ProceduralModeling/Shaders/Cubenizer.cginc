@@ -18,7 +18,7 @@ float map(float3 pg)
 
     float bump = 0.0;
     if (_BumpHeight != 0.0) {
-        float r = iq_rand(floor((p.BUMP_PLANE) / _GridSize)).x;
+        float r = iq_rand(floor((p.BUMP_PLANE) / _GridSize + _ObjectID*0.057234)).x;
         if (_AnimationPattern == 0) {
             float t = cos(r*PI + _LocalTime*r*_AnimationSpeed) * 0.5 + 0.5;
             p.BUMP_DIR += _BumpHeight * t;

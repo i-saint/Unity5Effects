@@ -28,7 +28,9 @@ namespace Ist
         public float m_animation_distortion;
 
         public bool m_debug = false;
+
         Material m_material;
+        protected Animator m_animator;
 
 
         public virtual void Die() { Destroy(gameObject); }
@@ -44,10 +46,10 @@ namespace Ist
 
         public virtual void Start()
         {
-            var animator = GetComponent<Animator>();
-            if (animator != null)
+            m_animator = GetComponent<Animator>();
+            if (m_animator != null)
             {
-                animator.speed = 1.0f / m_lifetime;
+                m_animator.speed = 1.0f / m_lifetime;
             }
         }
 
@@ -56,6 +58,11 @@ namespace Ist
             var trans = GetComponent<Transform>();
             var s = Mathf.Lerp(m_radius_start * 2.0f, m_radius_end * 2.0f, m_animation_radius);
             trans.localScale = new Vector3(s, s, s);
+
+            if (m_animator != null && m_animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1.0f)
+            {
+                Die();
+            }
         }
 
         public virtual void OnWillRenderObject()

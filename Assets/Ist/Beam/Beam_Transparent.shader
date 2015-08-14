@@ -27,6 +27,8 @@ struct ia_out
 struct vs_out
 {
     float4 vertex : SV_POSITION;
+    float4 world_pos : TEXCOORD1;
+    float4 normal : TEXCOORD2;
 };
 
 struct ps_out
@@ -45,13 +47,18 @@ vs_out vert(ia_out v)
 
     vs_out o;
     o.vertex = mul(UNITY_MATRIX_VP, float4(pos, 1.0));
+    o.world_pos = float4(pos, 1.0);
+    o.normal = float4(n, 0.0);
     return o;
 }
 
 ps_out frag(vs_out i)
 {
+    float3 cam_dir = normalize(_WorldSpaceCameraPos.xyz - i.world_pos.xyz);
+    float s = pow(abs(dot(cam_dir, i.normal.xyz)), 2.);
+
     ps_out r;
-    r.color = _Color;
+    r.color = _Color * s;
     return r;
 }
 ENDCG

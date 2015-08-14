@@ -34,6 +34,7 @@ namespace Ist
         public float m_falloff_distance = 2.5f;
         public float m_ray_hit_radius = 0.15f;
         public float m_max_accumulation = 25.0f;
+        public float m_step_boost = 0.0f;
         public Shader m_shader;
 
         Material m_material;
@@ -169,7 +170,7 @@ namespace Ist
 
             m_reflection_buffers[1].filterMode = FilterMode.Point;
             m_material.SetVector("_Params0", new Vector4(m_intensity, m_raymarch_distance, m_ray_diffusion, m_falloff_distance));
-            m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, 0.0f, 0.0f));
+            m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, m_step_boost, 0.0f));
             m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[1]);
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[1]);
             m_material.SetTexture("_MainTex", src);

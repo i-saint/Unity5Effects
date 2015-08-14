@@ -79,7 +79,7 @@ ps_out frag(vs_out i)
     // equivalent to above code. this if more faster in some cases.
     float t1 = dot(n1, n2) - _EdgeThreshold;
     float t2 = dot(n1, n3) - _EdgeThreshold;
-    float t = clamp(min(min(t1, t2), 0.0) * -100000000000.0, 0.0, 1.0);
+    float t = clamp(min(min(t1, t2), 0.0) * -100000.0, 0.0, 1.0);
     h += _EdgeIntensity * t;
 #endif
 

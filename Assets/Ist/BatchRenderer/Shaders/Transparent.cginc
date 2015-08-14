@@ -14,12 +14,12 @@ void ApplyInstanceTransformSimplified(float2 id, inout float4 vertex, inout floa
     }
 
     vertex.xyz *= GetBaseScale();
-#ifndef BR_WITHOUT_INSTANCE_SCALE
+#ifdef ENABLE_INSTANCE_SCALE
     if(GetFlag_Scale()) {
         vertex.xyz *= GetInstanceScale(instance_id);
     }
 #endif
-#ifndef BR_WITHOUT_INSTANCE_ROTATION
+#ifdef ENABLE_INSTANCE_ROTATION
     if(GetFlag_Rotation()) {
         float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
@@ -28,13 +28,13 @@ void ApplyInstanceTransformSimplified(float2 id, inout float4 vertex, inout floa
     vertex.xyz += GetInstanceTranslation(instance_id);
     vertex = mul(UNITY_MATRIX_VP, vertex);
 
-#ifndef BR_WITHOUT_INSTANCE_UVOFFSET
+#ifdef ENABLE_INSTANCE_UVOFFSET
     if(GetFlag_UVOffset()) {
         float4 u = GetInstanceUVOffset(instance_id);
         texcoord = texcoord*u.xy + u.zw;
     }
 #endif
-#ifndef BR_WITHOUT_INSTANCE_COLOR
+#ifdef ENABLE_INSTANCE_COLOR
     if(GetFlag_Color()) {
         color *= GetInstanceColor(instance_id);
     }

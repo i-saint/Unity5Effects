@@ -227,9 +227,9 @@ ps_out frag(unity_v2f_deferred i)
             //if (ray_depth > ref_depth) {
             //    occlusion += occulusion_par_march;
             //}
-            occlusion += occulusion_par_march * clamp((ray_depth - ref_depth)*10000000000.0, 0.0, 1.0);
+            occlusion += occulusion_par_march * clamp((ray_depth - ref_depth)*100000.0, 0.0, 1.0);
         }
-        occlusion = min(occlusion, clamp(distance*10000, 0.0, 1.0)); // 0.0 if wpos is inner light inner radius
+        occlusion = min(occlusion, clamp(distance*10000.0, 0.0, 1.0)); // 0.0 if wpos is inner light inner radius
     }
     //if(occlusion >= 1.0) { discard; } // this makes slower
 #endif

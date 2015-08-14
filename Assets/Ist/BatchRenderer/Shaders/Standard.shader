@@ -13,10 +13,10 @@ CGPROGRAM
 #define ENABLE_INSTANCE_BUFFER
 #define ENABLE_INSTANCE_SCALE
 #define ENABLE_INSTANCE_ROTATION
-#define ENABLE_INSTANCE_UVOFFSET
 #define ENABLE_INSTANCE_EMISSION
-#if SHADER_TARGET > 20
+#if SHADER_TARGET > 30
     // this will exceed max interpolator counts on some low-profile targets
+    #define ENABLE_INSTANCE_UVOFFSET
     #define ENABLE_INSTANCE_COLOR
 #endif
 
