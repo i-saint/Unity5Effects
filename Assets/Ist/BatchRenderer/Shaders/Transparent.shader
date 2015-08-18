@@ -18,7 +18,6 @@ Category {
         Pass {
 CGPROGRAM
 #pragma target 3.0
-#define ENABLE_INSTANCE_BUFFER
 #define ENABLE_INSTANCE_ROTATION
 #define ENABLE_INSTANCE_SCALE
 #define ENABLE_INSTANCE_COLOR
@@ -29,6 +28,7 @@ CGPROGRAM
 
 #pragma vertex vert
 #pragma fragment frag
+#pragma multi_compile ___ ENABLE_INSTANCE_BUFFER
 
 #define BR_TRANSPARENT
 #include "Transparent.cginc"

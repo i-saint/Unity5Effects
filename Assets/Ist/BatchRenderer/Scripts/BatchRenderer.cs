@@ -335,7 +335,7 @@ public class BatchRenderer : BatchRendererBase
         Material m = new Material(src);
         if (m_data_transfer_mode == DataTransferMode.Buffer)
         {
-            m.EnableKeyword("USE_INSTANCE_BUFFER");
+            m.EnableKeyword("ENABLE_INSTANCE_BUFFER");
         }
         m.SetInt("g_batch_begin", nth * m_instances_par_batch);
         m.SetInt("g_flag_rotation", m_enable_rotation ? 1 : 0);

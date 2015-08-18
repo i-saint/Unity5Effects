@@ -108,6 +108,11 @@ float3 nrand3(float2 co)
     return c;
 }
 
+float soft_min(float a, float b, float r)
+{
+    float e = max(r - abs(a - b), 0);
+    return min(a, b) - e*e*0.25 / r;
+}
 
 float3 localize(float3 p)
 {

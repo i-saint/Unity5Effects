@@ -89,8 +89,8 @@ namespace Ist
                         break;
                     case Profile.Medium:
                         ssr.enabled = true;
-                        ssr.m_sample_count = ScreenSpaceReflections.SampleCount.Medium;
-                        ssr.m_downsampling = 4;
+                        ssr.m_sample_count = ScreenSpaceReflections.SampleCount.Low;
+                        ssr.m_downsampling = 2;
                         break;
                     case Profile.High:
                         ssr.enabled = true;
@@ -111,8 +111,6 @@ namespace Ist
                 switch (prof)
                 {
                     case Profile.Fastest:
-                        bloom.enabled = false;
-                        break;
                     case Profile.Fast:
                         bloom.enabled = true;
                         bloom.quality = UnityStandardAssets.ImageEffects.Bloom.BloomQuality.Cheap;

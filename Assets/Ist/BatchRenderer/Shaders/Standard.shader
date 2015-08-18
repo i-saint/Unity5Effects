@@ -10,17 +10,16 @@ SubShader {
 
 CGPROGRAM
 #pragma target 3.0
-#define ENABLE_INSTANCE_BUFFER
 #define ENABLE_INSTANCE_SCALE
 #define ENABLE_INSTANCE_ROTATION
 #define ENABLE_INSTANCE_EMISSION
 #if SHADER_TARGET > 30
-    // this will exceed max interpolator counts on some low-profile targets
     #define ENABLE_INSTANCE_UVOFFSET
     #define ENABLE_INSTANCE_COLOR
 #endif
 
 #pragma surface surf Standard fullforwardshadows vertex:vert addshadow
+#pragma multi_compile ___ ENABLE_INSTANCE_BUFFER
 
 #define BR_STANDARD
 #include "Surface.cginc"
