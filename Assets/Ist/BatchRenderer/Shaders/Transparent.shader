@@ -22,6 +22,7 @@ CGPROGRAM
 #define ENABLE_INSTANCE_SCALE
 #define ENABLE_INSTANCE_COLOR
 #if SHADER_TARGET > 30
+    // on shader model 3.0, this exceeds max interpolator values..
     #define ENABLE_INSTANCE_UVOFFSET
     #define ENABLE_INSTANCE_EMISSION
 #endif

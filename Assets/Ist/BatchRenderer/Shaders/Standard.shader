@@ -14,6 +14,7 @@ CGPROGRAM
 #define ENABLE_INSTANCE_ROTATION
 #define ENABLE_INSTANCE_EMISSION
 #if SHADER_TARGET > 30
+    // on shader model 3.0, this exceeds max interpolator values..
     #define ENABLE_INSTANCE_UVOFFSET
     #define ENABLE_INSTANCE_COLOR
 #endif
