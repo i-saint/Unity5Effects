@@ -48,6 +48,15 @@ public class MetaballRenderer : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        if(m_buffer!=null)
+        {
+            m_buffer.Release();
+            m_buffer = null;
+        }
+    }
+
     void LateUpdate()
     {
         InitializeMembers();

@@ -35,15 +35,20 @@ G-Buffer 加工によるスクリーンスペースブーリアン演算です�
 水面は G-Buffer をレイマーチすることで屈折をエミュレートしています。コースティクスは 3 次元ノイズで明るくしてそれっぽく見せかけています。
 
 
+### Light Particle
+![alt text](doc/LightParticle.jpg)  
+一粒一粒を Point Light として扱うパーティクルレンダラ。MassParticle の拡張。
+
+
 ### Procedural Modeling
 ![alt text](doc/ProceduralModeling.jpg)  
 Mesh の表面を開始点としてレイマーチ (sphere tracing) することで、オブジェクトスペースで distance function をレンダリングする代物。
 上の画像は Unity ちゃん以外の背景オブジェクトは全て Cube をピクセルシェーダで加工したものです。
 
-
-### Light Particle
-![alt text](doc/LightParticle.jpg)  
-一粒一粒を Point Light として扱うパーティクルレンダラ。MassParticle の拡張。
+### Metaball
+![alt text](doc/Metaball.gif)  
+レイマーチによる Metaball。完全に GPU で完結するので、MC 法などでメッシュを生成するよりはずっと高速なはずです。  
+実装には Media Molecule の方が発表した soft_min() 関数を拝借しています。([詳細](http://media.lolrus.mediamolecule.com/AlexEvans_SIGGRAPH-2015-sml.pdf)。この資料プロシージャルモデリングの類に関する情報の宝庫なのでおすすめです) また、D3D11 世代の機能 (StructuredBuffer) を使っているのでやや環境を選びます。  
 
 
 #### Mosaic Field
