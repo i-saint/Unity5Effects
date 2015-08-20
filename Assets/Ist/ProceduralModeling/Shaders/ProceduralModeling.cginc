@@ -58,6 +58,7 @@ struct raymarch_data
 };
 
 
+sampler2D _BackDepth;
 float4 _Position;
 float4 _Rotation;
 float4 _Scale;
@@ -112,6 +113,12 @@ float soft_min(float a, float b, float r)
 {
     float e = max(r - abs(a - b), 0);
     return min(a, b) - e*e*0.25 / r;
+}
+
+float soft_max(float a, float b, float r)
+{
+    float e = max(r - abs(a - b), 0);
+    return max(a, b) + e*e*0.25 / r;
 }
 
 float3 localize(float3 p)

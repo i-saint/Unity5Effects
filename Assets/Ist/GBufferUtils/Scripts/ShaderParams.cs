@@ -27,7 +27,10 @@ public class ShaderParams : MonoBehaviour
 
     static uint s_idgen;
 
-    public bool m_share_material = true;
+    public bool m_debug_log = false;
+    public bool m_use_root_position = false;
+    public bool m_use_root_rotation = false;
+    public bool m_use_root_scale = false;
     public float m_local_time;
     public List<StringFloatPair> m_fparams = new List<StringFloatPair>();
 
@@ -46,10 +49,18 @@ public class ShaderParams : MonoBehaviour
             m_mpb.SetFloat("_ObjectID", m_id);
         }
 
-        var rot = trans.rotation;
-        m_mpb.SetVector("_Position", trans.position);
+        var pos = m_use_root_position ? trans.root.position : trans.position;
+        var rot = m_use_root_rotation ? trans.root.rotation : trans.rotation;
+        var scale = m_use_root_scale ? trans.root.lossyScale : trans.lossyScale;
+        if(m_debug_log)
+        {
+            Debug.Log("pos: " + pos);
+            Debug.Log("rot: " + rot);
+            Debug.Log("scale: " + scale);
+        }
+        m_mpb.SetVector("_Position", pos);
         m_mpb.SetVector("_Rotation", new Vector4(rot.x, rot.y, rot.z, rot.w));
-        m_mpb.SetVector("_Scale", trans.localScale);
+        m_mpb.SetVector("_Scale", scale);
         m_mpb.SetFloat("_LocalTime", m_local_time);
         for (int i = 0; i < m_fparams.Count; ++i)
         {
