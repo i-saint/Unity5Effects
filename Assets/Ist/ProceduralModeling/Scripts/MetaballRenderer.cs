@@ -51,6 +51,8 @@ public class MetaballRenderer : MonoBehaviour
     void LateUpdate()
     {
         InitializeMembers();
+        System.Comparison<MetaballData> comparison = (a, b) => a.negative.CompareTo(b.negative);
+        System.Array.Sort(m_entities, comparison);
         m_buffer.SetData(m_entities);
         m_material.SetBuffer("_Entities", m_buffer);
         m_material.SetInt("_NumEntities", m_num_entities);
