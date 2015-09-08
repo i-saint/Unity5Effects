@@ -67,6 +67,9 @@ gbuffer_out frag_gbuffer(vs_out I)
 
     raymarching(rmd);
     float3 normal = I.world_normal;
+    //float3 d1 = ddx(world_pos);
+    //float3 d2 = ddy(world_pos);
+    //normal = normalize(cross(d2, d1));
     if (rmd.total_distance > 0.0) {
         normal = guess_normal(rmd.ray_pos);
     }

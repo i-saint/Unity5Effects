@@ -6,6 +6,14 @@ Properties {
     _Metallic("Metallic", Range(0, 1)) = 0.0
     _Position("Position", Vector) = (0, 0, 0, 0)
     _Rotation("Rotation", Vector) = (0, 1, 0, 0)
+    _Scale("Scale", Vector) = (1, 1, 1, 0)
+
+    _Scene("Scene", Float) = 0
+
+    [Toggle(ENABLE_SCREENSPACE)] _EnableScreenSpace("ScreenSpace", Float) = 0
+    [Toggle(ENABLE_ADAPTIVE)] _EnableAdaptive("Adaptive", Float) = 0
+    [Toggle(ENABLE_TEMPORAL)] _EnableTemporal("Temporal", Float) = 0
+    [Toggle(ENABLE_PATTERN)] _EnablePattern("Pattern", Float) = 0
 }
 
 CGINCLUDE
@@ -19,22 +27,30 @@ CGINCLUDE
 #define MAX_MARCH_SINGLE_GBUFFER_PASS 100
 
 
-int g_scene;
-int g_hdr;
-int g_enable_adaptive;
-int g_enable_temporal;
-int g_enable_glowline;
+int _Scene;
+float3 _Position;
 float4 _Rotation;
-float4 _Position;
+float3 _Scale;
+
+float3 localize(float3 p)
+{
+#if ENABLE_SCREENSPACE
+    p = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), p);
+    p -= _Position.xyz;
+#else
+    p = mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz;
+#endif
+    return p;
+}
 
 float map(float3 p)
 {
-    p = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), p);
-    p += _Position.xyz;
-    if(g_scene==0) {
+    p = localize(p);
+
+    if(_Scene==0) {
         return pseudo_kleinian( (p+float3(0.0, -0.5, 0.0)).xzy );
     }
-    else if (g_scene==1) {
+    else if (_Scene==1) {
         return tglad_formula(p);
     }
     else {
@@ -106,19 +122,23 @@ struct vs_out
 };
 
 
-vs_out vert(ia_out v)
+vs_out vert(ia_out I)
 {
-    vs_out o;
-    o.vertex = v.vertex;
-    o.spos = o.vertex;
-    return o;
+    vs_out O;
+#if ENABLE_SCREENSPACE
+    O.vertex = I.vertex;
+#else
+    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
+#endif
+    O.spos = O.vertex;
+    return O;
 }
 
-vs_out vert_dummy(ia_out v)
+vs_out vert_dummy(ia_out I)
 {
-    vs_out o;
-    o.vertex = o.spos = float4(0.0, 0.0, 0.0, 1.0);
-    return o;
+    vs_out O;
+    O.vertex = O.spos = float4(0.0, 0.0, 0.0, 1.0);
+    return O;
 }
 
 
@@ -159,62 +179,64 @@ struct gbuffer_out
 };
 
 
-gbuffer_out frag_gbuffer(vs_out v)
+gbuffer_out frag_gbuffer(vs_out I)
 {
+    I.spos.xy /= I.spos.w;
 #if UNITY_UV_STARTS_AT_TOP
-    v.spos.y *= -1.0;
+    I.spos.y *= -1.0;
 #endif
     float time = _Time.y;
-    float2 pos = v.spos.xy;
-    pos.x *= _ScreenParams.x / _ScreenParams.y;
+    float2 coord = I.spos.xy;
+    coord.x *= _ScreenParams.x / _ScreenParams.y;
 
     float num_steps = 1.0;
     float last_distance = 0.0;
     float total_distance = _ProjectionParams.y;
     float3 ray_pos;
     float3 normal;
-    if(g_enable_adaptive) {
+#if ENABLE_ADAPTIVE
+    {
         float3 cam_pos      = GetCameraPosition();
         float3 cam_forward  = GetCameraForward();
         float3 cam_up       = GetCameraUp();
         float3 cam_right    = GetCameraRight();
         float  cam_focal_len= GetCameraFocalLength();
-        float3 ray_dir = normalize(cam_right*pos.x + cam_up*pos.y + cam_forward*cam_focal_len);
+        float3 ray_dir = normalize(cam_right*coord.x + cam_up*coord.y + cam_forward*cam_focal_len);
 
-        total_distance = tex2D(g_depth, v.spos.xy*0.5+0.5).x;
+        total_distance = tex2D(g_depth, I.spos.xy*0.5+0.5).x;
         ray_pos = cam_pos + ray_dir * total_distance;
         normal = guess_normal(ray_pos);
-        //normal = float3(0.0, 0.0, 1.0);
-    }
-    else {
-        raymarching(pos, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
+        }
+#else // ENABLE_ADAPTIVE
+    {
+        raymarching(coord, MAX_MARCH_SINGLE_GBUFFER_PASS, total_distance, num_steps, last_distance, ray_pos);
         normal = guess_normal(ray_pos);
     }
+#endif // ENABLE_ADAPTIVE
 
     float glow = 0.0;
-    if(g_enable_glowline) {
-        float3 p3 = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), ray_pos);
-        p3 += _Position.xyz;
+#if ENABLE_PATTERN
+    {
+        float3 p3 = localize(ray_pos);
         p3 *= 2.0;
         glow += max((modc(length(p3) - time*3, 15.0) - 12.0)*0.7, 0.0);
         float2 p2 = pattern(p3.xz*0.5);
         if(p2.x<1.3) { glow = 0.0; }
     }
+#endif // ENABLE_PATTERN
     glow += max(1.0-abs(dot(-GetCameraForward(), normal)) - 0.4, 0.0) * 1.0;
-    
-    float c = total_distance*0.01;
-    float4 color = float4( c + float3(0.02, 0.02, 0.025)*num_steps*0.4, 1.0 );
-    color.xyz += float3(0.5, 0.5, 0.75)*glow;
-
     float3 emission = float3(0.7, 0.7, 1.0)*glow*0.6;
 
-    gbuffer_out o;
-    o.diffuse = float4(0.75, 0.75, 0.80, 1.0);
-    o.spec_smoothness = float4(0.2, 0.2, 0.2, _Glossiness);
-    o.normal = float4(normal*0.5+0.5, 1.0);
-    o.emission = g_hdr ? float4(emission, 1.0) : exp2(float4(-emission, 1.0));
-    o.depth = ComputeDepth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
-    return o;
+    gbuffer_out O;
+    O.diffuse = float4(0.75, 0.75, 0.80, 1.0);
+    O.spec_smoothness = float4(0.2, 0.2, 0.2, _Glossiness);
+    O.normal = float4(normal*0.5+0.5, 1.0);
+    O.emission = float4(emission, 1.0);
+#ifndef UNITY_HDR_ON
+    O.emission = exp2(-O.emission);
+#endif
+    O.depth = ComputeDepth(mul(UNITY_MATRIX_VP, float4(ray_pos, 1.0)));
+    return O;
 }
 
 struct distance_out
@@ -231,45 +253,47 @@ struct opass_out
 
 #define DIFF_THRESHILD 0.0001
 
-opass_out frag_opass(vs_out v)
+opass_out frag_opass(vs_out I)
 {
 #if UNITY_UV_STARTS_AT_TOP
-    v.spos.y *= -1.0;
+    I.spos.y *= -1.0;
 #endif
-    float2 tpos = v.spos.xy*0.5+0.5;
-    float2 pos = v.spos.xy;
+    float2 tpos = I.spos.xy*0.5+0.5;
+    float2 pos = I.spos.xy;
     pos.x *= _ScreenParams.x / _ScreenParams.y;
 
     float num_steps, last_distance, total_distance = _ProjectionParams.y;
     float3 ray_pos;
     raymarching(pos, MAX_MARCH_OPASS, total_distance, num_steps, last_distance, ray_pos);
 
-    opass_out o;
-    o.distance = total_distance;
-    o.diff = total_distance - tex2D(g_depth_prev, tpos).x;
-    return o;
+    opass_out O;
+    O.distance = total_distance;
+    O.diff = total_distance - tex2D(g_depth_prev, tpos).x;
+    return O;
 }
 
 
-distance_out adaptive_pass(vs_out v, const int max_steps)
+distance_out adaptive_pass(vs_out I, const int max_steps)
 {
 #if UNITY_UV_STARTS_AT_TOP
-    v.spos.y *= -1.0;
+    I.spos.y *= -1.0;
 #endif
-    float2 tpos = v.spos.xy*0.5+0.5;
-    float2 pos = v.spos.xy;
+    float2 tpos = I.spos.xy*0.5+0.5;
+    float2 pos = I.spos.xy;
     pos.x *= _ScreenParams.x / _ScreenParams.y;
 
     float num_steps, last_distance, total_distance = sample_upper_depth(tpos);
     float3 ray_pos;
-    if(g_enable_temporal && abs(tex2D(g_velocity, tpos).x) < DIFF_THRESHILD) {
+#if ENABLE_TEMPORAL
+    if(abs(tex2D(g_velocity, tpos).x) < DIFF_THRESHILD) {
         total_distance = max(total_distance, sample_prev_depth(tpos));
     }
+#endif
     raymarching(pos, max_steps, total_distance, num_steps, last_distance, ray_pos);
 
-    distance_out o;
-    o.distance = total_distance;
-    return o;
+    distance_out O;
+    O.distance = total_distance;
+    return O;
 }
 
 distance_out frag_qpass(vs_out v) { return adaptive_pass(v, MAX_MARCH_QPASS); }
@@ -280,9 +304,9 @@ distance_out frag_apass(vs_out v) { return adaptive_pass(v, MAX_MARCH_APASS); }
 sampler2D g_qsteps;
 sampler2D g_hsteps;
 sampler2D g_asteps;
-half4 frag_show_steps(vs_out v) : SV_Target0
+half4 frag_show_steps(vs_out I) : SV_Target0
 {
-    float2 t = v.spos.xy*0.5+0.5;
+    float2 t = I.spos.xy*0.5+0.5;
     float3 l = float3(tex2D(g_qsteps, t).x, tex2D(g_hsteps, t).x, tex2D(g_asteps, t).x);
     return float4(l.xyz, 1.0);
 }
@@ -290,7 +314,7 @@ half4 frag_show_steps(vs_out v) : SV_Target0
 ENDCG
 
 SubShader {
-    Tags { "RenderType"="Opaque" }
+    Tags{ "RenderType" = "Opaque" "DisableBatching" = "True" "Queue" = "Geometry+10" }
     Cull Off
 
     Pass {
@@ -305,6 +329,10 @@ CGPROGRAM
 #pragma target 3.0
 #pragma vertex vert
 #pragma fragment frag_gbuffer
+#pragma multi_compile ___ UNITY_HDR_ON
+#pragma multi_compile ___ ENABLE_SCREENSPACE
+#pragma multi_compile ___ ENABLE_ADAPTIVE
+#pragma multi_compile ___ ENABLE_PATTERN
 ENDCG
     }
     
@@ -315,6 +343,7 @@ ENDCG
 CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag_opass
+#pragma multi_compile ___ ENABLE_SCREENSPACE
 ENDCG
     }
 
@@ -325,6 +354,8 @@ ENDCG
 CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag_qpass
+#pragma multi_compile ___ ENABLE_SCREENSPACE
+#pragma multi_compile ___ ENABLE_TEMPORAL
 ENDCG
     }
 
@@ -335,6 +366,8 @@ ENDCG
 CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag_hpass
+#pragma multi_compile ___ ENABLE_SCREENSPACE
+#pragma multi_compile ___ ENABLE_TEMPORAL
 ENDCG
     }
     
@@ -345,6 +378,8 @@ ENDCG
 CGPROGRAM
 #pragma vertex vert
 #pragma fragment frag_apass
+#pragma multi_compile ___ ENABLE_SCREENSPACE
+#pragma shader_feature ___ ENABLE_TEMPORAL
 ENDCG
     }
 
