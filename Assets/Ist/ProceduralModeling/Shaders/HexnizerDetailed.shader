@@ -20,6 +20,8 @@ Properties {
     _CutoutDistance("Cutout Distance", Float) = 0.01
 
     _ZTest("ZTest", Int) = 4
+
+    [Toggle(ENABLE_DEPTH_OUTPUT)] _DepthOutput("Depth Output", Float) = 0
 }
 
 CGINCLUDE
