@@ -11,7 +11,7 @@ namespace UnityStandardAssets.ImageEffects
         public bool  visualizeFocus = false;
         public float focalLength = 10.0f;
         public float focalSize = 0.05f;
-        public float aperture = 11.5f;
+        public float aperture = 0.5f;
         public Transform focalTransform = null;
         public float maxBlurSize = 2.0f;
         public bool  highResolution = false;
@@ -50,6 +50,7 @@ namespace UnityStandardAssets.ImageEffects
         private ComputeBuffer cbPoints;
         private float internalBlurWidth = 1.0f;
 
+        private Camera cachedCamera;
 
         public override bool CheckResources () {
             CheckSupport (true); // only requires depth, not HDR
@@ -67,7 +68,8 @@ namespace UnityStandardAssets.ImageEffects
         }
 
         void OnEnable () {
-            GetComponent<Camera>().depthTextureMode |= DepthTextureMode.Depth;
+            cachedCamera = GetComponent<Camera>();
+            cachedCamera.depthTextureMode |= DepthTextureMode.Depth;
         }
 
         void OnDisable () {
@@ -101,7 +103,7 @@ namespace UnityStandardAssets.ImageEffects
         }
 
         float FocalDistance01 ( float worldDist) {
-            return GetComponent<Camera>().WorldToViewportPoint((worldDist-GetComponent<Camera>().nearClipPlane) * GetComponent<Camera>().transform.forward + GetComponent<Camera>().transform.position).z / (GetComponent<Camera>().farClipPlane-GetComponent<Camera>().nearClipPlane);
+            return cachedCamera.WorldToViewportPoint((worldDist-cachedCamera.nearClipPlane) * cachedCamera.transform.forward + cachedCamera.transform.position).z / (cachedCamera.farClipPlane-cachedCamera.nearClipPlane);
         }
 
         private void WriteCoc ( RenderTexture fromTo, bool fgDilate) {
@@ -157,8 +159,8 @@ namespace UnityStandardAssets.ImageEffects
 
             // focal & coc calculations
 
-            focalDistance01 = (focalTransform) ? (GetComponent<Camera>().WorldToViewportPoint (focalTransform.position)).z / (GetComponent<Camera>().farClipPlane) : FocalDistance01 (focalLength);
-            dofHdrMaterial.SetVector ("_CurveParams", new Vector4 (1.0f, focalSize, aperture/10.0f, focalDistance01));
+            focalDistance01 = (focalTransform) ? (cachedCamera.WorldToViewportPoint (focalTransform.position)).z / (cachedCamera.farClipPlane) : FocalDistance01 (focalLength);
+            dofHdrMaterial.SetVector("_CurveParams", new Vector4(1.0f, focalSize, (1.0f / (1.0f - aperture) - 1.0f), focalDistance01));
 
             // possible render texture helpers
 

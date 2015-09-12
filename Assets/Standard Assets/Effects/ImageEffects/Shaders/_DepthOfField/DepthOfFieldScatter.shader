@@ -506,7 +506,7 @@
 
 	float4 fragMergeCoc (v2f i) : SV_Target 
 	{	
-		float4 color = tex2D (_FgOverlap, i.uv1.xy); // this is the foreground overlap value
+		float4 color = tex2D (_FgOverlap, i.uv.xy); // this is the foreground overlap value
 		float fgCoc = color.a;
 
 		float d = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv1.xy);

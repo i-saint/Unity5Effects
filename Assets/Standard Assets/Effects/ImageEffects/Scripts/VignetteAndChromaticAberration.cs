@@ -16,7 +16,7 @@ namespace UnityStandardAssets.ImageEffects
 
 
         public AberrationMode mode = AberrationMode.Simple;
-        public float intensity = 0.375f;                    // intensity == 0 disables pre pass (optimization)
+        public float intensity = 0.036f;                    // intensity == 0 disables pre pass (optimization)
         public float chromaticAberration = 0.2f;
         public float axialAberration = 0.5f;
         public float blur = 0.0f;                           // blur == 0 disables blur pass (optimization)
@@ -91,8 +91,8 @@ namespace UnityStandardAssets.ImageEffects
                     }
                 }
 
-                m_VignetteMaterial.SetFloat ("_Intensity", intensity);		// intensity for vignette
-                m_VignetteMaterial.SetFloat ("_Blur", blur);					// blur intensity
+                m_VignetteMaterial.SetFloat("_Intensity", (1.0f / (1.0f - intensity) - 1.0f));		// intensity for vignette
+                m_VignetteMaterial.SetFloat("_Blur", (1.0f / (1.0f - blur)) - 1.0f);					// blur intensity
                 m_VignetteMaterial.SetTexture ("_VignetteTex", color2A);	// blurred texture
 
                 Graphics.Blit (source, color, m_VignetteMaterial, 0);			// prepass blit: darken & blur corners

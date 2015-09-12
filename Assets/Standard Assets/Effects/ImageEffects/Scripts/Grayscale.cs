@@ -7,6 +7,8 @@ namespace UnityStandardAssets.ImageEffects
     [AddComponentMenu("Image Effects/Color Adjustments/Grayscale")]
     public class Grayscale : ImageEffectBase {
         public Texture  textureRamp;
+
+        [Range(-1.0f,1.0f)]
         public float    rampOffset;
 
         // Called by camera to apply image effect

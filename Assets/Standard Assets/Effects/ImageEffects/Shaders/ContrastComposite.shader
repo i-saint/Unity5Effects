@@ -20,7 +20,7 @@ Shader "Hidden/ContrastComposite" {
 	float4 _MainTex_TexelSize;
 	
 	float intensity;
-	float threshhold;
+	float threshold;
 		
 	v2f vert( appdata_img v ) {
 		v2f o;
@@ -40,11 +40,11 @@ Shader "Hidden/ContrastComposite" {
 		half4 color = tex2D (_MainTex, i.uv[1]);
 		half4 blurred = tex2D (_MainTexBlurred, (i.uv[0]));
 		
-		half4 difff = color - blurred;
-		half4 signs = sign (difff);
+		half4 difference = color - blurred;
+		half4 signs = sign (difference);
 		
-		difff = saturate ( (color-blurred) - threshhold) * signs * 1.0/(1.0-threshhold);
-		color += difff * intensity;
+		half4 enhancement = saturate (abs(difference) - threshold) * signs * 1.0/(1.0-threshold);
+		color += enhancement * intensity;
 		
 		return color;
 	}

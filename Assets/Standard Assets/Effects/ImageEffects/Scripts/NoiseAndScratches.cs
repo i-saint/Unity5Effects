@@ -16,19 +16,26 @@ namespace UnityStandardAssets.ImageEffects
         private bool rgbFallback = false;
 
         // Noise grain takes random intensity from Min to Max.
+        [Range(0.0f,5.0f)]
         public float grainIntensityMin = 0.1f;
+        [Range(0.0f, 5.0f)]
         public float grainIntensityMax = 0.2f;
 
         /// The size of the noise grains (1 = one pixel).
+        [Range(0.1f, 50.0f)]
         public float grainSize = 2.0f;
 
         // Scratches take random intensity from Min to Max.
+        [Range(0.0f, 5.0f)]
         public float scratchIntensityMin = 0.05f;
+        [Range(0.0f, 5.0f)]
         public float scratchIntensityMax = 0.25f;
 
         /// Scratches jump to another locations at this times per second.
+        [Range(1.0f, 30.0f)]
         public float scratchFPS = 10.0f;
         /// While scratches are in the same location, they jitter a bit.
+        [Range(0.0f, 1.0f)]
         public float scratchJitter = 0.01f;
 
         public Texture grainTexture;

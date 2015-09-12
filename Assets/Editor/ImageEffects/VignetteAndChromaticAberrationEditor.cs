@@ -38,18 +38,18 @@ namespace UnityStandardAssets.ImageEffects
 
             EditorGUILayout.LabelField("Simulates the common lens artifacts 'Vignette' and 'Aberration'", EditorStyles.miniLabel);
 
-            EditorGUILayout.PropertyField (m_Intensity, new GUIContent("Vignetting"));
-            EditorGUILayout.PropertyField (m_Blur, new GUIContent(" Blurred Corners"));
+            EditorGUILayout.Slider(m_Intensity, 0.0f, 1.0f, new GUIContent("Vignetting"));
+            EditorGUILayout.Slider(m_Blur, 0.0f, 1.0f, new GUIContent(" Blurred Corners"));
             if (m_Blur.floatValue>0.0f)
-                EditorGUILayout.PropertyField (m_BlurSpread, new GUIContent(" Blur Distance"));
+                EditorGUILayout.Slider(m_BlurSpread, 0.0f, 1.0f, new GUIContent(" Blur Distance"));
 
             EditorGUILayout.Separator ();
 
             EditorGUILayout.PropertyField (m_Mode, new GUIContent("Aberration"));
             if (m_Mode.intValue>0)
             {
-                EditorGUILayout.PropertyField (m_ChromaticAberration, new GUIContent("  Tangential Aberration"));
-                EditorGUILayout.PropertyField (m_AxialAberration, new GUIContent("  Axial Aberration"));
+                EditorGUILayout.Slider(m_ChromaticAberration, 0.0f, 5.0f, new GUIContent("  Tangential Aberration"));
+                EditorGUILayout.Slider(m_AxialAberration, 0.0f, 5.0f, new GUIContent("  Axial Aberration"));
                 m_LuminanceDependency.floatValue = EditorGUILayout.Slider("  Contrast Dependency", m_LuminanceDependency.floatValue, 0.001f, 1.0f);
                 m_BlurDistance.floatValue = EditorGUILayout.Slider("  Blur Distance", m_BlurDistance.floatValue, 0.001f, 5.0f);
             }

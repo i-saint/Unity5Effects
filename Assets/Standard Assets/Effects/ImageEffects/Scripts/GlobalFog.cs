@@ -10,6 +10,8 @@ namespace UnityStandardAssets.ImageEffects
 	{
 		[Tooltip("Apply distance-based fog?")]
         public bool  distanceFog = true;
+		[Tooltip("Exclude far plane pixels from distance-based fog? (Skybox or clear color)")]
+		public bool  excludeFarPixels = true;
 		[Tooltip("Distance fog is based on radial distance from camera when checked")]
 		public bool  useRadialDistance = false;
 		[Tooltip("Apply height-based fog?")]
@@ -85,10 +87,11 @@ namespace UnityStandardAssets.ImageEffects
 			var camPos= camtr.position;
             float FdotC = camPos.y-height;
             float paramK = (FdotC <= 0.0f ? 1.0f : 0.0f);
+            float excludeDepth = (excludeFarPixels ? 1.0f : 2.0f);
             fogMaterial.SetMatrix ("_FrustumCornersWS", frustumCorners);
             fogMaterial.SetVector ("_CameraWS", camPos);
             fogMaterial.SetVector ("_HeightParams", new Vector4 (height, FdotC, paramK, heightDensity*0.5f));
-            fogMaterial.SetVector ("_DistanceParams", new Vector4 (-Mathf.Max(startDistance,0.0f), 0, 0, 0));
+            fogMaterial.SetVector ("_DistanceParams", new Vector4 (-Mathf.Max(startDistance,0.0f), excludeDepth, 0, 0));
 
             var sceneMode= RenderSettings.fogMode;
             var sceneDensity= RenderSettings.fogDensity;

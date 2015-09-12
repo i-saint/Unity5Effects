@@ -6,14 +6,17 @@ namespace UnityStandardAssets.ImageEffects
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
     [AddComponentMenu("Image Effects/Color Adjustments/Contrast Enhance (Unsharp Mask)")]
-    class ContrastEnhance : PostEffectsBase
+    public class ContrastEnhance : PostEffectsBase
 	{
+        [Range(0.0f, 1.0f)]
         public float intensity = 0.5f;
+        [Range(0.0f,0.999f)]
         public float threshold = 0.0f;
 
         private Material separableBlurMaterial;
         private Material contrastCompositeMaterial;
 
+        [Range(0.0f,1.0f)]
         public float blurSpread = 1.0f;
 
         public Shader separableBlurShader = null;
@@ -68,7 +71,7 @@ namespace UnityStandardAssets.ImageEffects
 
             contrastCompositeMaterial.SetTexture ("_MainTexBlurred", color4a);
             contrastCompositeMaterial.SetFloat ("intensity", intensity);
-            contrastCompositeMaterial.SetFloat ("threshhold", threshold);
+            contrastCompositeMaterial.SetFloat ("threshold", threshold);
             Graphics.Blit (source, destination, contrastCompositeMaterial);
 
             RenderTexture.ReleaseTemporary (color4a);

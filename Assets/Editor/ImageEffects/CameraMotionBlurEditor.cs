@@ -61,11 +61,11 @@ namespace UnityStandardAssets.ImageEffects
             EditorGUILayout.PropertyField (velocityScale, new GUIContent(" Velocity Scale"));
             if (filterType.enumValueIndex >= 2) {
                 EditorGUILayout.LabelField(" Tile size used during reconstruction filter:", EditorStyles.miniLabel);
-                EditorGUILayout.PropertyField (maxVelocity, new GUIContent("  Velocity Max"));
+                EditorGUILayout.Slider(maxVelocity, 2.0f, 10.0f, new GUIContent(" Velocity Max"));
             }
             else
-                EditorGUILayout.PropertyField (maxVelocity, new GUIContent(" Velocity Max"));
-            EditorGUILayout.PropertyField (minVelocity, new GUIContent(" Velocity Min"));
+                EditorGUILayout.Slider (maxVelocity, 2.0f, 10.0f, new GUIContent(" Velocity Max"));
+            EditorGUILayout.Slider(minVelocity, 0.0f, 10.0f, new GUIContent(" Velocity Min"));
 
             EditorGUILayout.Separator ();
 
@@ -83,7 +83,7 @@ namespace UnityStandardAssets.ImageEffects
                 velocityDownsample.intValue = velocityDownsample.intValue < 1 ? 1 : velocityDownsample.intValue;
                 if (filterType.enumValueIndex >= 2) { // only display jitter for reconstruction
                     EditorGUILayout.PropertyField (noiseTexture, new GUIContent(" Sample Jitter"));
-                    EditorGUILayout.PropertyField (jitter, new GUIContent("  Jitter Strength"));
+                    EditorGUILayout.Slider (jitter, 0.0f, 10.0f, new GUIContent("  Jitter Strength"));
                 }
             }
 

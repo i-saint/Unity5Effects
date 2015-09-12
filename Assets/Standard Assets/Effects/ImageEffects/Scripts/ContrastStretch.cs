@@ -9,6 +9,7 @@ namespace UnityStandardAssets.ImageEffects
     {
         /// Adaptation speed - percents per frame, if playing at 30FPS.
         /// Default is 0.02 (2% each 1/30s).
+        [Range(0.0001f, 1.0f)]
         public float adaptationSpeed = 0.02f;
 
         /// If our scene is really dark (or really bright), we might not want to
@@ -17,9 +18,11 @@ namespace UnityStandardAssets.ImageEffects
         /// limitMinimum=1, limitMaximum=0 is always stretching colors to full range.
 
         /// The limit on the minimum luminance (0...1) - we won't go above this.
+        [Range(0.0f,1.0f)]
         public float limitMinimum = 0.2f;
 
         /// The limit on the maximum luminance (0...1) - we won't go below this.
+        [Range(0.0f, 1.0f)]
         public float limitMaximum = 0.6f;
 
 
