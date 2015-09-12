@@ -480,9 +480,9 @@ public class BatchRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_data_transfer_material = AssetDatabase.LoadAssetAtPath("Assets/BatchRenderer/Materials/DataTransfer.mat", typeof(Material)) as Material;
-        m_material = AssetDatabase.LoadAssetAtPath("Assets/BatchRenderer/Materials/BatchLambert.mat", typeof(Material)) as Material;
-        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/BatchRenderer/Meshes/cube.asset", typeof(Mesh)) as Mesh;
+        m_data_transfer_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BatchRenderer/Materials/DataTransfer.mat");
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BatchRenderer/Materials/BatchLambert.mat");
+        m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/BatchRenderer/Meshes/cube.asset");
     }
 #endif
 

@@ -51,7 +51,7 @@ namespace Ist
 #if UNITY_EDITOR
         void Reset()
         {
-            m_sh_gbuffer_copy = AssetDatabase.LoadAssetAtPath("Assets/Ist/GBufferUtils/Shaders/GBufferCopy.shader", typeof(Shader)) as Shader;
+            m_sh_gbuffer_copy = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/GBufferUtils/Shaders/GBufferCopy.shader");
             m_quad = MeshUtils.GenerateQuad();
         }
 #endif // UNITY_EDITOR

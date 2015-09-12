@@ -57,7 +57,7 @@ namespace Ist
 #if UNITY_EDITOR
         void Reset()
         {
-            m_shader = AssetDatabase.LoadAssetAtPath("Assets/Ist/ScreenSpaceReflections/Shaders/ScreenSpaceReflections.shader", typeof(Shader)) as Shader;
+            m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/ScreenSpaceReflections/Shaders/ScreenSpaceReflections.shader");
             GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
             GetComponent<GBufferUtils>().m_enable_prev_depth = true;
         }

@@ -33,8 +33,8 @@ public class MPGPTrailRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_cs_trail = AssetDatabase.LoadAssetAtPath("Assets/GPUParticle/Shaders/MPGPTrail.compute", typeof(ComputeShader)) as ComputeShader;
-        m_material = AssetDatabase.LoadAssetAtPath("Assets/GPUParticle/Materials/MPGPTrail.mat", typeof(Material)) as Material;
+        m_cs_trail = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/GPUParticle/Shaders/MPGPTrail.compute");
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/GPUParticle/Materials/MPGPTrail.mat");
         m_bounds_size = Vector3.one * 2.0f;
     }
 

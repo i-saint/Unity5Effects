@@ -153,9 +153,9 @@ public class MPGPWorld : MonoBehaviour
 #if UNITY_EDITOR
     void Reset()
     {
-        m_cs_core = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/GPUParticle/Shaders/ParticleCore.compute", typeof(ComputeShader)) as ComputeShader;
-        m_cs_sort = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/GPUParticle/Shaders/BitonicSort.compute", typeof(ComputeShader)) as ComputeShader;
-        m_cs_hashgrid = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/GPUParticle/Shaders/HashGrid.compute", typeof(ComputeShader)) as ComputeShader;
+        m_cs_core = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Ist/MassParticle/GPUParticle/Shaders/ParticleCore.compute");
+        m_cs_sort = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Ist/MassParticle/GPUParticle/Shaders/BitonicSort.compute");
+        m_cs_hashgrid = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Ist/MassParticle/GPUParticle/Shaders/HashGrid.compute");
     }
 
     void OnValidate()

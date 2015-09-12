@@ -38,8 +38,8 @@ public class MPLightRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mesh = AssetDatabase.LoadAssetAtPath("Assets/Ist/Utilities/Meshes/IcoSphere.asset", typeof(Mesh)) as Mesh;
-        m_material = AssetDatabase.LoadAssetAtPath("Assets/Ist/MassParticle/CPUParticle/Materials/MPPointLight.mat", typeof(Material)) as Material;
+        m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphere.asset");
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/MassParticle/CPUParticle/Materials/MPPointLight.mat");
         m_bounds_size = Vector3.one * 2.0f;
     }
 #endif // UNITY_EDITOR
