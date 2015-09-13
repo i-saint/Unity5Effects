@@ -28,6 +28,11 @@ namespace Ist
             if (s_cameras == null) { s_cameras = new HashSet<Camera>(); }
             return s_cameras;
         }
+
+        static public CommandBuffer GetCommandBuffer()
+        {
+            return s_commands;
+        }
         #endregion
 
 

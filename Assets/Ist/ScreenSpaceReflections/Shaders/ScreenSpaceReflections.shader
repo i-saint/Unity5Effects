@@ -103,12 +103,12 @@ float3 Diffusion(float3 p, float d)
     return (float3(frac(sin(p)*43758.5453))*2.0-1.0) * d;
 }
 
-void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, float smoothness, float march_step, float hit_radius,
+void RayMarching(float seed, float3 p, float2 uv, float3 cam_dir, float3 n, float smoothness, float march_step, float hit_radius,
     inout float4 blend_color, inout float accumulation)
 {
     float3 refdir = normalize(reflect(cam_dir, n.xyz) + Diffusion(p+seed, _RayDiffusion) * (1.0-smoothness));
     float jitter = march_step * Jitter(p+seed);
-    float2 hit_coord = coord;
+    float2 hit_coord = uv;
     float hit = 0.0;
     float adv;
 
@@ -167,30 +167,30 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
 
 ps_out frag_reflections(vs_out i)
 {
-    float2 coord = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
 
     ps_out r;
     r.color = 0.0;
     r.accumulation = 0.0;
 
-    float depth = GetDepth(coord);
+    float depth = GetDepth(uv);
     if(depth == 1.0) { return r; }
 
-    float3 p = GetPosition(coord);
-    float3 n = GetNormal(coord);
-    float4 smoothness = GetSpecular(coord).w;
+    float3 p = GetPosition(uv);
+    float3 n = GetNormal(uv);
+    float4 smoothness = GetSpecular(uv).w;
     float3 cam_dir = normalize(p - _WorldSpaceCameraPos);
 
-    float2 prev_coord;
+    float2 prev_uv;
     float4 prev_result;
     float3 prev_pos;
     float accumulation;
     {
         float4 ppos = mul(_PrevViewProj, float4(p, 1.0) );
-        prev_coord = (ppos.xy / ppos.w) * 0.5 + 0.5;
-        prev_result = tex2D(_ReflectionBuffer, prev_coord);
-        accumulation = tex2D(_AccumulationBuffer, prev_coord).x * _MaxAccumulation;
-        prev_pos = GetPrevPosition(coord);
+        prev_uv = (ppos.xy / ppos.w) * 0.5 + 0.5;
+        prev_result = tex2D(_ReflectionBuffer, prev_uv);
+        accumulation = tex2D(_AccumulationBuffer, prev_uv).x * _MaxAccumulation;
+        prev_pos = GetPrevPosition(uv);
     }
 
     float diff = length(p-prev_pos);
@@ -199,13 +199,13 @@ ps_out frag_reflections(vs_out i)
     float march_step = _RayMarchDistance / MAX_MARCH;
     float hit_radius = _RayHitRadius;
 
-    RayMarching(0.0, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+    RayMarching(0.0, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
 #if NUM_RAYS >= 2
-    RayMarching(0.1, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+    RayMarching(0.1, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
 #endif
 #if NUM_RAYS >= 4
-    RayMarching(0.2, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
-    RayMarching(0.3, p, coord, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+    RayMarching(0.2, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
+    RayMarching(0.3, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
 #endif
     r.color = blend_color / accumulation;
     r.accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
@@ -214,24 +214,24 @@ ps_out frag_reflections(vs_out i)
 
 float4 frag_combine(vs_out i) : SV_Target
 {
-    float2 coord = i.screen_pos.xy / i.screen_pos.w;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w;
 
-    float accumulation = tex2D(_AccumulationBuffer, coord).x;
+    float accumulation = tex2D(_AccumulationBuffer, uv).x;
     float2 s = (_ScreenParams.zw-1.0) * 1.25;
-    float4 color = tex2D(_MainTex, coord);
+    float4 color = tex2D(_MainTex, uv);
     float4 ref_color = 0.0;
 #ifdef ENABLE_BLURED_COMBINE
-    ref_color += tex2D(_ReflectionBuffer, coord+float2( 0.0, 0.0)) * 0.2;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2( s.x, 0.0)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2(-s.x, 0.0)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2( 0.0, s.y)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2( 0.0,-s.y)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2( s.x, s.y)) * 0.075;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2(-s.x, s.y)) * 0.075;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2(-s.x,-s.y)) * 0.075;
-    ref_color += tex2D(_ReflectionBuffer, coord+float2( s.x,-s.y)) * 0.075;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2( 0.0, 0.0)) * 0.2;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2( s.x, 0.0)) * 0.125;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2(-s.x, 0.0)) * 0.125;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2( 0.0, s.y)) * 0.125;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2( 0.0,-s.y)) * 0.125;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2( s.x, s.y)) * 0.075;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2(-s.x, s.y)) * 0.075;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2(-s.x,-s.y)) * 0.075;
+    ref_color += tex2D(_ReflectionBuffer, uv+float2( s.x,-s.y)) * 0.075;
 #else
-    ref_color += tex2D(_ReflectionBuffer, coord);
+    ref_color += tex2D(_ReflectionBuffer, uv);
 #endif
 
     float alpha = ref_color.a * _Intensity;

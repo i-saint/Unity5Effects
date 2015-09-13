@@ -48,7 +48,7 @@ struct ps_out
 vs_out vert(ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = v.vertex;
+    o.vertex = v.vertex;
     o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }
@@ -56,13 +56,17 @@ vs_out vert(ia_out v)
 vs_out vert_combine(ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
     o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }
 
 // on d3d9, _CameraDepthTexture is bilinear-filtered. so we need to sample center of pixels.
-#define HalfPixelSize ((_ScreenParams.zw-1.0)*0.5)
+#if SHADER_API_D3D9
+    #define UVOffset ((_ScreenParams.zw-1.0)*0.5)
+#else
+    #define UVOffset 0.0
+#endif
 
 
 float nrand(float2 uv, float dx, float dy)
@@ -92,7 +96,7 @@ float3 spherical_kernel(float2 uv, float index)
 
 half4 frag_ao(vs_out i) : SV_Target
 {
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
     float2 screen_pos = uv * 2.0 - 1.0;
 
     float depth = GetDepth(uv);
@@ -105,7 +109,7 @@ half4 frag_ao(vs_out i) : SV_Target
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
     float2 prev_uv;
-    float4 prev_depth;
+    float  prev_depth;
     float3 prev_pos;
     float2 prev_result;
     float  ao;
@@ -113,11 +117,12 @@ half4 frag_ao(vs_out i) : SV_Target
     {
         float4 ppos4 = mul(_PrevViewProj, float4(p.xyz, 1.0) );
         float2 pspos = ppos4.xy / ppos4.w;
-        prev_uv = pspos * 0.5 + 0.5;
+        prev_uv = pspos * 0.5 + 0.5 + UVOffset;
         prev_result = tex2D(_AOBuffer, prev_uv).rg;
         accumulation = prev_result.y * _MaxAccumulation;
         ao = prev_result.x;
         prev_depth = GetPrevDepth(prev_uv);
+        //prev_depth = GetDepth(prev_uv);
         prev_pos = GetPrevPosition(pspos, prev_depth);
     }
 
@@ -125,9 +130,7 @@ half4 frag_ao(vs_out i) : SV_Target
     //float velocity_similarity = saturate(velocity * _VelocityScalar);
 
     float diff = length(p.xyz - prev_pos.xyz);
-    accumulation *= max(1.0-(0.025 + diff*20.0), 0.0);
-    //if (accumulation + 1.0 > _MaxAccumulation) { return prev_result.xyxy; }
-
+    accumulation *= max(1.0-(0.03 + diff*20.0), 0.0);
     ao *= accumulation;
 
     float occ = 0.0;
@@ -138,7 +141,7 @@ half4 frag_ao(vs_out i) : SV_Target
 
         float3 tpos = vp + delta * _Radius;
         float3 spos = mul(proj, tpos);
-        float2 tuv = spos.xy / tpos.z * 0.5 + 0.5;
+        float2 tuv = spos.xy / tpos.z * 0.5 + 0.5 + UVOffset;
         float tdepth = GetLinearDepth(tuv);
 
         float dist = tpos.z - tdepth;
@@ -149,6 +152,7 @@ half4 frag_ao(vs_out i) : SV_Target
     accumulation += 1.0;
     ao = (ao + occ) / accumulation;
     accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
+    //return abs(uv-prev_uv).xyxy*100;
     return half4(ao, accumulation, 0.0, 0.0);
 }
 
@@ -165,7 +169,7 @@ half4 frag_blur(vs_out i) : SV_Target
 {
 #define NUM_BLUR_SAMPLES 4
 
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
     half sum = tex2D(_AOBuffer, uv).r * (NUM_BLUR_SAMPLES + 1);
     half denom = NUM_BLUR_SAMPLES + 1;
 
@@ -174,22 +178,22 @@ half4 frag_blur(vs_out i) : SV_Target
     for (s = 0; s < NUM_BLUR_SAMPLES; ++s)
     {
         float2 nuv = uv + _BlurOffset.xy * (s + 1);
-        float4 ngeom = float4(GetNormal(nuv).xyz, GetDepth(nuv));
-        half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
-        sum += tex2D(_AOBuffer, nuv.xy).r * coef;
-        denom += coef;
-        //sum += tex2D(_AOBuffer, nuv.xy).r;
-        //denom += 1.0;
+        //float4 ngeom = float4(GetNormal(nuv).xyz, GetDepth(nuv));
+        //half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
+        //sum += tex2D(_AOBuffer, nuv.xy).r * coef;
+        //denom += coef;
+        sum += tex2D(_AOBuffer, nuv.xy).r;
+        denom += 1.0;
     }
     for (s = 0; s < NUM_BLUR_SAMPLES; ++s)
     {
         float2 nuv = uv - _BlurOffset.xy * (s + 1);
-        float4 ngeom = float4(GetNormal(nuv).xyz, GetDepth(nuv));
-        half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
-        sum += tex2D(_AOBuffer, nuv.xy).r * coef;
-        denom += coef;
-        //sum += tex2D(_AOBuffer, nuv.xy).r;
-        //denom += 1.0;
+        //float4 ngeom = float4(GetNormal(nuv).xyz, GetDepth(nuv));
+        //half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
+        //sum += tex2D(_AOBuffer, nuv.xy).r * coef;
+        //denom += coef;
+        sum += tex2D(_AOBuffer, nuv.xy).r;
+        denom += 1.0;
     }
     return sum / denom;
 }
@@ -198,7 +202,7 @@ half4 frag_blur(vs_out i) : SV_Target
 
 half4 frag_combine(vs_out i) : SV_Target
 {
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
 
     half4 c = tex2D(_MainTex, uv);
     half ao = tex2D(_AOBuffer, uv).r;

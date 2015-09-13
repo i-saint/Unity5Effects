@@ -98,7 +98,7 @@ namespace Ist
                 for (int i = 0; i < m_ao_buffer.Length; ++i)
                 {
                     m_ao_buffer[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.RGHalf);
-                    m_ao_buffer[i].filterMode = FilterMode.Point;
+                    m_ao_buffer[i].filterMode = FilterMode.Bilinear;
                     Graphics.SetRenderTarget(m_ao_buffer[i]);
                     GL.Clear(false, true, Color.black);
                 }
@@ -117,7 +117,6 @@ namespace Ist
             }
             UpdateRenderTargets();
 
-            m_ao_buffer[1].filterMode = FilterMode.Point;
             m_material.SetVector("_Params0", new Vector4(m_radius, m_intensity, m_max_accumulation, 0.0f));
             m_material.SetTexture("_AOBuffer", m_ao_buffer[1]);
             m_material.SetTexture("_MainTex", src);
@@ -134,18 +133,16 @@ namespace Ist
             tmp2.filterMode = FilterMode.Bilinear;
 
             // horizontal blur
-            m_ao_buffer[0].filterMode = FilterMode.Bilinear;
             Graphics.SetRenderTarget(tmp1);
             m_material.SetTexture("_AOBuffer", m_ao_buffer[0]);
-            m_material.SetVector("_BlurOffsetScale", new Vector4(m_blur_size / src.width, 0.0f, 0.0f, 0.0f));
+            m_material.SetVector("_BlurOffset", new Vector4(m_blur_size / src.width, 0.0f, 0.0f, 0.0f));
             m_material.SetPass(1);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
             // vertical blur
-            m_ao_buffer[0].filterMode = FilterMode.Bilinear;
             Graphics.SetRenderTarget(tmp2);
             m_material.SetTexture("_AOBuffer", tmp1);
-            m_material.SetVector("_BlurOffsetScale", new Vector4(0.0f, m_blur_size / src.height, 0.0f, 0.0f));
+            m_material.SetVector("_BlurOffset", new Vector4(0.0f, m_blur_size / src.height, 0.0f, 0.0f));
             m_material.SetPass(1);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 

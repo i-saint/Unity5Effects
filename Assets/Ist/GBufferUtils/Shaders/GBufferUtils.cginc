@@ -35,7 +35,7 @@ half4 GetSpecular(float2 uv)    { return tex2D(_CameraGBufferTexture1, uv); }
 half3 GetNormal(float2 uv)      { return tex2D(_CameraGBufferTexture2, uv).xyz * 2.0 - 1.0; }
 half4 GetEmission(float2 uv)    { return tex2D(_CameraGBufferTexture3, uv); }
 float GetDepth(float2 uv)       { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-float GetLinearDepth(float2 uv) { return LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv)); }
+float GetLinearDepth(float2 uv) { return LinearEyeDepth(GetDepth(uv)); }
 half4 GetFrameBuffer(float2 uv) { return tex2D(_FrameBuffer, uv); }
 half2 GetVelocity(float2 uv)    { return tex2D(_VelocityBuffer, uv); }
 
@@ -76,7 +76,8 @@ half4 GetPrevAlbedo(float2 uv)      { return tex2D(_PrevCameraGBufferTexture0, u
 half4 GetPrevSpecular(float2 uv)    { return tex2D(_PrevCameraGBufferTexture1, uv); }
 half3 GetPrevNormal(float2 uv)      { return tex2D(_PrevCameraGBufferTexture2, uv).xyz * 2.0 - 1.0; }
 half4 GetPrevEmission(float2 uv)    { return tex2D(_PrevCameraGBufferTexture3, uv); }
-float GetPrevDepth(float2 uv)       { return tex2D(_PrevCameraDepthTexture, uv).x; }
+float GetPrevDepth(float2 uv)       { return SAMPLE_DEPTH_TEXTURE(_PrevCameraDepthTexture, uv); }
+float GetPrevLinearDepth(float2 uv) { return LinearEyeDepth(GetPrevDepth(uv)); }
 half4 GetPrevFrameBuffer(float2 uv) { return tex2D(_PrevFrameBuffer, uv); }
 
 float3 GetPrevPosition(float2 screen_position, float depth)

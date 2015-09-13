@@ -97,13 +97,7 @@ namespace Ist
             if (m_enable_inv_matrices)
             {
                 Matrix4x4 view = m_camera.worldToCameraMatrix;
-                Matrix4x4 proj = m_camera.projectionMatrix;
-                // Unity internally modify projection matrix like this.
-                // GL.GetGPUProjectionMatrix() seems doing similar things, but it is different on some (OpenGL etc) platforms. 
-                proj[2, 0] = proj[2, 0] * 0.5f + proj[3, 0] * 0.5f;
-                proj[2, 1] = proj[2, 1] * 0.5f + proj[3, 1] * 0.5f;
-                proj[2, 2] = proj[2, 2] * 0.5f + proj[3, 2] * 0.5f;
-                proj[2, 3] = proj[2, 3] * 0.5f + proj[3, 3] * 0.5f;
+                Matrix4x4 proj = GL.GetGPUProjectionMatrix(m_camera.projectionMatrix, false);
                 m_prev_vp = m_vp;
                 m_prev_inv_vp = m_inv_vp;
                 m_vp = proj * view;
@@ -147,8 +141,12 @@ namespace Ist
         IEnumerator OnPostRender()
         {
             yield return new WaitForEndOfFrame();
+            CopyBuffers();
+        }
 
-            if (prev_color_buffers_enabled)
+        void CopyBuffers()
+        {
+            if (prev_color_buffers_enabled || m_enable_prev_depth)
             {
                 if (m_mat_gbuffer_copy == null)
                 {
@@ -160,6 +158,7 @@ namespace Ist
                     m_gbuffer_rt[1] = CreateGBufferRT(RenderTextureFormat.ARGB32);
                     m_gbuffer_rt[2] = CreateGBufferRT(m_enable_uav ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB2101010);
                     m_gbuffer_rt[3] = CreateGBufferRT(m_camera.hdr ? RenderTextureFormat.ARGBHalf : RenderTextureFormat.ARGB32);
+                    m_depth = CreateGBufferRT(RenderTextureFormat.Depth, 24);
                     m_gbuffer_rb[0] = m_gbuffer_rt[0].colorBuffer;
                     m_gbuffer_rb[1] = m_gbuffer_rt[1].colorBuffer;
                     m_gbuffer_rb[2] = m_gbuffer_rt[2].colorBuffer;
@@ -168,28 +167,11 @@ namespace Ist
                     Shader.SetGlobalTexture("_PrevCameraGBufferTexture1", m_gbuffer_rt[1]);
                     Shader.SetGlobalTexture("_PrevCameraGBufferTexture2", m_gbuffer_rt[2]);
                     Shader.SetGlobalTexture("_PrevCameraGBufferTexture3", m_gbuffer_rt[3]);
-                }
-
-                m_mat_gbuffer_copy.SetPass(0);
-                Graphics.SetRenderTarget(m_gbuffer_rb, m_gbuffer_rt[0].depthBuffer);
-                Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
-                Graphics.SetRenderTarget(null);
-            }
-
-            if (m_enable_prev_depth)
-            {
-                if (m_mat_gbuffer_copy == null)
-                {
-                    m_mat_gbuffer_copy = new Material(m_sh_gbuffer_copy);
-                }
-                if (m_depth == null)
-                {
-                    m_depth = CreateGBufferRT(RenderTextureFormat.RFloat);
                     Shader.SetGlobalTexture("_PrevCameraDepthTexture", m_depth);
                 }
 
-                m_mat_gbuffer_copy.SetPass(1);
-                Graphics.SetRenderTarget(m_depth);
+                m_mat_gbuffer_copy.SetPass(0);
+                Graphics.SetRenderTarget(m_gbuffer_rb, m_depth.depthBuffer);
                 Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
                 Graphics.SetRenderTarget(null);
             }
