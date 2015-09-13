@@ -149,7 +149,7 @@ void RayMarching(float seed, float3 p, float2 coord, float3 cam_dir, float3 n, f
     }
 #endif
 
-    float4 ref_pos = GetPosition(ray_coord);
+    float3 ref_pos = GetPosition(ray_coord);
     float3 ref_normal = GetNormal(ray_coord);
     if(/*dot(ref_normal, refdir) > 0.0 ||*/
         length(ref_pos.xyz-ray_pos.xyz) > hit_radius)
@@ -176,24 +176,24 @@ ps_out frag_reflections(vs_out i)
     float depth = GetDepth(coord);
     if(depth == 1.0) { return r; }
 
-    float4 p = GetPosition(coord);
-    float4 n = GetNormal(coord);
+    float3 p = GetPosition(coord);
+    float3 n = GetNormal(coord);
     float4 smoothness = GetSpecular(coord).w;
-    float3 cam_dir = normalize(p.xyz - _WorldSpaceCameraPos);
+    float3 cam_dir = normalize(p - _WorldSpaceCameraPos);
 
     float2 prev_coord;
     float4 prev_result;
-    float4 prev_pos;
+    float3 prev_pos;
     float accumulation;
     {
-        float4 ppos = mul(_PrevViewProj, float4(p.xyz, 1.0) );
+        float4 ppos = mul(_PrevViewProj, float4(p, 1.0) );
         prev_coord = (ppos.xy / ppos.w) * 0.5 + 0.5;
         prev_result = tex2D(_ReflectionBuffer, prev_coord);
         accumulation = tex2D(_AccumulationBuffer, prev_coord).x * _MaxAccumulation;
         prev_pos = GetPrevPosition(coord);
     }
 
-    float diff = length(p.xyz-prev_pos.xyz);
+    float diff = length(p-prev_pos);
     accumulation *= max(1.0-(0.05+diff*20.0), 0.0);
     float4 blend_color = prev_result * accumulation;
     float march_step = _RayMarchDistance / MAX_MARCH;

@@ -21,8 +21,7 @@ float4 _BlurOffset;
 float4x4 _WorldToCamera;
 
 #define _Radius             _Params0.x
-#define _FallOff            _Params0.y
-#define _Intensity          _Params0.z
+#define _Intensity          _Params0.y
 
 #define _MaxAccumulation    20.0
 #define _DepthMinSimilarity 0.01
@@ -94,28 +93,31 @@ float3 spherical_kernel(float2 uv, float index)
 half4 frag_ao(vs_out i) : SV_Target
 {
     float2 uv = i.screen_pos.xy / i.screen_pos.w + HalfPixelSize;
+    float2 screen_pos = uv * 2.0 - 1.0;
 
     float depth = GetDepth(uv);
     if(depth == 1.0) { return 0.0; }
 
-    float4 p = GetPosition(uv);
+    float3 p = GetPosition(uv);
+    float3 vp = GetViewPosition(uv);
     float3 n = GetNormal(uv).xyz;
-    float3 vn = mul((float3x3)_WorldToCamera, n);
-    float3x3 proj = (float3x3)unity_CameraProjection;
+    float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    float3x3 proj = tofloat3x3(unity_CameraProjection);
 
     float2 prev_uv;
     float  prev_ao;
     float4 prev_depth;
-    float4 prev_pos;
+    float3 prev_pos;
     float accumulation;
     {
-        float4 ppos = mul(_PrevViewProj, float4(p.xyz, 1.0) );
-        prev_uv = (ppos.xy / ppos.w) * 0.5 + 0.5;
+        float4 ppos4 = mul(_PrevViewProj, float4(p.xyz, 1.0) );
+        float2 pspos = ppos4.xy / ppos4.w;
+        prev_uv = pspos * 0.5 + 0.5;
         float2 r = tex2D(_AOBuffer, prev_uv).rg;
         prev_ao = r.x;
         accumulation = r.y * _MaxAccumulation;
-        prev_depth = GetPrevDepth(uv);
-        prev_pos = GetPrevPosition(uv);
+        prev_depth = GetPrevDepth(prev_uv);
+        prev_pos = GetPrevPosition(pspos, prev_depth);
     }
 
     float depth_similarity = saturate(pow(prev_depth / depth, 4) + _DepthMinSimilarity);
@@ -129,22 +131,18 @@ half4 frag_ao(vs_out i) : SV_Target
     for (int s = 0; s < SAMPLE_COUNT; s++)
     {
         float3 delta = spherical_kernel(uv, s);
-        delta *= (dot(n, delta) >= 0) * 2 - 1;
+        delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
 
-        float3 tpos = p + delta * _Radius;
-        float4 spos = mul(UNITY_MATRIX_VP, float4(tpos, 1.0));
-        spos /= spos.w;
-        float2 tuv = spos.xy * 0.5 + 0.5;
-        tuv.y = 1.0 - tuv.y;
-        float tdepth = GetDepth(tuv);
+        float3 tpos = vp + delta * _Radius;
+        float3 spos = mul(proj, tpos);
+        float2 tuv = spos.xy / tpos.z * 0.5 + 0.5;
+        float tdepth = GetLinearDepth(tuv);
 
-        float dist = spos.z - tdepth;
-        //occ += (dist > 0.01 * _Radius) * (dist < 0.02);
-        occ += (dist > 0.01 * _Radius);
+        float dist = tpos.z - tdepth;
+        occ += (dist > 0.01 * _Radius) * (dist < _Radius);
     }
 
-    float falloff = 1.0 - depth / _FallOff;
-    occ = saturate(occ * _Intensity * falloff / SAMPLE_COUNT);
+    occ = saturate(occ * _Intensity / SAMPLE_COUNT);
 
     ao += occ;
     accumulation += 1.0;

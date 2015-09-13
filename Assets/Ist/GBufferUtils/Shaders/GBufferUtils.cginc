@@ -8,6 +8,7 @@ sampler2D _CameraGBufferTexture3;   // emission (rgb), --unused-- (a)
 #ifndef UNITY_DEFERRED_LIBRARY_INCLUDED
 sampler2D_float _CameraDepthTexture;
 #endif // UNITY_DEFERRED_LIBRARY_INCLUDED
+sampler2D _VelocityBuffer;
 
 // not Unity internals
 sampler2D _PrevCameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
@@ -23,39 +24,70 @@ float4x4 _InvViewProj;
 float4x4 _PrevViewProj;
 float4x4 _PrevInvViewProj;
 
+// casting float4x4 to float3x3 causes compile error on some platforms. this is workaround for it.
+float3x3 tofloat3x3(float4x4 v)
+{
+    return float3x3(v[0].xyz, v[1].xyz, v[2].xyz);
+}
 
 half4 GetAlbedo(float2 uv)      { return tex2D(_CameraGBufferTexture0, uv); }
 half4 GetSpecular(float2 uv)    { return tex2D(_CameraGBufferTexture1, uv); }
-half4 GetNormal(float2 uv)      { return tex2D(_CameraGBufferTexture2, uv) * 2.0 - 1.0; }
+half3 GetNormal(float2 uv)      { return tex2D(_CameraGBufferTexture2, uv).xyz * 2.0 - 1.0; }
 half4 GetEmission(float2 uv)    { return tex2D(_CameraGBufferTexture3, uv); }
-float GetDepth(float2 uv)       { return tex2D(_CameraDepthTexture, uv).x; }
+float GetDepth(float2 uv)       { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
+float GetLinearDepth(float2 uv) { return LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv)); }
 half4 GetFrameBuffer(float2 uv) { return tex2D(_FrameBuffer, uv); }
-float4 GetPosition(float2 uv)
+half2 GetVelocity(float2 uv)    { return tex2D(_VelocityBuffer, uv); }
+
+float3 GetPosition(float2 screen_position, float depth)
+{
+    float4 pos4 = mul(_InvViewProj, float4(screen_position, depth, 1.0));
+    return pos4.xyz / pos4.w;
+}
+float3 GetPosition(float2 uv)
 {
     float2 screen_position = uv * 2.0 - 1.0;
     float depth = GetDepth(uv);
-    float4 pos4 = mul(_InvViewProj, float4(screen_position, depth, 1.0));
-    return pos4 / pos4.w;
+    return GetPosition(screen_position, depth);
 }
 
-float4 GetPositionByPrevMatrix(float2 uv)
+float3 GetPositionByPrevMatrix(float2 screen_position, float depth)
+{
+    float4 pos4 = mul(_PrevInvViewProj, float4(screen_position, depth, 1.0));
+    return pos4.xyz / pos4.w;
+}
+float3 GetPositionByPrevMatrix(float2 uv)
 {
     float2 screen_position = uv * 2.0 - 1.0;
-    float depth = tex2D(_CameraDepthTexture, uv).x;
-    float4 pos4 = mul(_PrevInvViewProj, float4(screen_position, depth, 1.0));
-    return pos4 / pos4.w;
+    float depth = GetDepth(uv).x;
+    return GetPositionByPrevMatrix(screen_position, depth);
 }
+
+float3 GetViewPosition(float2 uv)
+{
+    float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv));
+    float2 p11_22 = float2(unity_CameraProjection._11, unity_CameraProjection._22);
+    return float3((uv * 2.0 - 1.0) / p11_22, 1.0) * depth;
+
+}
+
 
 half4 GetPrevAlbedo(float2 uv)      { return tex2D(_PrevCameraGBufferTexture0, uv); }
 half4 GetPrevSpecular(float2 uv)    { return tex2D(_PrevCameraGBufferTexture1, uv); }
-half4 GetPrevNormal(float2 uv)      { return tex2D(_PrevCameraGBufferTexture2, uv) * 2.0 - 1.0; }
+half3 GetPrevNormal(float2 uv)      { return tex2D(_PrevCameraGBufferTexture2, uv).xyz * 2.0 - 1.0; }
 half4 GetPrevEmission(float2 uv)    { return tex2D(_PrevCameraGBufferTexture3, uv); }
 float GetPrevDepth(float2 uv)       { return tex2D(_PrevCameraDepthTexture, uv).x; }
 half4 GetPrevFrameBuffer(float2 uv) { return tex2D(_PrevFrameBuffer, uv); }
-float4 GetPrevPosition(float2 uv)
+
+float3 GetPrevPosition(float2 screen_position, float depth)
+{
+    float4 pos4 = mul(_PrevInvViewProj, float4(screen_position, depth, 1.0));
+    return pos4.xyz / pos4.w;
+}
+
+float3 GetPrevPosition(float2 uv)
 {
     float2 screen_position = uv * 2.0 - 1.0;
     float depth = GetPrevDepth(uv);
-    float4 pos4 = mul(_PrevInvViewProj, float4(screen_position, depth, 1.0));
-    return pos4 / pos4.w;
+    return GetPrevPosition(screen_position, depth);
 }
