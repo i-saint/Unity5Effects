@@ -16,11 +16,13 @@ namespace Ist
     {
         [Range(1,8)]
         public int m_downsampling = 2;
-        public float m_ao_radius = 0.5f;
-        public float m_ao_pow = 1.0f;
-        public float m_blue_size = 1.0f;
+        public float m_radius = 0.15f;
+        public float m_intensity = 1.0f;
+        public float m_falloff = 0.5f;
+        public float m_blur_size = 2.0f;
 
         public Shader m_shader;
+        public Texture m_texture_random;
 
         Material m_material;
         Mesh m_quad;
@@ -33,6 +35,7 @@ namespace Ist
             r.filterMode = FilterMode.Point;
             r.useMipMap = false;
             r.generateMips = false;
+            r.wrapMode = TextureWrapMode.Clamp;
             r.Create();
             return r;
         }
@@ -41,6 +44,7 @@ namespace Ist
         void Reset()
         {
             m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/TemporalSSAO/Shaders/TemporalSSAO.shader");
+            m_texture_random = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Ist/Utilities/Textures/RandomVectors.png");
             GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
             GetComponent<GBufferUtils>().m_enable_prev_depth = true;
         }
@@ -114,9 +118,10 @@ namespace Ist
             UpdateRenderTargets();
 
             m_ao_buffer[1].filterMode = FilterMode.Point;
-            m_material.SetVector("_Params0", new Vector4(m_ao_pow, m_ao_radius, 0.0f, 0.0f));
+            m_material.SetVector("_Params0", new Vector4(m_radius, m_falloff, m_intensity, 0.0f));
             m_material.SetTexture("_AOBuffer", m_ao_buffer[1]);
             m_material.SetTexture("_MainTex", src);
+            m_material.SetTexture("_RandomTexture", m_texture_random);
 
             // accumulate ao
             Graphics.SetRenderTarget(m_ao_buffer[0]);
@@ -132,7 +137,7 @@ namespace Ist
             m_ao_buffer[0].filterMode = FilterMode.Bilinear;
             Graphics.SetRenderTarget(tmp1);
             m_material.SetTexture("_AOBuffer", m_ao_buffer[0]);
-            m_material.SetVector("_BlurOffsetScale", new Vector4(m_blue_size / src.width, 0.0f, 0.0f, 0.0f));
+            m_material.SetVector("_BlurOffsetScale", new Vector4(m_blur_size / src.width, 0.0f, 0.0f, 0.0f));
             m_material.SetPass(1);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
@@ -140,15 +145,20 @@ namespace Ist
             m_ao_buffer[0].filterMode = FilterMode.Bilinear;
             Graphics.SetRenderTarget(tmp2);
             m_material.SetTexture("_AOBuffer", tmp1);
-            m_material.SetVector("_BlurOffsetScale", new Vector4(0.0f, m_blue_size / src.height, 0.0f, 0.0f));
+            m_material.SetVector("_BlurOffsetScale", new Vector4(0.0f, m_blur_size / src.height, 0.0f, 0.0f));
             m_material.SetPass(1);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
             // combine
             Graphics.SetRenderTarget(dst);
             m_material.SetTexture("_AOBuffer", tmp2);
-            m_material.SetPass(2);
-            Graphics.Blit(src, dst, m_material, 1);
+            Graphics.Blit(src, dst, m_material, 2);
+
+            //// combine
+            //Graphics.SetRenderTarget(dst);
+            //m_material.SetTexture("_AOBuffer", m_ao_buffer[0]);
+            //m_material.SetPass(2);
+            //Graphics.Blit(src, dst, m_material, 2);
 
             RenderTexture.ReleaseTemporary(tmp2);
             RenderTexture.ReleaseTemporary(tmp1);
