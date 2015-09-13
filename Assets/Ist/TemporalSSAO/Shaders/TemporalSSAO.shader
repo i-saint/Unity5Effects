@@ -80,8 +80,6 @@ float nrand(float2 uv, float dx, float dy)
 
 float3 spherical_kernel(float2 uv, float index)
 {
-    //return tex2D(_RandomTexture, uv*12.3456789+index+_Time.y).xyz * 2.0 - 1.0;
-
     // Uniformaly distributed points
     // http://mathworld.wolfram.com/SpherePointPicking.html
     float u = nrand(uv, 0, index) * 2 - 1;
@@ -167,35 +165,21 @@ inline half CheckSame(float4 nd, float4 nnd)
 
 half4 frag_blur(vs_out i) : SV_Target
 {
-#define NUM_BLUR_SAMPLES 4
-
+    const float Weights[5] = {0.05, 0.09, 0.12, 0.16, 0.16};
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
-    half sum = tex2D(_AOBuffer, uv).r * (NUM_BLUR_SAMPLES + 1);
-    half denom = NUM_BLUR_SAMPLES + 1;
+    float2 o = _BlurOffset.xy;
 
-    float4 geom = float4(GetNormal(uv).xyz, GetDepth(uv));
-    int s;
-    for (s = 0; s < NUM_BLUR_SAMPLES; ++s)
-    {
-        float2 nuv = uv + _BlurOffset.xy * (s + 1);
-        //float4 ngeom = float4(GetNormal(nuv).xyz, GetDepth(nuv));
-        //half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
-        //sum += tex2D(_AOBuffer, nuv.xy).r * coef;
-        //denom += coef;
-        sum += tex2D(_AOBuffer, nuv.xy).r;
-        denom += 1.0;
-    }
-    for (s = 0; s < NUM_BLUR_SAMPLES; ++s)
-    {
-        float2 nuv = uv - _BlurOffset.xy * (s + 1);
-        //float4 ngeom = float4(GetNormal(nuv).xyz, GetDepth(nuv));
-        //half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
-        //sum += tex2D(_AOBuffer, nuv.xy).r * coef;
-        //denom += coef;
-        sum += tex2D(_AOBuffer, nuv.xy).r;
-        denom += 1.0;
-    }
-    return sum / denom;
+    float4 r = 0.0;
+    r += tex2D(_AOBuffer, uv - o*4.0) * Weights[0];
+    r += tex2D(_AOBuffer, uv - o*3.0) * Weights[1];
+    r += tex2D(_AOBuffer, uv - o*2.0) * Weights[2];
+    r += tex2D(_AOBuffer, uv - o*1.0) * Weights[3];
+    r += tex2D(_AOBuffer, uv        ) * Weights[4];
+    r += tex2D(_AOBuffer, uv + o*1.0) * Weights[3];
+    r += tex2D(_AOBuffer, uv + o*2.0) * Weights[2];
+    r += tex2D(_AOBuffer, uv + o*3.0) * Weights[1];
+    r += tex2D(_AOBuffer, uv + o*4.0) * Weights[0];
+    return r;
 }
 
 
