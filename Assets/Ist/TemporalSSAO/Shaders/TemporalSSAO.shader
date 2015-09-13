@@ -22,8 +22,8 @@ float4x4 _WorldToCamera;
 
 #define _Radius             _Params0.x
 #define _Intensity          _Params0.y
+#define _MaxAccumulation    _Params0.z
 
-#define _MaxAccumulation    20.0
 #define _DepthMinSimilarity 0.01
 #define _VelocityScalar     0.01
 
@@ -99,33 +99,36 @@ half4 frag_ao(vs_out i) : SV_Target
     if(depth == 1.0) { return 0.0; }
 
     float3 p = GetPosition(uv);
-    float3 vp = GetViewPosition(uv);
     float3 n = GetNormal(uv).xyz;
+    float3 vp = GetViewPosition(uv);
     float3 vn = mul(tofloat3x3(_WorldToCamera), n);
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
     float2 prev_uv;
-    float  prev_ao;
     float4 prev_depth;
     float3 prev_pos;
-    float accumulation;
+    float2 prev_result;
+    float  ao;
+    float  accumulation;
     {
         float4 ppos4 = mul(_PrevViewProj, float4(p.xyz, 1.0) );
         float2 pspos = ppos4.xy / ppos4.w;
         prev_uv = pspos * 0.5 + 0.5;
-        float2 r = tex2D(_AOBuffer, prev_uv).rg;
-        prev_ao = r.x;
-        accumulation = r.y * _MaxAccumulation;
+        prev_result = tex2D(_AOBuffer, prev_uv).rg;
+        accumulation = prev_result.y * _MaxAccumulation;
+        ao = prev_result.x;
         prev_depth = GetPrevDepth(prev_uv);
         prev_pos = GetPrevPosition(pspos, prev_depth);
     }
 
     float depth_similarity = saturate(pow(prev_depth / depth, 4) + _DepthMinSimilarity);
-    float velocity = length(p.xyz - prev_pos.xyz);
-    float velocity_similarity = saturate(velocity * _VelocityScalar);
+    //float velocity_similarity = saturate(velocity * _VelocityScalar);
 
-    accumulation *= max(1.0-(0.05 + velocity*20.0), 0.0);
-    float ao = prev_ao * accumulation;
+    float diff = length(p.xyz - prev_pos.xyz);
+    accumulation *= max(1.0-(0.025 + diff*20.0), 0.0);
+    //if (accumulation + 1.0 > _MaxAccumulation) { return prev_result.xyxy; }
+
+    ao *= accumulation;
 
     float occ = 0.0;
     for (int s = 0; s < SAMPLE_COUNT; s++)
@@ -141,12 +144,12 @@ half4 frag_ao(vs_out i) : SV_Target
         float dist = tpos.z - tdepth;
         occ += (dist > 0.01 * _Radius) * (dist < _Radius);
     }
-
     occ = saturate(occ * _Intensity / SAMPLE_COUNT);
 
-    ao += occ;
     accumulation += 1.0;
-    return half4(ao / accumulation, accumulation / _MaxAccumulation, 0.0, 0.0);
+    ao = (ao + occ) / accumulation;
+    accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
+    return half4(ao, accumulation, 0.0, 0.0);
 }
 
 
@@ -175,6 +178,8 @@ half4 frag_blur(vs_out i) : SV_Target
         half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
         sum += tex2D(_AOBuffer, nuv.xy).r * coef;
         denom += coef;
+        //sum += tex2D(_AOBuffer, nuv.xy).r;
+        //denom += 1.0;
     }
     for (s = 0; s < NUM_BLUR_SAMPLES; ++s)
     {
@@ -183,6 +188,8 @@ half4 frag_blur(vs_out i) : SV_Target
         half coef = (NUM_BLUR_SAMPLES - s) * CheckSame(geom, ngeom);
         sum += tex2D(_AOBuffer, nuv.xy).r * coef;
         denom += coef;
+        //sum += tex2D(_AOBuffer, nuv.xy).r;
+        //denom += 1.0;
     }
     return sum / denom;
 }
