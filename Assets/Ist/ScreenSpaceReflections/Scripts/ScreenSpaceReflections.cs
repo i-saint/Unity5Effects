@@ -116,12 +116,12 @@ namespace Ist
                 for (int i = 0; i < m_reflection_buffers.Length; ++i)
                 {
                     m_reflection_buffers[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.ARGB32);
-                    m_reflection_buffers[i].filterMode = FilterMode.Point;
+                    m_reflection_buffers[i].filterMode = FilterMode.Bilinear;
                     Graphics.SetRenderTarget(m_reflection_buffers[i]);
                     GL.Clear(false, true, Color.black);
 
                     m_accumulation_buffers[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.R8);
-                    m_accumulation_buffers[i].filterMode = FilterMode.Point;
+                    m_accumulation_buffers[i].filterMode = FilterMode.Bilinear;
                     Graphics.SetRenderTarget(m_accumulation_buffers[i]);
                     GL.Clear(false, true, Color.black);
                 }
@@ -168,7 +168,6 @@ namespace Ist
                     break;
             }
 
-            m_reflection_buffers[1].filterMode = FilterMode.Point;
             m_material.SetVector("_Params0", new Vector4(m_intensity, m_raymarch_distance, m_ray_diffusion, m_falloff_distance));
             m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, m_step_boost, 0.0f));
             m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[1]);
@@ -181,7 +180,6 @@ namespace Ist
             m_material.SetPass(0);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
-            m_reflection_buffers[0].filterMode = FilterMode.Bilinear;
             Graphics.SetRenderTarget(dst);
             m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[0]);
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[0]);

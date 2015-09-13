@@ -101,7 +101,7 @@ half4 frag_ao(vs_out i) : SV_Target
     if(depth == 1.0) { return 0.0; }
 
     float3 p = GetPosition(uv);
-    float3 n = GetNormal(uv).xyz;
+    float3 n = GetNormal(uv);
     float3 vp = GetViewPosition(uv);
     float3 vn = mul(tofloat3x3(_WorldToCamera), n);
     float3x3 proj = tofloat3x3(unity_CameraProjection);
@@ -120,7 +120,6 @@ half4 frag_ao(vs_out i) : SV_Target
         accumulation = prev_result.y * _MaxAccumulation;
         ao = prev_result.x;
         prev_depth = GetPrevDepth(prev_uv);
-        //prev_depth = GetDepth(prev_uv);
         prev_pos = GetPrevPosition(pspos, prev_depth);
     }
 
@@ -137,12 +136,12 @@ half4 frag_ao(vs_out i) : SV_Target
         float3 delta = spherical_kernel(uv, s);
         delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
 
-        float3 tpos = vp + delta * _Radius;
-        float3 spos = mul(proj, tpos);
-        float2 tuv = spos.xy / tpos.z * 0.5 + 0.5 + UVOffset;
-        float tdepth = GetLinearDepth(tuv);
-
-        float dist = tpos.z - tdepth;
+        float3 svpos = vp + delta * _Radius;
+        float3 sppos = mul(proj, svpos);
+        float2 suv = sppos.xy / svpos.z * 0.5 + 0.5 + UVOffset;
+        float  sdepth = svpos.z;
+        float  fdepth = GetLinearDepth(suv);
+        float dist = sdepth - fdepth;
         occ += (dist > 0.01 * _Radius) * (dist < _Radius);
     }
     occ = saturate(occ * _Intensity / SAMPLE_COUNT);
@@ -155,30 +154,22 @@ half4 frag_ao(vs_out i) : SV_Target
 }
 
 
-
-inline half CheckSame(float4 nd, float4 nnd)
-{
-    half sn = dot(abs(nd.xyz - nnd.xyz), 1.0) < 0.1;
-    half sz = abs(nd.w - nnd.w) * _ProjectionParams.z < 0.2;
-    return sn * sz;
-}
-
 half4 frag_blur(vs_out i) : SV_Target
 {
-    const float Weights[5] = {0.05, 0.09, 0.12, 0.16, 0.16};
+    const float weights[5] = {0.05, 0.09, 0.12, 0.16, 0.16};
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
     float2 o = _BlurOffset.xy;
 
     float4 r = 0.0;
-    r += tex2D(_AOBuffer, uv - o*4.0) * Weights[0];
-    r += tex2D(_AOBuffer, uv - o*3.0) * Weights[1];
-    r += tex2D(_AOBuffer, uv - o*2.0) * Weights[2];
-    r += tex2D(_AOBuffer, uv - o*1.0) * Weights[3];
-    r += tex2D(_AOBuffer, uv        ) * Weights[4];
-    r += tex2D(_AOBuffer, uv + o*1.0) * Weights[3];
-    r += tex2D(_AOBuffer, uv + o*2.0) * Weights[2];
-    r += tex2D(_AOBuffer, uv + o*3.0) * Weights[1];
-    r += tex2D(_AOBuffer, uv + o*4.0) * Weights[0];
+    r += tex2D(_AOBuffer, uv - o*4.0) * weights[0];
+    r += tex2D(_AOBuffer, uv - o*3.0) * weights[1];
+    r += tex2D(_AOBuffer, uv - o*2.0) * weights[2];
+    r += tex2D(_AOBuffer, uv - o*1.0) * weights[3];
+    r += tex2D(_AOBuffer, uv        ) * weights[4];
+    r += tex2D(_AOBuffer, uv + o*1.0) * weights[3];
+    r += tex2D(_AOBuffer, uv + o*2.0) * weights[2];
+    r += tex2D(_AOBuffer, uv + o*3.0) * weights[1];
+    r += tex2D(_AOBuffer, uv + o*4.0) * weights[0];
     return r;
 }
 
