@@ -12,6 +12,7 @@ CGINCLUDE
 #include "UnityCG.cginc"
 #include "Assets/Ist/GBufferUtils/Shaders/GBufferUtils.cginc"
 sampler2D _MainTex;
+sampler2D _PrePassBuffer;
 sampler2D _ReflectionBuffer;
 sampler2D _AccumulationBuffer;
 
@@ -43,10 +44,6 @@ float4x4 _WorldToCamera;
         #define MAX_MARCH 32
         #define MAX_TRACEBACK_MARCH 8
         //#define NUM_RAYS 2
-    #elif QUALITY_ULTRA
-        #define MAX_MARCH 64
-        #define MAX_TRACEBACK_MARCH 8
-        //#define NUM_RAYS 4
     #else // QUALITY_MEDIUM
         #define MAX_MARCH 16
         #define MAX_TRACEBACK_MARCH 8
@@ -54,8 +51,6 @@ float4x4 _WorldToCamera;
     #endif
 #endif
 
-#define ENABLE_RAY_TRACEBACK
-#define ENABLE_BLURED_COMBINE
 
 
 struct ia_out
@@ -67,12 +62,6 @@ struct vs_out
 {
     float4 vertex : SV_POSITION;
     float4 screen_pos : TEXCOORD0;
-};
-
-struct ps_out
-{
-    half4 color : SV_Target0;
-    half4 accumulation : SV_Target1;
 };
 
 
@@ -119,24 +108,21 @@ struct RayHitData
     float2 uv;
 };
 
-RayHitData RayMarching(float3 p, float3 n, float march_step, float hit_radius, float smoothness, float diffusion_seed)
+RayHitData RayMarching(float adv, float3 p, float3 n, float smoothness, float march_step, const int max_march, const int max_traceback)
 {
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
     float3 vp = mul(_WorldToCamera, float4(p, 1.0)).xyz;
     float3 cam_dir = normalize(p - _WorldSpaceCameraPos);
-    float3 ref_dir = normalize(reflect(cam_dir, n.xyz) + Diffusion(p + diffusion_seed, _RayDiffusion) * (1.0-smoothness));
+    float3 ref_dir = normalize(reflect(cam_dir, n.xyz) + Diffusion(p, _RayDiffusion) * (1.0-smoothness));
     float3 ref_vdir = mul(tofloat3x3(_WorldToCamera), ref_dir);
-    float jitter = march_step * Jitter(p + diffusion_seed);
 
     float hit = 0.0;
-    float adv = 0.0;
     float3 ray_vpos = 0.0;
     float2 ray_uv = 0.0;
 
     // raymarch
-    for(int k=0; k<MAX_MARCH; ++k) {
-        adv = march_step * k + jitter;
+    for(int k=0; k<max_march; ++k) {
         march_step *= (1.0+_RayStepBoost);
         ray_vpos = vp + ref_vdir * adv;
 
@@ -149,12 +135,12 @@ RayHitData RayMarching(float3 p, float3 n, float march_step, float hit_radius, f
             hit = 1.0;
             break;
         }
+        adv += march_step;
     }
 
     // trace back
-#ifdef ENABLE_RAY_TRACEBACK
-    for(int l=0; l<MAX_TRACEBACK_MARCH-1; ++l) {
-        adv -= (march_step/MAX_TRACEBACK_MARCH);
+    for(int l=0; l<max_traceback-1; ++l) {
+        adv -= (march_step/ max_traceback);
         float3 ray_vpos_ = vp + ref_vdir * adv;
         float3 ray_ppos = mul(proj, ray_vpos_);
         float2 ray_uv_ = ray_ppos.xy / ray_vpos_.z * 0.5 + 0.5 + UVOffset;
@@ -167,13 +153,12 @@ RayHitData RayMarching(float3 p, float3 n, float march_step, float hit_radius, f
         ray_uv = ray_uv_;
         ray_vpos = ray_vpos_;
     }
-#endif
 
     float3 ray_pos = p + ref_dir * adv;
     float3 ref_pos = GetPosition(ray_uv);
     float3 ref_normal = GetNormal(ray_uv);
     if(/*dot(ref_normal, ref_dir) > 0.0 ||*/
-        length(ref_pos.xyz- ray_pos.xyz) > hit_radius)
+        length(ref_pos.xyz- ray_pos.xyz) > _RayHitRadius)
     {
         hit = 0.0;
     }
@@ -196,11 +181,39 @@ void SampleHitFragment(RayHitData ray, float smoothness, inout float4 blend_colo
     accumulation += 1.0;
 }
 
-ps_out frag_reflections(vs_out i)
+
+half4 frag_prepass(vs_out i) : SV_Target
+{
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float depth = GetDepth(uv);
+    if (depth == 1.0) { return 0.0; }
+
+    float3 p = GetPosition(uv);
+    float3 n = GetNormal(uv);
+    float4 smoothness = GetSpecular(uv).w;
+
+    const int max_march = MAX_MARCH;
+    const int max_traceback = 0;
+    float march_step = _RayMarchDistance / max_march;
+    float adv = 0.0;
+    adv += march_step * Jitter(p);
+
+    RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
+    return hit.advance - march_step;
+}
+
+
+struct reflection_out
+{
+    half4 color : SV_Target0;
+    half4 accumulation : SV_Target1;
+};
+
+reflection_out frag_reflections(vs_out i)
 {
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
 
-    ps_out r;
+    reflection_out r;
     r.color = 0.0;
     r.accumulation = 0.0;
 
@@ -226,18 +239,22 @@ ps_out frag_reflections(vs_out i)
     float diff = length(p-prev_pos);
     accumulation *= max(1.0-(0.05+diff*20.0), 0.0);
     float4 blend_color = prev_result * accumulation;
+    float adv = 0.0f;
+#if ENABLE_PREPASS
+    const int max_march = 4;
+    const int max_traceback = 3;
+    float march_step = _RayMarchDistance / (MAX_MARCH*4);
+    adv = tex2D(_PrePassBuffer, uv).r;
+#else
+    const int max_march = MAX_MARCH;
+    const int max_traceback = MAX_TRACEBACK_MARCH;
     float march_step = _RayMarchDistance / MAX_MARCH;
-    float hit_radius = _RayHitRadius;
+    adv += march_step * Jitter(p);
+#endif
 
-    RayHitData hit = RayMarching(p, n, march_step, hit_radius, smoothness, 0.0);
+    RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
     SampleHitFragment(hit, smoothness, blend_color, accumulation);
-//#if NUM_RAYS >= 2
-//    RayMarching(0.1, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
-//#endif
-//#if NUM_RAYS >= 4
-//    RayMarching(0.2, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
-//    RayMarching(0.3, p, uv, cam_dir, n, smoothness, march_step, hit_radius, blend_color, accumulation);
-//#endif
+
     r.color = blend_color / accumulation;
     r.accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
     return r;
@@ -281,7 +298,8 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_reflections
         #pragma target 3.0
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
+        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma multi_compile ___ ENABLE_PREPASS
         ENDCG
     }
     Pass {
@@ -295,6 +313,13 @@ ENDCG
         CGPROGRAM
         #pragma vertex vert_combine
         #pragma fragment frag_combine
+        #pragma target 3.0
+        ENDCG
+    }
+    Pass {
+        CGPROGRAM
+        #pragma vertex vert
+        #pragma fragment frag_prepass
         #pragma target 3.0
         ENDCG
     }

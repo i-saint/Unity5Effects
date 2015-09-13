@@ -19,7 +19,6 @@ namespace Ist
             Low,
             Medium,
             High,
-            VeryHigh,
         }
 
         public SampleCount m_sample_count = SampleCount.Medium;
@@ -37,7 +36,7 @@ namespace Ist
         public float m_ray_hit_radius = 0.15f;
         public float m_max_accumulation = 25.0f;
         public float m_step_boost = 0.0f;
-
+        public bool m_pre_raymarch_pass = false;
         public Shader m_shader;
 
         Material m_material;
@@ -154,10 +153,9 @@ namespace Ist
                 case SampleCount.High:
                     m_material.EnableKeyword ("QUALITY_HIGH");
                     break;
-                case SampleCount.VeryHigh:
-                    m_material.EnableKeyword ("QUALITY_ULTRA");
-                    break;
             }
+            if(m_pre_raymarch_pass) { m_material.EnableKeyword("ENABLE_PREPASS"); }
+            else                    { m_material.DisableKeyword("ENABLE_PREPASS"); }
 
             m_material.SetVector("_Params0", new Vector4(m_intensity, m_raymarch_distance, m_ray_diffusion, m_falloff_distance));
             m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, m_step_boost, 0.0f));
@@ -165,12 +163,37 @@ namespace Ist
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[1]);
             m_material.SetTexture("_MainTex", src);
 
+
+
             // accumulate reflection
             m_rb[0] = m_reflection_buffers[0].colorBuffer;
             m_rb[1] = m_accumulation_buffers[0].colorBuffer;
-            Graphics.SetRenderTarget(m_rb, m_reflection_buffers[0].depthBuffer);
-            m_material.SetPass(0);
-            Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+            if (m_pre_raymarch_pass)
+            {
+                var prepass_buffer = RenderTexture.GetTemporary(
+                    m_reflection_buffers[0].width / 4,
+                    m_reflection_buffers[0].height / 4, 0, RenderTextureFormat.RHalf);
+                prepass_buffer.filterMode = FilterMode.Point;
+
+                // raymarch in low-resolution buffer
+                Graphics.SetRenderTarget(prepass_buffer);
+                m_material.SetPass(3);
+                Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
+                // continue raymarch from pre-march result
+                Graphics.SetRenderTarget(m_rb, m_reflection_buffers[0].depthBuffer);
+                m_material.SetTexture("_PrePassBuffer", prepass_buffer);
+                m_material.SetPass(0);
+                Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
+                RenderTexture.ReleaseTemporary(prepass_buffer);
+            }
+            else
+            {
+                Graphics.SetRenderTarget(m_rb, m_reflection_buffers[0].depthBuffer);
+                m_material.SetPass(0);
+                Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+            }
 
 
             var tmp1 = RenderTexture.GetTemporary(m_reflection_buffers[0].width, m_reflection_buffers[0].height, 0, RenderTextureFormat.ARGB32);
