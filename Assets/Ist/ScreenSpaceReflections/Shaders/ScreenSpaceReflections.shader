@@ -17,6 +17,7 @@ sampler2D _AccumulationBuffer;
 
 float4 _Params0;
 float4 _Params1;
+float4 _BlurOffset;
 float4x4 _WorldToCamera;
 
 #define _Intensity          _Params0.x
@@ -128,11 +129,10 @@ RayHitData RayMarching(float3 p, float3 n, float march_step, float hit_radius, f
     float3 ref_vdir = mul(tofloat3x3(_WorldToCamera), ref_dir);
     float jitter = march_step * Jitter(p + diffusion_seed);
 
-    float2 hit_uv = 0.0;
     float hit = 0.0;
     float adv = 0.0;
-    float3 ray_vpos;
-    float2 ray_uv;
+    float3 ray_vpos = 0.0;
+    float2 ray_uv = 0.0;
 
     // raymarch
     for(int k=0; k<MAX_MARCH; ++k) {
@@ -177,13 +177,12 @@ RayHitData RayMarching(float3 p, float3 n, float march_step, float hit_radius, f
     {
         hit = 0.0;
     }
-    hit_uv = lerp(hit_uv, ray_uv, hit);
 
     RayHitData r;
     r.hit = hit;
     r.advance = adv;
     r.pos = ray_pos;
-    r.uv = hit_uv;
+    r.uv = ray_uv;
     return r;
 }
 
@@ -244,32 +243,37 @@ ps_out frag_reflections(vs_out i)
     return r;
 }
 
+
+half4 frag_blur(vs_out i) : SV_Target
+{
+    const float weights[5] = {0.05, 0.09, 0.12, 0.16, 0.16};
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 o = _BlurOffset.xy;
+
+    float4 r = 0.0;
+    r += tex2D(_ReflectionBuffer, uv - o*4.0) * weights[0];
+    r += tex2D(_ReflectionBuffer, uv - o*3.0) * weights[1];
+    r += tex2D(_ReflectionBuffer, uv - o*2.0) * weights[2];
+    r += tex2D(_ReflectionBuffer, uv - o*1.0) * weights[3];
+    r += tex2D(_ReflectionBuffer, uv        ) * weights[4];
+    r += tex2D(_ReflectionBuffer, uv + o*1.0) * weights[3];
+    r += tex2D(_ReflectionBuffer, uv + o*2.0) * weights[2];
+    r += tex2D(_ReflectionBuffer, uv + o*3.0) * weights[1];
+    r += tex2D(_ReflectionBuffer, uv + o*4.0) * weights[0];
+    return r;
+}
+
+
 float4 frag_combine(vs_out i) : SV_Target
 {
     float2 uv = i.screen_pos.xy / i.screen_pos.w;
 
     float accumulation = tex2D(_AccumulationBuffer, uv).x;
-    float2 s = (_ScreenParams.zw-1.0) * 1.25;
     float4 color = tex2D(_MainTex, uv);
-    float4 ref_color = 0.0;
-#ifdef ENABLE_BLURED_COMBINE
-    ref_color += tex2D(_ReflectionBuffer, uv+float2( 0.0, 0.0)) * 0.2;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2( s.x, 0.0)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2(-s.x, 0.0)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2( 0.0, s.y)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2( 0.0,-s.y)) * 0.125;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2( s.x, s.y)) * 0.075;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2(-s.x, s.y)) * 0.075;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2(-s.x,-s.y)) * 0.075;
-    ref_color += tex2D(_ReflectionBuffer, uv+float2( s.x,-s.y)) * 0.075;
-#else
-    ref_color += tex2D(_ReflectionBuffer, uv);
-#endif
-
-    float alpha = ref_color.a * _Intensity;
+    float4 ref_color = tex2D(_ReflectionBuffer, uv);
+    float alpha = saturate(ref_color.a * _Intensity);
     return float4(lerp(color.rgb, ref_color.rgb, alpha), 1.0);
 }
-
 ENDCG
 
     Pass {
@@ -278,6 +282,13 @@ ENDCG
         #pragma fragment frag_reflections
         #pragma target 3.0
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH QUALITY_ULTRA
+        ENDCG
+    }
+    Pass {
+        CGPROGRAM
+        #pragma vertex vert
+        #pragma fragment frag_blur
+        #pragma target 3.0
         ENDCG
     }
     Pass {

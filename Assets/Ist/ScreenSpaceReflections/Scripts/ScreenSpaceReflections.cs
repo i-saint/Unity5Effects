@@ -29,12 +29,15 @@ namespace Ist
         public float m_intensity = 1.0f;
         [Range(0.0f, 1.0f)]
         public float m_ray_diffusion = 0.01f;
+        [Range(0.0f, 8.0f)]
+        public float m_blur_size = 1.0f;
 
         public float m_raymarch_distance = 2.5f;
         public float m_falloff_distance = 2.5f;
         public float m_ray_hit_radius = 0.15f;
         public float m_max_accumulation = 25.0f;
         public float m_step_boost = 0.0f;
+
         public Shader m_shader;
 
         Material m_material;
@@ -144,26 +147,14 @@ namespace Ist
             {
                 case SampleCount.Low:
                     m_material.EnableKeyword ("QUALITY_FAST");
-                    m_material.DisableKeyword("QUALITY_MEDIUM");
-                    m_material.DisableKeyword("QUALITY_HIGH");
-                    m_material.DisableKeyword("QUALITY_ULTRA");
                     break;
                 case SampleCount.Medium:
-                    m_material.DisableKeyword("QUALITY_FAST");
                     m_material.EnableKeyword ("QUALITY_MEDIUM");
-                    m_material.DisableKeyword("QUALITY_HIGH");
-                    m_material.DisableKeyword("QUALITY_ULTRA");
                     break;
                 case SampleCount.High:
-                    m_material.DisableKeyword("QUALITY_FAST");
-                    m_material.DisableKeyword("QUALITY_MEDIUM");
                     m_material.EnableKeyword ("QUALITY_HIGH");
-                    m_material.DisableKeyword("QUALITY_ULTRA");
                     break;
                 case SampleCount.VeryHigh:
-                    m_material.DisableKeyword("QUALITY_FAST");
-                    m_material.DisableKeyword("QUALITY_MEDIUM");
-                    m_material.DisableKeyword("QUALITY_HIGH");
                     m_material.EnableKeyword ("QUALITY_ULTRA");
                     break;
             }
@@ -174,17 +165,45 @@ namespace Ist
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[1]);
             m_material.SetTexture("_MainTex", src);
 
+            // accumulate reflection
             m_rb[0] = m_reflection_buffers[0].colorBuffer;
             m_rb[1] = m_accumulation_buffers[0].colorBuffer;
             Graphics.SetRenderTarget(m_rb, m_reflection_buffers[0].depthBuffer);
             m_material.SetPass(0);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
+
+            var tmp1 = RenderTexture.GetTemporary(m_reflection_buffers[0].width, m_reflection_buffers[0].height, 0, RenderTextureFormat.ARGB32);
+            var tmp2 = RenderTexture.GetTemporary(m_reflection_buffers[0].width, m_reflection_buffers[0].height, 0, RenderTextureFormat.ARGB32);
+            tmp1.filterMode = FilterMode.Bilinear;
+            tmp2.filterMode = FilterMode.Bilinear;
+
+            if(m_blur_size > 0.0f)
+            {
+                // horizontal blur
+                Graphics.SetRenderTarget(tmp1);
+                m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[0]);
+                m_material.SetVector("_BlurOffset", new Vector4(m_blur_size / src.width, 0.0f, 0.0f, 0.0f));
+                m_material.SetPass(1);
+                Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
+                // vertical blur
+                Graphics.SetRenderTarget(tmp2);
+                m_material.SetTexture("_ReflectionBuffer", tmp1);
+                m_material.SetVector("_BlurOffset", new Vector4(0.0f, m_blur_size / src.height, 0.0f, 0.0f));
+                m_material.SetPass(1);
+                Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+            }
+
+            // combine
             Graphics.SetRenderTarget(dst);
-            m_material.SetTexture("_ReflectionBuffer", m_reflection_buffers[0]);
+            m_material.SetTexture("_ReflectionBuffer", m_blur_size > 0.0f ? tmp2 : m_reflection_buffers[0]);
             m_material.SetTexture("_AccumulationBuffer", m_accumulation_buffers[0]);
-            m_material.SetPass(1);
-            Graphics.Blit(src, dst, m_material, 1);
+            Graphics.Blit(src, dst, m_material, 2);
+
+            RenderTexture.ReleaseTemporary(tmp2);
+            RenderTexture.ReleaseTemporary(tmp1);
+
 
             Swap(ref m_reflection_buffers[0], ref m_reflection_buffers[1]);
             Swap(ref m_accumulation_buffers[0], ref m_accumulation_buffers[1]);
