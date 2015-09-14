@@ -82,7 +82,7 @@ public class MetaballRenderer : MonoBehaviour
 
         m_buffer.SetData(m_entities);
         m_material.SetBuffer("_Entities", m_buffer);
-        m_material.SetInt("_NumEntities", m_num_entities);
+        m_material.SetInt("_NumEntities", Mathf.Min(m_num_entities, m_max_entities));
         m_num_entities = 0;
     }
 }
