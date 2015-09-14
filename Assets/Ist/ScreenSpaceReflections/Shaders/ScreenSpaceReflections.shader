@@ -27,6 +27,7 @@ float4x4 _WorldToCamera;
 #define _FalloffDistance    _Params0.w
 #define _MaxAccumulation    _Params1.x
 #define _RayHitRadius       _Params1.y
+#define _InvRayHitRadius    (1.0/_RayHitRadius)
 #define _RayStepBoost       _Params1.z
 
 // on OpenGL ES platforms, shader compiler goes infinite loop (?) without this workaround...
@@ -171,14 +172,17 @@ RayHitData RayMarching(float adv, float3 p, float3 n, float smoothness, float ma
     return r;
 }
 
-void SampleHitFragment(RayHitData ray, float smoothness, inout float4 blend_color, inout float accumulation)
+void SampleHitFragment(RayHitData ray, float smoothness, inout float4 hit_color, inout float accumulation)
 {
     float2 edge = abs(ray.uv * 2.0 - 1.0);
     float edge_attr = pow(1.0 - max(edge.x, edge.y), 0.5);
-    blend_color.a += max(1.0 - (ray.advance / _FalloffDistance), 0.0) * edge_attr * smoothness * ray.hit;
 
-    blend_color.rgb += tex2D(_MainTex, ray.uv).rgb;
-    accumulation += 1.0;
+#if ENABLE_DANGEROUS_SAMPLES
+    accumulation = max(accumulation - GetVelocity(ray.uv).z * 20.0 * _InvRayHitRadius, 0.0);
+#endif
+
+    hit_color.a = max(1.0 - (ray.advance / _FalloffDistance), 0.0) * edge_attr * smoothness * ray.hit;
+    hit_color.rgb = tex2D(_MainTex, ray.uv).rgb;
 }
 
 
@@ -223,22 +227,14 @@ reflection_out frag_reflections(vs_out i)
     float3 p = GetPosition(uv);
     float3 n = GetNormal(uv);
     float4 smoothness = GetSpecular(uv).w;
+    float4 vel = GetVelocity(uv);
 
-    float2 prev_uv;
-    float4 prev_result;
-    float3 prev_pos;
-    float accumulation;
-    {
-        float4 ppos = mul(_PrevViewProj, float4(p, 1.0) );
-        prev_uv = (ppos.xy / ppos.w) * 0.5 + 0.5;
-        prev_result = tex2D(_ReflectionBuffer, prev_uv);
-        accumulation = tex2D(_AccumulationBuffer, prev_uv).x * _MaxAccumulation;
-        prev_pos = GetPrevPosition(uv);
-    }
+    float2 prev_uv      = uv - vel.xy;
+    float  prev_depth   = GetPrevDepth(prev_uv);
+    float3 prev_pos     = GetPrevPosition(prev_uv*2.0 - 1.0, prev_depth);
+    float4 ref_color    = tex2D(_ReflectionBuffer, prev_uv);
+    float  accumulation = tex2D(_AccumulationBuffer, prev_uv).x * _MaxAccumulation;
 
-    float diff = length(p-prev_pos);
-    accumulation *= max(1.0-(0.05+diff*20.0), 0.0);
-    float4 blend_color = prev_result * accumulation;
     float adv = 0.0f;
 #if ENABLE_PREPASS
     const int max_march = 4;
@@ -252,10 +248,18 @@ reflection_out frag_reflections(vs_out i)
     adv += march_step * Jitter(p);
 #endif
 
-    RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
-    SampleHitFragment(hit, smoothness, blend_color, accumulation);
 
-    r.color = blend_color / accumulation;
+    RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
+
+    float diff = vel.w;
+    accumulation *= max(1.0-(0.05+diff*20.0), 0.0);
+
+    float4 hit_color;
+    SampleHitFragment(hit, smoothness, hit_color, accumulation);
+    ref_color = ref_color * accumulation + hit_color;
+    accumulation += 1.0;
+
+    r.color = ref_color / accumulation;
     r.accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
     return r;
 }
@@ -300,6 +304,7 @@ ENDCG
         #pragma target 3.0
         #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
         #pragma multi_compile ___ ENABLE_PREPASS
+        #pragma multi_compile ___ ENABLE_DANGEROUS_SAMPLES
         ENDCG
     }
     Pass {

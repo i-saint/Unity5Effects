@@ -36,6 +36,7 @@ namespace Ist
         public float m_ray_hit_radius = 0.15f;
         public float m_max_accumulation = 25.0f;
         public float m_step_boost = 0.0f;
+        public bool m_dangerous_samples = false;
         public bool m_pre_raymarch_pass = false;
         public Shader m_shader;
 
@@ -60,8 +61,10 @@ namespace Ist
         void Reset()
         {
             m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/ScreenSpaceReflections/Shaders/ScreenSpaceReflections.shader");
-            GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
-            GetComponent<GBufferUtils>().m_enable_prev_depth = true;
+            var gbu = GetComponent<GBufferUtils>();
+            gbu.m_enable_inv_matrices = true;
+            gbu.m_enable_prev_depth = true;
+            gbu.m_enable_velocity = true;
         }
 #endif // UNITY_EDITOR
 
@@ -133,11 +136,11 @@ namespace Ist
         [ImageEffectOpaque]
         void OnRenderImage(RenderTexture src, RenderTexture dst)
         {
+            GetComponent<GBufferUtils>().UpdateVelocityBuffer();
+
             if (m_material == null)
             {
                 m_material = new Material(m_shader);
-                m_material.hideFlags = HideFlags.DontSave;
-
                 m_quad = MeshUtils.GenerateQuad();
             }
             UpdateRenderTargets();
@@ -145,10 +148,13 @@ namespace Ist
             switch (m_sample_count)
             {
                 case SampleCount.Low:
-                    m_material.EnableKeyword ("QUALITY_FAST");
+                    m_material.EnableKeyword("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
                     break;
                 case SampleCount.Medium:
                     m_material.EnableKeyword ("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_HIGH");
                     break;
                 case SampleCount.High:
                     m_material.EnableKeyword ("QUALITY_HIGH");
@@ -156,6 +162,9 @@ namespace Ist
             }
             if(m_pre_raymarch_pass) { m_material.EnableKeyword("ENABLE_PREPASS"); }
             else                    { m_material.DisableKeyword("ENABLE_PREPASS"); }
+
+            if(m_dangerous_samples) { m_material.EnableKeyword("ENABLE_DANGEROUS_SAMPLES"); }
+            else                    { m_material.DisableKeyword("ENABLE_DANGEROUS_SAMPLES"); }
 
             m_material.SetVector("_Params0", new Vector4(m_intensity, m_raymarch_distance, m_ray_diffusion, m_falloff_distance));
             m_material.SetVector("_Params1", new Vector4(m_max_accumulation, m_ray_hit_radius, m_step_boost, 0.0f));

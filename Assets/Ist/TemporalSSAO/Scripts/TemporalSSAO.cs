@@ -14,6 +14,12 @@ namespace Ist
     [ExecuteInEditMode]
     public class TemporalSSAO : MonoBehaviour
     {
+        public enum DebugOption
+        {
+            Off,
+            ShowVelocity,
+        }
+
         [Range(1,8)]
         public int m_downsampling = 2;
         [Range(0.0f, 5.0f)]
@@ -22,7 +28,12 @@ namespace Ist
         public float m_intensity = 1.0f;
         [Range(0.0f, 8.0f)]
         public float m_blur_size = 2.0f;
+        public bool m_dangerous_samples;
         public float m_max_accumulation = 100.0f;
+
+#if UNITY_EDITOR
+        public DebugOption m_debug_option;
+#endif
 
         public Shader m_shader;
         public Texture m_texture_random;
@@ -48,8 +59,10 @@ namespace Ist
         {
             m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/TemporalSSAO/Shaders/TemporalSSAO.shader");
             m_texture_random = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Ist/Utilities/Textures/RandomVectors.png");
-            GetComponent<GBufferUtils>().m_enable_inv_matrices = true;
-            GetComponent<GBufferUtils>().m_enable_prev_depth = true;
+            var gbu = GetComponent<GBufferUtils>();
+            gbu.m_enable_inv_matrices = true;
+            gbu.m_enable_prev_depth = true;
+            gbu.m_enable_velocity = true;
         }
 #endif // UNITY_EDITOR
 
@@ -111,6 +124,8 @@ namespace Ist
         [ImageEffectOpaque]
         void OnRenderImage(RenderTexture src, RenderTexture dst)
         {
+            GetComponent<GBufferUtils>().UpdateVelocityBuffer();
+
             if (m_material == null)
             {
                 m_material = new Material(m_shader);
@@ -119,6 +134,28 @@ namespace Ist
                 m_quad = MeshUtils.GenerateQuad();
             }
             UpdateRenderTargets();
+
+            if(m_dangerous_samples)
+            {
+                m_material.EnableKeyword("ENABLE_DANGEROUS_SAMPLES");
+            }
+            else
+            {
+                m_material.DisableKeyword("ENABLE_DANGEROUS_SAMPLES");
+            }
+
+#if UNITY_EDITOR
+            switch (m_debug_option)
+            {
+                case DebugOption.Off:
+                    m_material.EnableKeyword("DEBUG_OFF");
+                    m_material.DisableKeyword("DEBUG_SHOW_VELOCITY");
+                    break;
+                case DebugOption.ShowVelocity:
+                    m_material.EnableKeyword("DEBUG_SHOW_VELOCITY");
+                    break;
+            }
+#endif
 
             m_material.SetVector("_Params0", new Vector4(m_radius, m_intensity, m_max_accumulation, 0.0f));
             m_material.SetTexture("_AOBuffer", m_ao_buffer[1]);

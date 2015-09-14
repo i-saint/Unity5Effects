@@ -21,6 +21,7 @@ float4 _BlurOffset;
 float4x4 _WorldToCamera;
 
 #define _Radius             _Params0.x
+#define _InvRadius          (1.0/_Params0.x)
 #define _Intensity          _Params0.y
 #define _MaxAccumulation    _Params0.z
 
@@ -78,7 +79,7 @@ float nrand(float2 uv, float dx, float dy)
 
 #define SAMPLE_COUNT 8
 
-float3 spherical_kernel(float2 uv, float index)
+float3 random_hemisphere(float2 uv, float index, float3 vn)
 {
     // Uniformaly distributed points
     // http://mathworld.wolfram.com/SpherePointPicking.html
@@ -88,7 +89,9 @@ float3 spherical_kernel(float2 uv, float index)
     float3 v = float3(u2 * cos(theta), u2 * sin(theta), u);
     // Adjustment for distance distribution.
     float l = index / SAMPLE_COUNT;
-    return v * lerp(0.1, 1.0, l * l);
+    float3 delta = v * lerp(0.1, 1.0, l * l);
+    delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
+    return delta;
 }
 
 
@@ -104,37 +107,26 @@ half4 frag_ao(vs_out i) : SV_Target
     float3 n = GetNormal(uv);
     float3 vp = GetViewPosition(uv);
     float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    float4 vel = GetVelocity(uv);
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
-    float2 prev_uv;
-    float  prev_depth;
-    float3 prev_pos;
-    float2 prev_result;
-    float  ao;
-    float  accumulation;
-    {
-        float4 ppos4 = mul(_PrevViewProj, float4(p.xyz, 1.0) );
-        float2 pspos = ppos4.xy / ppos4.w;
-        prev_uv = pspos * 0.5 + 0.5 + UVOffset;
-        prev_result = tex2D(_AOBuffer, prev_uv).rg;
-        accumulation = prev_result.y * _MaxAccumulation;
-        ao = prev_result.x;
-        prev_depth = GetPrevDepth(prev_uv);
-        prev_pos = GetPrevPosition(pspos, prev_depth);
-    }
+    float2 prev_uv      = uv - vel.xy;
+    float  prev_depth   = GetPrevDepth(prev_uv);
+    float2 prev_result  = tex2D(_AOBuffer, prev_uv).rg;
+    float  accumulation = prev_result.y * _MaxAccumulation;
+    float  ao           = prev_result.x;
+
 
     float depth_similarity = saturate(pow(prev_depth / depth, 4) + _DepthMinSimilarity);
     //float velocity_similarity = saturate(velocity * _VelocityScalar);
 
-    float diff = length(p.xyz - prev_pos.xyz);
+    float diff = vel.z;
     accumulation *= max(1.0-(0.03 + diff*20.0), 0.0);
-    ao *= accumulation;
 
     float occ = 0.0;
     for (int s = 0; s < SAMPLE_COUNT; s++)
     {
-        float3 delta = spherical_kernel(uv, s);
-        delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
+        float3 delta = random_hemisphere(uv, s, vn);
 
         float3 svpos = vp + delta * _Radius;
         float3 sppos = mul(proj, svpos);
@@ -143,13 +135,18 @@ half4 frag_ao(vs_out i) : SV_Target
         float  fdepth = GetLinearDepth(suv);
         float dist = sdepth - fdepth;
         occ += (dist > 0.01 * _Radius) * (dist < _Radius);
+#if ENABLE_DANGEROUS_SAMPLES
+        accumulation -= GetVelocity(suv).z * 20.0 * _InvRadius;
+#endif
+
     }
     occ = saturate(occ * _Intensity / SAMPLE_COUNT);
 
+    accumulation = max(accumulation, 0.0);
+    ao *= accumulation;
     accumulation += 1.0;
     ao = (ao + occ) / accumulation;
     accumulation = min(accumulation, _MaxAccumulation) / _MaxAccumulation;
-    //return abs(uv-prev_uv).xyxy*100;
     return half4(ao, accumulation, 0.0, 0.0);
 }
 
@@ -182,7 +179,10 @@ half4 frag_combine(vs_out i) : SV_Target
     half4 c = tex2D(_MainTex, uv);
     half ao = tex2D(_AOBuffer, uv).r;
     c.rgb = lerp(c.rgb, 0.0, ao);
-    //return ao;
+
+#if DEBUG_SHOW_VELOCITY
+    c.rgb = GetVelocity(uv).b;
+#endif
     return c;
 }
 ENDCG
@@ -192,6 +192,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_ao
         #pragma target 3.0
+        #pragma multi_compile ___ ENABLE_DANGEROUS_SAMPLES
         ENDCG
     }
     Pass {
@@ -206,6 +207,7 @@ ENDCG
         #pragma vertex vert_combine
         #pragma fragment frag_combine
         #pragma target 3.0
+        #pragma multi_compile DEBUG_OFF, DEBUG_SHOW_VELOCITY
         ENDCG
     }
 }

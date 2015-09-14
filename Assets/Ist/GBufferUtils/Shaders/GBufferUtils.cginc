@@ -23,6 +23,8 @@ sampler2D _PrevFrameBuffer;
 float4x4 _InvViewProj;
 float4x4 _PrevViewProj;
 float4x4 _PrevInvViewProj;
+float4x4 _PrevView;
+float4x4 _PrevProj;
 
 // casting float4x4 to float3x3 causes compile error on some platforms. this is workaround for it.
 float3x3 tofloat3x3(float4x4 v)
@@ -37,7 +39,7 @@ half4 GetEmission(float2 uv)    { return tex2D(_CameraGBufferTexture3, uv); }
 float GetDepth(float2 uv)       { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
 float GetLinearDepth(float2 uv) { return LinearEyeDepth(GetDepth(uv)); }
 half4 GetFrameBuffer(float2 uv) { return tex2D(_FrameBuffer, uv); }
-half2 GetVelocity(float2 uv)    { return tex2D(_VelocityBuffer, uv); }
+half4 GetVelocity(float2 uv)    { return tex2D(_VelocityBuffer, uv); }
 
 float3 GetPosition(float2 screen_position, float depth)
 {

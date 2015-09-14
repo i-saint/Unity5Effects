@@ -1,5 +1,7 @@
 ﻿Shader "Hidden/Ist/GbufferUtils/GBufferCopy" {
 CGINCLUDE
+#include "UnityCG.cginc"
+
 sampler2D _CameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
 sampler2D _CameraGBufferTexture1;   // spec color (rgb), smoothness (a)
 sampler2D _CameraGBufferTexture2;   // normal (rgb), --unused, very low precision-- (a) 
@@ -80,6 +82,7 @@ SubShader {
     ZWrite On
     Cull Off
 
+    // gbuffer & depth
     Pass {
 CGPROGRAM
 #pragma vertex vert
@@ -87,6 +90,7 @@ CGPROGRAM
 ENDCG
     }
 
+    // depth only
     Pass {
 CGPROGRAM
 #pragma vertex vert
@@ -94,5 +98,4 @@ CGPROGRAM
 ENDCG
     }
 }
-Fallback Off
 }
