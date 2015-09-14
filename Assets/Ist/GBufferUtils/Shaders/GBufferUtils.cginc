@@ -65,11 +65,16 @@ float3 GetPositionByPrevMatrix(float2 uv)
     return GetPositionByPrevMatrix(screen_position, depth);
 }
 
+float3 GetViewPosition(float2 screen_position, float linear_depth)
+{
+    float2 p11_22 = float2(unity_CameraProjection._11, unity_CameraProjection._22);
+    return float3(screen_position / p11_22, 1.0) * linear_depth;
+
+}
 float3 GetViewPosition(float2 uv)
 {
-    float depth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv));
-    float2 p11_22 = float2(unity_CameraProjection._11, unity_CameraProjection._22);
-    return float3((uv * 2.0 - 1.0) / p11_22, 1.0) * depth;
+    float linear_depth = GetLinearDepth(uv);
+    return GetViewPosition(uv * 2.0 - 1.0, linear_depth);
 
 }
 

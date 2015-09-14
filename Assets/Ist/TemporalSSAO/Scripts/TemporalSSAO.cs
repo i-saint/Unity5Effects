@@ -17,7 +17,9 @@ namespace Ist
         public enum DebugOption
         {
             Off,
+            ShowAO,
             ShowVelocity,
+            ShowViewNormal,
         }
 
         [Range(1,8)]
@@ -149,10 +151,27 @@ namespace Ist
             {
                 case DebugOption.Off:
                     m_material.EnableKeyword("DEBUG_OFF");
+                    m_material.DisableKeyword("DEBUG_SHOW_AO");
                     m_material.DisableKeyword("DEBUG_SHOW_VELOCITY");
+                    m_material.DisableKeyword("DEBUG_SHOW_VIEW_NORMAL");
+                    break;
+                case DebugOption.ShowAO:
+                    m_material.DisableKeyword("DEBUG_OFF");
+                    m_material.EnableKeyword("DEBUG_SHOW_AO");
+                    m_material.DisableKeyword("DEBUG_SHOW_VELOCITY");
+                    m_material.DisableKeyword("DEBUG_SHOW_VIEW_NORMAL");
                     break;
                 case DebugOption.ShowVelocity:
+                    m_material.DisableKeyword("DEBUG_OFF");
+                    m_material.DisableKeyword("DEBUG_SHOW_AO");
                     m_material.EnableKeyword("DEBUG_SHOW_VELOCITY");
+                    m_material.DisableKeyword("DEBUG_SHOW_VIEW_NORMAL");
+                    break;
+                case DebugOption.ShowViewNormal:
+                    m_material.DisableKeyword("DEBUG_OFF");
+                    m_material.DisableKeyword("DEBUG_SHOW_AO");
+                    m_material.DisableKeyword("DEBUG_SHOW_VELOCITY");
+                    m_material.EnableKeyword("DEBUG_SHOW_VIEW_NORMAL");
                     break;
             }
 #endif
@@ -167,13 +186,13 @@ namespace Ist
             m_material.SetPass(0);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
 
-            var tmp1 = RenderTexture.GetTemporary(m_ao_buffer[0].width, m_ao_buffer[0].height, 0, RenderTextureFormat.RHalf);
-            var tmp2 = RenderTexture.GetTemporary(m_ao_buffer[0].width, m_ao_buffer[0].height, 0, RenderTextureFormat.RHalf);
-            tmp1.filterMode = FilterMode.Bilinear;
-            tmp2.filterMode = FilterMode.Bilinear;
-
             if(m_blur_size > 0.0f)
             {
+                var tmp1 = RenderTexture.GetTemporary(m_ao_buffer[0].width, m_ao_buffer[0].height, 0, RenderTextureFormat.RGHalf);
+                var tmp2 = RenderTexture.GetTemporary(m_ao_buffer[0].width, m_ao_buffer[0].height, 0, RenderTextureFormat.RGHalf);
+                tmp1.filterMode = FilterMode.Bilinear;
+                tmp2.filterMode = FilterMode.Bilinear;
+
                 // horizontal blur
                 Graphics.SetRenderTarget(tmp1);
                 m_material.SetTexture("_AOBuffer", m_ao_buffer[0]);
@@ -187,15 +206,22 @@ namespace Ist
                 m_material.SetVector("_BlurOffset", new Vector4(0.0f, m_blur_size / src.height, 0.0f, 0.0f));
                 m_material.SetPass(1);
                 Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
+                // combine
+                Graphics.SetRenderTarget(dst);
+                m_material.SetTexture("_AOBuffer", tmp2);
+                Graphics.Blit(src, dst, m_material, 2);
+
+                RenderTexture.ReleaseTemporary(tmp2);
+                RenderTexture.ReleaseTemporary(tmp1);
             }
-
-            // combine
-            Graphics.SetRenderTarget(dst);
-            m_material.SetTexture("_AOBuffer", m_blur_size > 0.0f ? tmp2 : m_ao_buffer[0]);
-            Graphics.Blit(src, dst, m_material, 2);
-
-            RenderTexture.ReleaseTemporary(tmp2);
-            RenderTexture.ReleaseTemporary(tmp1);
+            else
+            {
+                // combine
+                Graphics.SetRenderTarget(dst);
+                m_material.SetTexture("_AOBuffer", m_ao_buffer[0]);
+                Graphics.Blit(src, dst, m_material, 2);
+            }
 
             Swap(ref m_ao_buffer[0], ref m_ao_buffer[1]);
         }

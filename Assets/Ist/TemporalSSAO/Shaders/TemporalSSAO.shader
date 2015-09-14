@@ -16,7 +16,6 @@ sampler2D _AOBuffer;
 sampler2D _RandomTexture;
 
 float4 _Params0;
-float4 _BlurOffsetScale;
 float4 _BlurOffset;
 float4x4 _WorldToCamera;
 
@@ -103,10 +102,10 @@ half4 frag_ao(vs_out i) : SV_Target
     float depth = GetDepth(uv);
     if(depth == 1.0) { return 0.0; }
 
-    float3 p = GetPosition(uv);
-    float3 n = GetNormal(uv);
     float3 vp = GetViewPosition(uv);
+    float3 n = GetNormal(uv);
     float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    //float3 vn = -normalize(cross(ddx(vp), ddy(vp))); 
     float4 vel = GetVelocity(uv);
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
@@ -117,13 +116,14 @@ half4 frag_ao(vs_out i) : SV_Target
     float  ao           = prev_result.x;
 
 
-    float depth_similarity = saturate(pow(prev_depth / depth, 4) + _DepthMinSimilarity);
+    //float depth_similarity = saturate(pow(prev_depth / depth, 4) + _DepthMinSimilarity);
     //float velocity_similarity = saturate(velocity * _VelocityScalar);
 
     float diff = vel.z;
     accumulation *= max(1.0-(0.03 + diff*20.0), 0.0);
 
     float occ = 0.0;
+    float danger = 0.0;
     for (int s = 0; s < SAMPLE_COUNT; s++)
     {
         float3 delta = random_hemisphere(uv, s, vn);
@@ -134,12 +134,13 @@ half4 frag_ao(vs_out i) : SV_Target
         float  sdepth = svpos.z;
         float  fdepth = GetLinearDepth(suv);
         float dist = sdepth - fdepth;
-        occ += (dist > 0.01 * _Radius) * (dist < _Radius);
+        occ += (dist > 0.05 * _Radius) * (dist < _Radius);
 #if ENABLE_DANGEROUS_SAMPLES
-        accumulation -= GetVelocity(suv).z * 20.0 * _InvRadius;
+        danger = max(danger, GetVelocity(suv).z);
 #endif
-
     }
+    accumulation -= danger * 20.0 * _InvRadius;
+
     occ = saturate(occ * _Intensity / SAMPLE_COUNT);
 
     accumulation = max(accumulation, 0.0);
@@ -155,33 +156,43 @@ half4 frag_blur(vs_out i) : SV_Target
 {
     const float weights[5] = {0.05, 0.09, 0.12, 0.16, 0.16};
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
-    float2 o = _BlurOffset.xy;
 
-    float4 r = 0.0;
-    r += tex2D(_AOBuffer, uv - o*4.0) * weights[0];
-    r += tex2D(_AOBuffer, uv - o*3.0) * weights[1];
-    r += tex2D(_AOBuffer, uv - o*2.0) * weights[2];
-    r += tex2D(_AOBuffer, uv - o*1.0) * weights[3];
-    r += tex2D(_AOBuffer, uv        ) * weights[4];
-    r += tex2D(_AOBuffer, uv + o*1.0) * weights[3];
-    r += tex2D(_AOBuffer, uv + o*2.0) * weights[2];
-    r += tex2D(_AOBuffer, uv + o*3.0) * weights[1];
-    r += tex2D(_AOBuffer, uv + o*4.0) * weights[0];
-    return r;
+    float2 ref = tex2D(_AOBuffer, uv).rg;
+    float accumulation = ref.g;
+    float ao = 0.0;
+    float2 o = _BlurOffset.xy * max( 2.5 - accumulation*_MaxAccumulation*0.25, 1.0 );
+    ao += tex2D(_AOBuffer, uv - o*4.0).r * weights[0];
+    ao += tex2D(_AOBuffer, uv - o*3.0).r * weights[1];
+    ao += tex2D(_AOBuffer, uv - o*2.0).r * weights[2];
+    ao += tex2D(_AOBuffer, uv - o*1.0).r * weights[3];
+    ao +=                          ref.r * weights[4];
+    ao += tex2D(_AOBuffer, uv + o*1.0).r * weights[3];
+    ao += tex2D(_AOBuffer, uv + o*2.0).r * weights[2];
+    ao += tex2D(_AOBuffer, uv + o*3.0).r * weights[1];
+    ao += tex2D(_AOBuffer, uv + o*4.0).r * weights[0];
+    return half4(ao, accumulation, 0.0, 0.0);
 }
-
 
 
 half4 frag_combine(vs_out i) : SV_Target
 {
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
-
     half4 c = tex2D(_MainTex, uv);
     half ao = tex2D(_AOBuffer, uv).r;
     c.rgb = lerp(c.rgb, 0.0, ao);
 
-#if DEBUG_SHOW_VELOCITY
+#if DEBUG_SHOW_AO
+    c.rgb = 1.0 - ao;
+#elif DEBUG_SHOW_VELOCITY
     c.rgb = GetVelocity(uv).b;
+#elif DEBUG_SHOW_VIEW_NORMAL
+    float3 n = GetNormal(uv);
+    float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+
+    //float3 vp = GetViewPosition(uv);
+    //float3 vn = -normalize(cross(ddx(vp), ddy(vp))); 
+
+    c.rgb = vn * 0.5 + 0.5;
 #endif
     return c;
 }
@@ -207,7 +218,7 @@ ENDCG
         #pragma vertex vert_combine
         #pragma fragment frag_combine
         #pragma target 3.0
-        #pragma multi_compile DEBUG_OFF, DEBUG_SHOW_VELOCITY
+        #pragma multi_compile DEBUG_OFF DEBUG_SHOW_AO DEBUG_SHOW_VELOCITY DEBUG_SHOW_VIEW_NORMAL
         ENDCG
     }
 }
