@@ -163,6 +163,31 @@ float4x4 look_matrix44(float3 dir, float3 up)
         0.0, 0.0, 0.0, 1.0 );
 }
 
+// dir & up must be normalized
+float3x3 look_matrix33(float3 from, float3 to, float3 up)
+{
+    float3 z = normalize(to - from);
+    float3 x = cross(up, z);
+    float3 y = cross(z, x);
+    return float3x3(
+        x.x, y.x, z.x,
+        x.y, y.y, z.y,
+        x.z, y.z, z.z);
+}
+
+// dir & up must be normalized
+float4x4 look_matrix44(float3 from, float3 to, float3 up)
+{
+    float3 z = normalize(to - from);
+    float3 x = cross(up, z);
+    float3 y = cross(z, x);
+    return float4x4(
+                 x.x,          y.x,          z.x, 0.0,
+                 x.y,          y.y,          z.y, 0.0,
+                 x.z,          y.z,          z.z, 0.0,
+        -dot(x,from), -dot(y,from), -dot(z,from), 1.0);
+}
+
 // axis must be normalized
 float3x3 axis_rotation_matrix33(float3 axis, float angle)
 {

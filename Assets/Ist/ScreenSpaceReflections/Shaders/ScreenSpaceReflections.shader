@@ -15,6 +15,7 @@ sampler2D _MainTex;
 sampler2D _PrePassBuffer;
 sampler2D _ReflectionBuffer;
 sampler2D _AccumulationBuffer;
+float4 _PrePassBuffer_TexelSize;
 
 float4 _Params0;
 float4 _Params1;
@@ -121,45 +122,49 @@ RayHitData RayMarching(float adv, float3 p, float3 n, float smoothness, float ma
     float hit = 0.0;
     float3 ray_vpos = 0.0;
     float2 ray_uv = 0.0;
+    float ray_depth;
+    float ref_depth;
 
     // raymarch
     for(int k=0; k<max_march; ++k) {
+        adv += march_step;
         march_step *= (1.0+_RayStepBoost);
         ray_vpos = vp + ref_vdir * adv;
 
         float3 ray_ppos = mul(proj, ray_vpos);
         ray_uv = ray_ppos.xy / ray_vpos.z * 0.5 + 0.5 + UVOffset;
-        float ray_depth = ray_vpos.z;
-        float ref_depth = GetLinearDepth(ray_uv);
+        ray_depth = ray_vpos.z;
+        ref_depth = GetLinearDepth(ray_uv);
 
         if(ray_depth > ref_depth) {
             hit = 1.0;
             break;
         }
-        adv += march_step;
     }
 
     // trace back
-    for(int l=0; l<max_traceback-1; ++l) {
-        adv -= (march_step/ max_traceback);
+    for(int l=0; l<max_traceback; ++l) {
+        adv -= march_step / (max_traceback+1);
         float3 ray_vpos_ = vp + ref_vdir * adv;
         float3 ray_ppos = mul(proj, ray_vpos_);
         float2 ray_uv_ = ray_ppos.xy / ray_vpos_.z * 0.5 + 0.5 + UVOffset;
-        float ray_depth = ray_vpos_.z;
-        float ref_depth = GetLinearDepth(ray_uv_);
+        float ray_depth_ = ray_vpos_.z;
+        float ref_depth_ = GetLinearDepth(ray_uv_);
 
-        if(ray_depth < ref_depth) {
+        if(ray_depth_ < ref_depth_) {
             break;
         }
         ray_uv = ray_uv_;
         ray_vpos = ray_vpos_;
+        ray_depth = ray_depth_;
+        ref_depth = ref_depth_;
     }
 
     float3 ray_pos = p + ref_dir * adv;
     float3 ref_pos = GetPosition(ray_uv);
     float3 ref_normal = GetNormal(ray_uv);
     if(/*dot(ref_normal, ref_dir) > 0.0 ||*/
-        length(ref_pos.xyz- ray_pos.xyz) > _RayHitRadius)
+        (ray_depth - ref_depth) > _RayHitRadius)
     {
         hit = 0.0;
     }
@@ -178,7 +183,7 @@ void SampleHitFragment(RayHitData ray, float smoothness, inout float4 hit_color,
     float edge_attr = pow(1.0 - max(edge.x, edge.y), 0.5);
 
 #if ENABLE_DANGEROUS_SAMPLES
-    accumulation = max(accumulation - GetVelocity(ray.uv).z * 20.0 * _InvRayHitRadius, 0.0);
+    accumulation = max(accumulation - GetVelocity(ray.uv).z * 30.0 * _InvRayHitRadius, 0.0);
 #endif
 
     hit_color.a = max(1.0 - (ray.advance / _FalloffDistance), 0.0) * edge_attr * smoothness * ray.hit;
@@ -197,13 +202,13 @@ half4 frag_prepass(vs_out i) : SV_Target
     float4 smoothness = GetSpecular(uv).w;
 
     const int max_march = MAX_MARCH;
-    const int max_traceback = 0;
+    const int max_traceback = 4;
     float march_step = _RayMarchDistance / max_march;
     float adv = 0.0;
     adv += march_step * Jitter(p);
 
     RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
-    return hit.advance - march_step;
+    return hit.advance - march_step*0.25;
 }
 
 
@@ -238,9 +243,13 @@ reflection_out frag_reflections(vs_out i)
     float adv = 0.0f;
 #if ENABLE_PREPASS
     const int max_march = 4;
-    const int max_traceback = 3;
-    float march_step = _RayMarchDistance / (MAX_MARCH*4);
-    adv = tex2D(_PrePassBuffer, uv).r;
+    const int max_traceback = 2;
+    float march_step = _RayMarchDistance / (MAX_MARCH*2);
+
+    float2 tx = float2(_PrePassBuffer_TexelSize.x, 0.0);
+    float2 ty = float2(0.0, _PrePassBuffer_TexelSize.y);
+    adv = min(tex2D(_PrePassBuffer, uv).r, min(tex2D(_PrePassBuffer, uv + tx).r, tex2D(_PrePassBuffer, uv - tx).r));
+    adv = min(adv, min(tex2D(_PrePassBuffer, uv + ty).r, tex2D(_PrePassBuffer, uv - ty).r));
 #else
     const int max_march = MAX_MARCH;
     const int max_traceback = MAX_TRACEBACK_MARCH;
@@ -326,6 +335,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_prepass
         #pragma target 3.0
+        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
         ENDCG
     }
 }

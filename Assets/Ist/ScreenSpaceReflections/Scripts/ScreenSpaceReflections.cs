@@ -36,8 +36,8 @@ namespace Ist
         public float m_ray_hit_radius = 0.15f;
         public float m_max_accumulation = 25.0f;
         public float m_step_boost = 0.0f;
-        public bool m_dangerous_samples = false;
-        public bool m_pre_raymarch_pass = false;
+        public bool m_dangerous_samples = true;
+        public bool m_pre_raymarch_pass = true;
         public Shader m_shader;
 
         Material m_material;
@@ -50,7 +50,7 @@ namespace Ist
         public static RenderTexture CreateRenderTexture(int w, int h, int d, RenderTextureFormat f)
         {
             RenderTexture r = new RenderTexture(w, h, d, f);
-            r.filterMode = FilterMode.Point;
+            r.filterMode = FilterMode.Bilinear;
             r.useMipMap = false;
             r.generateMips = false;
             r.Create();
@@ -121,12 +121,10 @@ namespace Ist
                 for (int i = 0; i < m_reflection_buffers.Length; ++i)
                 {
                     m_reflection_buffers[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.ARGB32);
-                    m_reflection_buffers[i].filterMode = FilterMode.Bilinear;
                     Graphics.SetRenderTarget(m_reflection_buffers[i]);
                     GL.Clear(false, true, Color.black);
 
                     m_accumulation_buffers[i] = CreateRenderTexture((int)reso.x, (int)reso.y, 0, RenderTextureFormat.R8);
-                    m_accumulation_buffers[i].filterMode = FilterMode.Bilinear;
                     Graphics.SetRenderTarget(m_accumulation_buffers[i]);
                     GL.Clear(false, true, Color.black);
                 }
@@ -153,11 +151,14 @@ namespace Ist
                     m_material.DisableKeyword("QUALITY_HIGH");
                     break;
                 case SampleCount.Medium:
-                    m_material.EnableKeyword ("QUALITY_MEDIUM");
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.EnableKeyword("QUALITY_MEDIUM");
                     m_material.DisableKeyword("QUALITY_HIGH");
                     break;
                 case SampleCount.High:
-                    m_material.EnableKeyword ("QUALITY_HIGH");
+                    m_material.DisableKeyword("QUALITY_FAST");
+                    m_material.DisableKeyword("QUALITY_MEDIUM");
+                    m_material.EnableKeyword("QUALITY_HIGH");
                     break;
             }
             if(m_pre_raymarch_pass) { m_material.EnableKeyword("ENABLE_PREPASS"); }
@@ -182,7 +183,7 @@ namespace Ist
                 var prepass_buffer = RenderTexture.GetTemporary(
                     m_reflection_buffers[0].width / 4,
                     m_reflection_buffers[0].height / 4, 0, RenderTextureFormat.RHalf);
-                prepass_buffer.filterMode = FilterMode.Point;
+                prepass_buffer.filterMode = FilterMode.Bilinear;
 
                 // raymarch in low-resolution buffer
                 Graphics.SetRenderTarget(prepass_buffer);
