@@ -28,6 +28,14 @@ float4x4 _WorldToCamera;
 #define _DepthMinSimilarity 0.01
 #define _VelocityScalar     0.01
 
+#if SAMPLES_LOW
+    #define _SampleCount 4
+#elif SAMPLES_HIGH
+    #define _SampleCount 12
+#else // SAMPLES_MEDIUM
+    #define _SampleCount 8
+#endif
+
 
 struct ia_out
 {
@@ -77,20 +85,19 @@ float nrand(float2 uv, float dx, float dy)
 }
 
 
-#define SAMPLE_COUNT 8
-
-
+// from keijiro's code
 float3 random_hemisphere(float2 uv, float index)
 {
     // Uniformaly distributed points
     // http://mathworld.wolfram.com/SpherePointPicking.html
+
     float u = nrand(uv, 0, index);
     float theta = nrand(uv, 1, index) * UNITY_PI * 2;
     float u2 = sqrt(1 - u * u);
 
     float3 v = float3(u2 * cos(theta), u2 * sin(theta), u);
     // Adjustment for distance distribution.
-    float l = index / SAMPLE_COUNT;
+    float l = index / _SampleCount;
     return v * lerp(0.1, 1.0, l * l);
 }
 
@@ -104,11 +111,10 @@ half4 frag_ao(vs_out I) : SV_Target
     if(depth == 1.0) { return 0.0; }
 
     float3 vp = GetViewPosition(uv);
-    //float3 n = GetNormal(uv);
-    //float3 vn = mul(tofloat3x3(_WorldToCamera), n);
-    float3 vn = -normalize(cross(ddx(vp), ddy(vp))); 
+    float3 n = GetNormal(uv);
+    float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    //float3 vn = -normalize(cross(ddx(vp), ddy(vp))); // not good :(
     float4 vel = GetVelocity(uv);
-    float3x3 proj = tofloat3x3(unity_CameraProjection);
 
     float2 prev_uv      = uv - vel.xy;
     float  prev_depth   = GetPrevDepth(prev_uv);
@@ -117,30 +123,18 @@ half4 frag_ao(vs_out I) : SV_Target
     float  ao           = prev_result.x;
 
 
-    //float depth_similarity = saturate(pow(prev_depth / depth, 4) + _DepthMinSimilarity);
-    //float velocity_similarity = saturate(velocity * _VelocityScalar);
-
     float diff = vel.z;
-    accumulation *= max(1.0-(0.03 + diff*20.0), 0.0);
+    accumulation *= max(1.0-(0.05 + diff*20.0), 0.0);
 
     float occ = 0.0;
     float danger = 0.0;
 
-    float2x2 rot = rotation_matrix22(_SinTime.w*12.3456789);
     float3x3 look = look_matrix33(vn, float3(0.0, 1.0, 0.1));
-    for (int i = 0; i < SAMPLE_COUNT; i++)
+    float3x3 proj = tofloat3x3(unity_CameraProjection);
+    for (int i = 0; i < _SampleCount; i++)
     {
-        //float4 r = tex2D(_RandomTexture, frac(uv + (vp.xy+_SinTime.xy*123.45)));
-        //float3 delta = r.xyz * r.w;
-        //delta.xy = delta.xy * 2.0 - 1.0;
-        //delta.xy = mul(rot, delta.xy);
-        //float l = i / SAMPLE_COUNT;
-        //delta = delta * lerp(0.5, 1.0, l * l);
-        //delta = mul(look, delta);
-
         float3 delta = random_hemisphere(uv, i);
         delta = mul(look, delta);
-        //delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
 
         float3 svpos = vp + delta * _Radius;
         float3 sppos = mul(proj, svpos);
@@ -148,15 +142,14 @@ half4 frag_ao(vs_out I) : SV_Target
         float  sdepth = svpos.z;
         float  fdepth = GetLinearDepth(suv);
         float dist = sdepth - fdepth;
-        occ += (dist > 0.05 * _Radius) * (dist < _Radius);
+        occ += (dist > 0.01 * _Radius) * (dist < _Radius);
 #if ENABLE_DANGEROUS_SAMPLES
         danger = max(danger, GetVelocity(suv).z);
 #endif
     }
-    accumulation -= danger * 20.0 * _InvRadius;
+    occ = saturate(occ * _Intensity / _SampleCount);
 
-    occ = saturate(occ * _Intensity / SAMPLE_COUNT);
-
+    accumulation -= danger * 40.0 * _InvRadius;
     accumulation = max(accumulation, 0.0);
     ao *= accumulation;
     accumulation += 1.0;
@@ -188,9 +181,9 @@ half4 frag_blur(vs_out i) : SV_Target
 }
 
 
-half4 frag_combine(vs_out i) : SV_Target
+half4 frag_combine(vs_out I) : SV_Target
 {
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 uv = I.screen_pos.xy / I.screen_pos.w + UVOffset;
     half4 c = tex2D(_MainTex, uv);
     half ao = tex2D(_AOBuffer, uv).r;
     c.rgb = lerp(c.rgb, 0.0, ao);
@@ -217,6 +210,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_ao
         #pragma target 3.0
+        #pragma multi_compile SAMPLES_LOW SAMPLES_MEDIUM SAMPLES_HIGH
         #pragma multi_compile ___ ENABLE_DANGEROUS_SAMPLES
         ENDCG
     }

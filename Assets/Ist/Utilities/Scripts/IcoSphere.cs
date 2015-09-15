@@ -59,7 +59,7 @@ public static class IcoSphere
         return i;
     }
 
-    [MenuItem("Assets/Mesh Utils/Create IcoSphere")]
+    [MenuItem("Assets/Ist/Mesh Utils/Create IcoSphere")]
     public static void Create()
     {
         Mesh mesh = new Mesh();

@@ -33,20 +33,20 @@ float4x4 _WorldToCamera;
 
 // on OpenGL ES platforms, shader compiler goes infinite loop (?) without this workaround...
 #if defined(SHADER_API_GLES) || defined(SHADER_API_GLES3)
-    // QUALITY_FAST
+    // SAMPLES_LOW
     #define MAX_MARCH 12
     #define MAX_TRACEBACK_MARCH 4
     #define NUM_RAYS 1
 #else
-    #if QUALITY_FAST
+    #if SAMPLES_LOW
         #define MAX_MARCH 12
         #define MAX_TRACEBACK_MARCH 4
         #define NUM_RAYS 1
-    #elif QUALITY_HIGH
+    #elif SAMPLES_HIGH
         #define MAX_MARCH 32
         #define MAX_TRACEBACK_MARCH 8
         //#define NUM_RAYS 2
-    #else // QUALITY_MEDIUM
+    #else // SAMPLES_MEDIUM
         #define MAX_MARCH 16
         #define MAX_TRACEBACK_MARCH 8
         #define NUM_RAYS 1
@@ -183,7 +183,7 @@ void SampleHitFragment(RayHitData ray, float smoothness, inout float4 hit_color,
     float edge_attr = pow(1.0 - max(edge.x, edge.y), 0.5);
 
 #if ENABLE_DANGEROUS_SAMPLES
-    accumulation = max(accumulation - GetVelocity(ray.uv).z * 30.0 * _InvRayHitRadius, 0.0);
+    accumulation = max(accumulation - GetVelocity(ray.uv).z * 15.0 * _InvRayHitRadius, 0.0);
 #endif
 
     hit_color.a = max(1.0 - (ray.advance / _FalloffDistance), 0.0) * edge_attr * smoothness * ray.hit;
@@ -311,7 +311,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_reflections
         #pragma target 3.0
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma multi_compile SAMPLES_LOW SAMPLES_MEDIUM SAMPLES_HIGH
         #pragma multi_compile ___ ENABLE_PREPASS
         #pragma multi_compile ___ ENABLE_DANGEROUS_SAMPLES
         ENDCG
@@ -335,7 +335,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_prepass
         #pragma target 3.0
-        #pragma multi_compile QUALITY_FAST QUALITY_MEDIUM QUALITY_HIGH
+        #pragma multi_compile SAMPLES_LOW SAMPLES_MEDIUM SAMPLES_HIGH
         ENDCG
     }
 }

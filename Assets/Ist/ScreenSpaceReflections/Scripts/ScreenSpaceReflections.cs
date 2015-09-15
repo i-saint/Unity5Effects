@@ -146,19 +146,19 @@ namespace Ist
             switch (m_sample_count)
             {
                 case SampleCount.Low:
-                    m_material.EnableKeyword("QUALITY_FAST");
-                    m_material.DisableKeyword("QUALITY_MEDIUM");
-                    m_material.DisableKeyword("QUALITY_HIGH");
+                    m_material.EnableKeyword("SAMPLES_LOW");
+                    m_material.DisableKeyword("SAMPLES_MEDIUM");
+                    m_material.DisableKeyword("SAMPLES_HIGH");
                     break;
                 case SampleCount.Medium:
-                    m_material.DisableKeyword("QUALITY_FAST");
-                    m_material.EnableKeyword("QUALITY_MEDIUM");
-                    m_material.DisableKeyword("QUALITY_HIGH");
+                    m_material.DisableKeyword("SAMPLES_LOW");
+                    m_material.EnableKeyword("SAMPLES_MEDIUM");
+                    m_material.DisableKeyword("SAMPLES_HIGH");
                     break;
                 case SampleCount.High:
-                    m_material.DisableKeyword("QUALITY_FAST");
-                    m_material.DisableKeyword("QUALITY_MEDIUM");
-                    m_material.EnableKeyword("QUALITY_HIGH");
+                    m_material.DisableKeyword("SAMPLES_LOW");
+                    m_material.DisableKeyword("SAMPLES_MEDIUM");
+                    m_material.EnableKeyword("SAMPLES_HIGH");
                     break;
             }
             if(m_pre_raymarch_pass) { m_material.EnableKeyword("ENABLE_PREPASS"); }

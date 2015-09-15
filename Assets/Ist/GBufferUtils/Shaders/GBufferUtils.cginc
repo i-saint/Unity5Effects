@@ -1,3 +1,4 @@
+#include "UnityCG.cginc"
 #include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
 
 // G-Buffers (Unity internals)

@@ -136,7 +136,7 @@ ps_out frag(vs_out i)
             step *= _MarchBoost;
         }
 
-        float4 hit_pos = GetPosition(ray_coord);
+        float3 hit_pos = GetPosition(ray_coord);
         float dist_surface = dot(i.normal.xyz, i.world_pos.xyz);
         float dist_hitpos = dot(i.normal.xyz, hit_pos.xyz);
         // dist_hitpos > dist_surface : hit_pos is above the surface

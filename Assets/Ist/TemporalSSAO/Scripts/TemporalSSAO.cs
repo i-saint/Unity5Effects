@@ -14,6 +14,12 @@ namespace Ist
     [ExecuteInEditMode]
     public class TemporalSSAO : MonoBehaviour
     {
+        public enum SampleCount
+        {
+            Low,
+            Medium,
+            High,
+        }
         public enum DebugOption
         {
             Off,
@@ -22,15 +28,16 @@ namespace Ist
             ShowViewNormal,
         }
 
+        public SampleCount m_sample_count = SampleCount.Medium;
         [Range(1,8)]
-        public int m_downsampling = 2;
+        public int m_downsampling = 3;
         [Range(0.0f, 5.0f)]
-        public float m_radius = 0.15f;
-        [Range(0.0f, 4.0f)]
+        public float m_radius = 0.5f;
+        [Range(0.0f, 8.0f)]
         public float m_intensity = 1.0f;
         [Range(0.0f, 8.0f)]
         public float m_blur_size = 2.0f;
-        public bool m_dangerous_samples;
+        public bool m_dangerous_samples = true;
         public float m_max_accumulation = 100.0f;
 
 #if UNITY_EDITOR
@@ -38,7 +45,6 @@ namespace Ist
 #endif
 
         public Shader m_shader;
-        public Texture m_texture_random;
 
         Material m_material;
         Mesh m_quad;
@@ -60,7 +66,6 @@ namespace Ist
         void Reset()
         {
             m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/TemporalSSAO/Shaders/TemporalSSAO.shader");
-            m_texture_random = AssetDatabase.LoadAssetAtPath<Texture>("Assets/Ist/Utilities/Textures/RandomVectors.png");
             var gbu = GetComponent<GBufferUtils>();
             gbu.m_enable_inv_matrices = true;
             gbu.m_enable_prev_depth = true;
@@ -137,7 +142,26 @@ namespace Ist
             }
             UpdateRenderTargets();
 
-            if(m_dangerous_samples)
+            switch(m_sample_count)
+            {
+                case SampleCount.Low:
+                    m_material.EnableKeyword("SAMPLES_LOW");
+                    m_material.DisableKeyword("SAMPLES_MEDIUM");
+                    m_material.DisableKeyword("SAMPLES_HIGH");
+                    break;
+                case SampleCount.Medium:
+                    m_material.DisableKeyword("SAMPLES_LOW");
+                    m_material.EnableKeyword("SAMPLES_MEDIUM");
+                    m_material.DisableKeyword("SAMPLES_HIGH");
+                    break;
+                case SampleCount.High:
+                    m_material.DisableKeyword("SAMPLES_LOW");
+                    m_material.DisableKeyword("SAMPLES_MEDIUM");
+                    m_material.EnableKeyword("SAMPLES_HIGH");
+                    break;
+            }
+
+            if (m_dangerous_samples)
             {
                 m_material.EnableKeyword("ENABLE_DANGEROUS_SAMPLES");
             }
@@ -179,7 +203,6 @@ namespace Ist
             m_material.SetVector("_Params0", new Vector4(m_radius, m_intensity, m_max_accumulation, 0.0f));
             m_material.SetTexture("_AOBuffer", m_ao_buffer[1]);
             m_material.SetTexture("_MainTex", src);
-            m_material.SetTexture("_RandomTexture", m_texture_random);
 
             // accumulate ao
             Graphics.SetRenderTarget(m_ao_buffer[0]);

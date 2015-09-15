@@ -123,7 +123,7 @@ namespace Ist
         }
 
 #if UNITY_EDITOR
-        [MenuItem("Assets/Mesh Utils/Copy Mesh")]
+        [MenuItem("Assets/Ist/Mesh Utils/Copy Mesh")]
         public static void CopyMesh_Menu()
         {
             Mesh mesh = Selection.activeObject as Mesh;
@@ -140,7 +140,7 @@ namespace Ist
             }
         }
 
-        [MenuItem("Assets/Mesh Utils/Create Reverted Mesh")]
+        [MenuItem("Assets/Ist/Mesh Utils/Create Reverted Mesh")]
         public static void CreateRevertedMesh_Menu()
         {
             Mesh mesh = Selection.activeObject as Mesh;
@@ -157,21 +157,21 @@ namespace Ist
             }
         }
 
-        [MenuItem("Assets/Mesh Utils/Generate Square")]
+        [MenuItem("Assets/Ist/Mesh Utils/Generate Square")]
         public static void GenerateSquare_Menu()
         {
             Mesh mesh = GenerateSquare();
             AssetDatabase.CreateAsset(mesh, "Assets/Square.asset");
         }
 
-        [MenuItem("Assets/Mesh Utils/Generate Line Square")]
+        [MenuItem("Assets/Ist/Mesh Utils/Generate Line Square")]
         public static void GenerateLineSquare_Menu()
         {
             Mesh mesh = GenerateLineSquare();
             AssetDatabase.CreateAsset(mesh, "Assets/LineSquare.asset");
         }
 
-        [MenuItem("Assets/Mesh Utils/Generate Wire Cube")]
+        [MenuItem("Assets/Ist/Mesh Utils/Generate Wire Cube")]
         public static void GenerateWireCube_Menu()
         {
             Mesh mesh = GenerateWireCube();

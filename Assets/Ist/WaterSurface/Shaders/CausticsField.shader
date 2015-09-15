@@ -53,10 +53,12 @@ float3 GetObjectUp()        { return normalize(_Object2World[1].xyz); }
 
 ps_out frag(vs_out i)
 {
-    float2 coord = i.screen_pos.xy / i.screen_pos.w * 0.5 + 0.5;
+    float2 spos = i.screen_pos.xy / i.screen_pos.w;
+    float2 uv = spos * 0.5 + 0.5;
 
-    float4 pos = GetPosition(coord);
-    if(pos.w==0.0) discard;
+    float depth = GetDepth(uv);
+    if(depth ==1.0) discard;
+    float3 pos = GetPosition(spos, depth);
 
     float time = _Time.y*_ScrollSpeed;
     float o1 = sea_octave(pos.xzy*1.25*_Scale + float3(1.0, 2.0, -1.5)*time*1.25 + sin(pos.xzy + time*8.3)*0.15, 4.0);
@@ -68,7 +70,7 @@ ps_out frag(vs_out i)
     float attr1 = 1;
     float attr2 = 1;
 #if ATTENUATION_DIRECTIONAL
-    float3 n = GetNormal(coord).xyz;
+    float3 n = GetNormal(uv).xyz;
     float3 opos = GetObjectPosition();
     float3 oup = GetObjectUp();
     float dist = dot(oup, pos.xyz) - dot(oup, opos.xyz);
@@ -76,14 +78,13 @@ ps_out frag(vs_out i)
     attr1 = pow(saturate(1.0 - abs(dist * _Attenuation)), _AttenuationPow);
     attr2 = max(-dot(oup*sign, n), 0.0);
 #elif ATTENUATION_RADIAL
-    float3 n = GetNormal(coord).xyz;
+    float3 n = GetNormal(uv).xyz;
     float3 opos = GetObjectPosition();
     float3 odir = normalize(pos - opos);
     float dist = length(pos - opos);
     attr1 = pow(saturate(1.0 - (dist * _Attenuation)), _AttenuationPow);
     attr2 = max(-dot(odir, n), 0.0);
 #endif
-
 
     ps_out r;
     r.color = _Color * (o1 * attr1 * attr2 * _Intensity);

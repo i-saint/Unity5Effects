@@ -117,6 +117,9 @@ namespace Ist
             m_mat_gbuffer_copy.SetPass(0);
             Graphics.SetRenderTarget(m_rb_gbuffer, m_rt_depth.depthBuffer);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+
+            // this is needed to show stats, frame debugger view, etc.
+            Graphics.SetRenderTarget(null);
         }
 
         public void UpdateVelocityBuffer()
