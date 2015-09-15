@@ -10,6 +10,7 @@ SubShader {
 
 CGINCLUDE
 #include "UnityCG.cginc"
+#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
 #include "Assets/Ist/GBufferUtils/Shaders/GBufferUtils.cginc"
 sampler2D _MainTex;
 sampler2D _AOBuffer;
@@ -78,34 +79,34 @@ float nrand(float2 uv, float dx, float dy)
 
 #define SAMPLE_COUNT 8
 
-float3 random_hemisphere(float2 uv, float index, float3 vn)
+
+float3 random_hemisphere(float2 uv, float index)
 {
     // Uniformaly distributed points
     // http://mathworld.wolfram.com/SpherePointPicking.html
-    float u = nrand(uv, 0, index) * 2 - 1;
+    float u = nrand(uv, 0, index);
     float theta = nrand(uv, 1, index) * UNITY_PI * 2;
     float u2 = sqrt(1 - u * u);
+
     float3 v = float3(u2 * cos(theta), u2 * sin(theta), u);
     // Adjustment for distance distribution.
     float l = index / SAMPLE_COUNT;
-    float3 delta = v * lerp(0.1, 1.0, l * l);
-    delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
-    return delta;
+    return v * lerp(0.1, 1.0, l * l);
 }
 
 
-half4 frag_ao(vs_out i) : SV_Target
+half4 frag_ao(vs_out I) : SV_Target
 {
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 uv = I.screen_pos.xy / I.screen_pos.w + UVOffset;
     float2 screen_pos = uv * 2.0 - 1.0;
 
     float depth = GetDepth(uv);
     if(depth == 1.0) { return 0.0; }
 
     float3 vp = GetViewPosition(uv);
-    float3 n = GetNormal(uv);
-    float3 vn = mul(tofloat3x3(_WorldToCamera), n);
-    //float3 vn = -normalize(cross(ddx(vp), ddy(vp))); 
+    //float3 n = GetNormal(uv);
+    //float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    float3 vn = -normalize(cross(ddx(vp), ddy(vp))); 
     float4 vel = GetVelocity(uv);
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
@@ -124,9 +125,22 @@ half4 frag_ao(vs_out i) : SV_Target
 
     float occ = 0.0;
     float danger = 0.0;
-    for (int s = 0; s < SAMPLE_COUNT; s++)
+
+    float2x2 rot = rotation_matrix22(_SinTime.w*12.3456789);
+    float3x3 look = look_matrix33(vn, float3(0.0, 1.0, 0.1));
+    for (int i = 0; i < SAMPLE_COUNT; i++)
     {
-        float3 delta = random_hemisphere(uv, s, vn);
+        //float4 r = tex2D(_RandomTexture, frac(uv + (vp.xy+_SinTime.xy*123.45)));
+        //float3 delta = r.xyz * r.w;
+        //delta.xy = delta.xy * 2.0 - 1.0;
+        //delta.xy = mul(rot, delta.xy);
+        //float l = i / SAMPLE_COUNT;
+        //delta = delta * lerp(0.5, 1.0, l * l);
+        //delta = mul(look, delta);
+
+        float3 delta = random_hemisphere(uv, i);
+        delta = mul(look, delta);
+        //delta *= (dot(vn, delta) >= 0.0) * 2.0 - 1.0;
 
         float3 svpos = vp + delta * _Radius;
         float3 sppos = mul(proj, svpos);

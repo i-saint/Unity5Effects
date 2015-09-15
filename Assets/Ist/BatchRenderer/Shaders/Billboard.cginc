@@ -16,8 +16,7 @@ void ApplyBillboardTransform(float2 id, inout float4 vertex, inout float3 normal
     float3 camera_pos = _WorldSpaceCameraPos.xyz;
     float3 pos = GetInstanceTranslation(instance_id);
     float3 look = normalize(pos-camera_pos);
-    float3 axis = cross(look, float3(0.0, 1.0, 0.0));
-    float3 up = mul(axis_rotation_matrix33(axis, 90.0), look);
+    float3 up = float3(0.0, 1.0, 0.0);
 
     vertex.xyz *= GetBaseScale();
 #ifndef BR_WITHOUT_INSTANCE_SCALE

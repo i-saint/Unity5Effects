@@ -220,8 +220,7 @@ int ParticleTransform(inout appdata_full v)
         float3 camera_pos = _WorldSpaceCameraPos.xyz;
         float3 pos = p.position;
         float3 look = normalize(pos-camera_pos);
-        float3 axis = cross(look, float3(0.0, 1.0, 0.0));
-        float3 up = mul(axis_rotation_matrix33(axis, 90.0), look);
+        float3 up = float3(0.0, 1.0, 0.0);
 
         v.vertex.xyz *= g_size;
         v.vertex.xyz *= min(1.0, p.lifetime/g_fade_time);
