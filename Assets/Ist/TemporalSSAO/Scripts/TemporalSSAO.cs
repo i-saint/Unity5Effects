@@ -32,11 +32,11 @@ namespace Ist
         [Range(1,8)]
         public int m_downsampling = 3;
         [Range(0.0f, 5.0f)]
-        public float m_radius = 0.5f;
+        public float m_radius = 0.25f;
         [Range(0.0f, 8.0f)]
-        public float m_intensity = 1.0f;
+        public float m_intensity = 1.5f;
         [Range(0.0f, 8.0f)]
-        public float m_blur_size = 2.0f;
+        public float m_blur_size = 0.5f;
         public bool m_dangerous_samples = true;
         public float m_max_accumulation = 100.0f;
 

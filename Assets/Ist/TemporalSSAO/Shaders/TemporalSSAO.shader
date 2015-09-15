@@ -98,7 +98,7 @@ float3 random_hemisphere(float2 uv, float index)
     float3 v = float3(u2 * cos(theta), u2 * sin(theta), u);
     // Adjustment for distance distribution.
     float l = index / _SampleCount;
-    return v * lerp(0.1, 1.0, l * l);
+    return v * lerp(0.5, 1.0, l * l);
 }
 
 
@@ -124,7 +124,7 @@ half4 frag_ao(vs_out I) : SV_Target
 
 
     float diff = vel.z;
-    accumulation *= max(1.0-(0.05 + diff*20.0), 0.0);
+    accumulation *= max(1.0-(0.01 + diff*10.0), 0.0);
 
     float occ = 0.0;
     float danger = 0.0;
@@ -142,14 +142,16 @@ half4 frag_ao(vs_out I) : SV_Target
         float  sdepth = svpos.z;
         float  fdepth = GetLinearDepth(suv);
         float dist = sdepth - fdepth;
-        occ += (dist > 0.01 * _Radius) * (dist < _Radius);
+
+        float accept = dist < _Radius;
+        occ += (dist > 0.01 * _Radius) * accept;
 #if ENABLE_DANGEROUS_SAMPLES
-        danger = max(danger, GetVelocity(suv).z);
+        danger = max(danger, GetVelocity(suv).z * accept);
 #endif
     }
     occ = saturate(occ * _Intensity / _SampleCount);
 
-    accumulation -= danger * 40.0 * _InvRadius;
+    accumulation *= max(1.0 - danger * 2.0 * _InvRadius, 0.25);
     accumulation = max(accumulation, 0.0);
     ao *= accumulation;
     accumulation += 1.0;

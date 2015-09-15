@@ -183,7 +183,7 @@ void SampleHitFragment(RayHitData ray, float smoothness, inout float4 hit_color,
     float edge_attr = pow(1.0 - max(edge.x, edge.y), 0.5);
 
 #if ENABLE_DANGEROUS_SAMPLES
-    accumulation = max(accumulation - GetVelocity(ray.uv).z * 15.0 * _InvRayHitRadius, 0.0);
+    accumulation *= max(1.0 - GetVelocity(ray.uv).z * 1.0 * _InvRayHitRadius, 0.25);
 #endif
 
     hit_color.a = max(1.0 - (ray.advance / _FalloffDistance), 0.0) * edge_attr * smoothness * ray.hit;
@@ -261,7 +261,7 @@ reflection_out frag_reflections(vs_out i)
     RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
 
     float diff = vel.w;
-    accumulation *= max(1.0-(0.05+diff*20.0), 0.0);
+    accumulation *= max(1.0-(0.02+diff*20.0), 0.0);
 
     float4 hit_color;
     SampleHitFragment(hit, smoothness, hit_color, accumulation);
