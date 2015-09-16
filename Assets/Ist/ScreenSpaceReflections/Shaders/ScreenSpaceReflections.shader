@@ -132,7 +132,7 @@ RayHitData RayMarching(float adv, float3 p, float3 vp, float3 n, float smoothnes
         ray_vpos = vp + ref_vdir * adv;
 
         float3 ray_ppos = mul(proj, ray_vpos);
-        ray_uv = ray_ppos.xy / ray_vpos.z * 0.5 + 0.5 + UVOffset;
+        ray_uv = ray_ppos.xy / ray_vpos.z * 0.5 + 0.5;
         ray_depth = ray_vpos.z;
         ref_depth = GetLinearDepth(ray_uv);
 
@@ -147,7 +147,7 @@ RayHitData RayMarching(float adv, float3 p, float3 vp, float3 n, float smoothnes
         adv -= march_step / (max_traceback+1);
         float3 ray_vpos_ = vp + ref_vdir * adv;
         float3 ray_ppos = mul(proj, ray_vpos_);
-        float2 ray_uv_ = ray_ppos.xy / ray_vpos_.z * 0.5 + 0.5 + UVOffset;
+        float2 ray_uv_ = ray_ppos.xy / ray_vpos_.z * 0.5 + 0.5 ;
         float ray_depth_ = ray_vpos_.z;
         float ref_depth_ = GetLinearDepth(ray_uv_);
 
@@ -223,7 +223,7 @@ struct reflection_out
 
 reflection_out frag_reflections(vs_out i)
 {
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset*2;
     float2 spos = uv * 2.0 - 1.0;
 
     reflection_out r;
@@ -282,7 +282,7 @@ reflection_out frag_reflections(vs_out i)
 half4 frag_blur(vs_out i) : SV_Target
 {
     const float weights[5] = {0.05, 0.09, 0.12, 0.16, 0.16};
-    float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 uv = i.screen_pos.xy / i.screen_pos.w;
     float2 o = _BlurOffset.xy;
 
     float4 r = 0.0;

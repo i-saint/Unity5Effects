@@ -45,7 +45,7 @@ struct ia_out
 struct vs_out
 {
     float4 vertex : SV_POSITION;
-    float4 screen_pos : TEXuv0;
+    float4 screen_pos : TEXCOORD0;
 };
 
 struct ps_out
@@ -104,7 +104,7 @@ float3 random_hemisphere(float2 uv, float index)
 
 half4 frag_ao(vs_out I) : SV_Target
 {
-    float2 uv = I.screen_pos.xy / I.screen_pos.w + UVOffset;
+    float2 uv = I.screen_pos.xy / I.screen_pos.w + UVOffset*2.0;
     float2 screen_pos = uv * 2.0 - 1.0;
 
     float depth = GetDepth(uv);
