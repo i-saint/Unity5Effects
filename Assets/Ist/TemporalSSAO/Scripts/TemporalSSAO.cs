@@ -48,7 +48,7 @@ namespace Ist
 
         Material m_material;
         Mesh m_quad;
-        public RenderTexture[] m_ao_buffer = new RenderTexture[2];
+        RenderTexture[] m_ao_buffer = new RenderTexture[2];
 
 
         public static RenderTexture CreateRenderTexture(int w, int h, int d, RenderTextureFormat f)

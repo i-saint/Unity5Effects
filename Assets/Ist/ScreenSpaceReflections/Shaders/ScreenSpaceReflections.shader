@@ -110,11 +110,11 @@ struct RayHitData
     float2 uv;
 };
 
-RayHitData RayMarching(float adv, float3 p, float3 n, float smoothness, float march_step, const int max_march, const int max_traceback)
+RayHitData RayMarching(float adv, float3 p, float3 vp, float3 n, float smoothness, float march_step, const int max_march, const int max_traceback)
 {
     float3x3 proj = tofloat3x3(unity_CameraProjection);
 
-    float3 vp = mul(_WorldToCamera, float4(p, 1.0)).xyz;
+    //float3 vp = mul(_WorldToCamera, float4(p, 1.0)).xyz; // doesn't work on OpenGL
     float3 cam_dir = normalize(p - _WorldSpaceCameraPos);
     float3 ref_dir = normalize(reflect(cam_dir, n.xyz) + Diffusion(p, _RayDiffusion) * (1.0-smoothness));
     float3 ref_vdir = mul(tofloat3x3(_WorldToCamera), ref_dir);
@@ -194,10 +194,13 @@ void SampleHitFragment(RayHitData ray, float smoothness, inout float4 hit_color,
 half4 frag_prepass(vs_out i) : SV_Target
 {
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 spos = uv * 2.0 - 1.0;
+
     float depth = GetDepth(uv);
     if (depth == 1.0) { return 0.0; }
 
-    float3 p = GetPosition(uv);
+    float3 p = GetPosition(spos, depth);
+    float3 vp = GetViewPosition(spos, LinearEyeDepth(depth));
     float3 n = GetNormal(uv);
     float4 smoothness = GetSpecular(uv).w;
 
@@ -207,7 +210,7 @@ half4 frag_prepass(vs_out i) : SV_Target
     float adv = 0.0;
     adv += march_step * Jitter(p);
 
-    RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
+    RayHitData hit = RayMarching(adv, p, vp, n, smoothness, march_step, max_march, max_traceback);
     return hit.advance - march_step*0.25;
 }
 
@@ -221,6 +224,7 @@ struct reflection_out
 reflection_out frag_reflections(vs_out i)
 {
     float2 uv = i.screen_pos.xy / i.screen_pos.w + UVOffset;
+    float2 spos = uv * 2.0 - 1.0;
 
     reflection_out r;
     r.color = 0.0;
@@ -229,7 +233,8 @@ reflection_out frag_reflections(vs_out i)
     float depth = GetDepth(uv);
     if(depth == 1.0) { return r; }
 
-    float3 p = GetPosition(uv);
+    float3 p = GetPosition(spos, depth);
+    float3 vp = GetViewPosition(spos, LinearEyeDepth(depth));
     float3 n = GetNormal(uv);
     float4 smoothness = GetSpecular(uv).w;
     float4 vel = GetVelocity(uv);
@@ -258,7 +263,7 @@ reflection_out frag_reflections(vs_out i)
 #endif
 
 
-    RayHitData hit = RayMarching(adv, p, n, smoothness, march_step, max_march, max_traceback);
+    RayHitData hit = RayMarching(adv, p, vp, n, smoothness, march_step, max_march, max_traceback);
 
     float diff = vel.w;
     accumulation *= max(1.0-(0.02+diff*20.0), 0.0);

@@ -42,8 +42,8 @@ namespace Ist
 
         Material m_material;
         Mesh m_quad;
-        public RenderTexture[] m_reflection_buffers = new RenderTexture[2];
-        public RenderTexture[] m_accumulation_buffers = new RenderTexture[2];
+        RenderTexture[] m_reflection_buffers = new RenderTexture[2];
+        RenderTexture[] m_accumulation_buffers = new RenderTexture[2];
         RenderBuffer[] m_rb = new RenderBuffer[2];
 
 

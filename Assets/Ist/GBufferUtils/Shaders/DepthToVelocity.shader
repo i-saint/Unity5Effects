@@ -35,8 +35,8 @@ vs_out vert(ia_out I)
 
 half4 frag(vs_out I) : SV_Target
 {
-    float2 spos = I.screen_pos.xy / I.screen_pos.w + UVOffset;
-    float2 uv = spos * 0.5 + 0.5;
+    float2 spos = I.screen_pos.xy / I.screen_pos.w;
+    float2 uv = spos * 0.5 + 0.5 + UVOffset;
 
     float depth = GetDepth(uv);
     if (depth >= 1.0) { return 0.0; }
