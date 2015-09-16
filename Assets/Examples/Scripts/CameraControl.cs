@@ -57,5 +57,11 @@ public class CameraControl : MonoBehaviour
 
         m_look_pos += (m_look_target.position - m_look_pos) * m_follow_strength;
         cam_t.transform.LookAt(m_look_pos + m_target_offset);
+
+
+        if(Input.GetKeyUp(KeyCode.F1))
+        {
+            Cursor.visible = !Cursor.visible;
+        }
     }
 }
