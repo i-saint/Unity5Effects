@@ -44,9 +44,11 @@ namespace Ist
         Matrix4x4 m_prev_viewproj;
         Matrix4x4 m_prev_inv_viewproj;
         RenderTexture[] m_rt_gbuffer = new RenderTexture[4];
-        RenderBuffer[] m_rb_gbuffer = new RenderBuffer[4];
         RenderTexture m_rt_depth;
         RenderTexture m_rt_velocity;
+        public RenderTexture m_rt_continuity;
+        RenderBuffer[] m_rb_gbuffer = new RenderBuffer[4];
+        RenderBuffer[] m_rb_aux = new RenderBuffer[2];
         bool m_dirty_velocity;
 
         public Camera GetCamera() { return m_camera; }
@@ -134,12 +136,16 @@ namespace Ist
             if (m_rt_velocity == null)
             {
                 m_rt_velocity = CreateGBufferRT(RenderTextureFormat.ARGBHalf);
+                m_rt_continuity = CreateGBufferRT(RenderTextureFormat.ARGB32);
+                m_rb_aux[0] = m_rt_velocity.colorBuffer;
+                m_rb_aux[1] = m_rt_continuity.colorBuffer;
             }
 
             m_mat_depth_to_velocity.SetPass(0);
-            Graphics.SetRenderTarget(m_rt_velocity);
+            Graphics.SetRenderTarget(m_rb_aux, m_rt_velocity.depthBuffer);
             Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
             Shader.SetGlobalTexture("_VelocityBuffer", m_rt_velocity);
+            Shader.SetGlobalTexture("_ContinuityBuffer", m_rt_continuity);
         }
 
 

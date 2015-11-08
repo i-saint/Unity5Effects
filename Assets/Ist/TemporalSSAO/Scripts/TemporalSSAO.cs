@@ -211,24 +211,30 @@ namespace Ist
 
             if(m_blur_size > 0.0f)
             {
-                var tmp1 = RenderTexture.GetTemporary(m_ao_buffer[0].width, m_ao_buffer[0].height, 0, RenderTextureFormat.RGHalf);
-                var tmp2 = RenderTexture.GetTemporary(m_ao_buffer[0].width, m_ao_buffer[0].height, 0, RenderTextureFormat.RGHalf);
-                tmp1.filterMode = FilterMode.Bilinear;
-                tmp2.filterMode = FilterMode.Bilinear;
+                int w = (int)(m_ao_buffer[0].width * 1.0f);
+                int h = (int)(m_ao_buffer[0].height * 1.0f);
+                var tmp1 = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.RGHalf);
+                var tmp2 = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.RGHalf);
+                tmp1.filterMode = FilterMode.Trilinear;
+                tmp2.filterMode = FilterMode.Trilinear;
 
                 // horizontal blur
                 Graphics.SetRenderTarget(tmp1);
                 m_material.SetTexture("_AOBuffer", m_ao_buffer[0]);
                 m_material.SetVector("_BlurOffset", new Vector4(m_blur_size / src.width, 0.0f, 0.0f, 0.0f));
+                m_material.EnableKeyword("BLUR_HORIZONTAL");
                 m_material.SetPass(1);
                 Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+                m_material.DisableKeyword("BLUR_HORIZONTAL");
 
                 // vertical blur
                 Graphics.SetRenderTarget(tmp2);
                 m_material.SetTexture("_AOBuffer", tmp1);
                 m_material.SetVector("_BlurOffset", new Vector4(0.0f, m_blur_size / src.height, 0.0f, 0.0f));
+                m_material.EnableKeyword("BLUR_VERTICAL");
                 m_material.SetPass(1);
                 Graphics.DrawMeshNow(m_quad, Matrix4x4.identity);
+                m_material.DisableKeyword("BLUR_VERTICAL");
 
                 // combine
                 Graphics.SetRenderTarget(dst);

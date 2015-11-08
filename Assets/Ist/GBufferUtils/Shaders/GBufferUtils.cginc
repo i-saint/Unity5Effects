@@ -10,6 +10,7 @@ sampler2D _CameraGBufferTexture3;   // emission (rgb), --unused-- (a)
 sampler2D_float _CameraDepthTexture;
 #endif // UNITY_DEFERRED_LIBRARY_INCLUDED
 sampler2D _VelocityBuffer;
+sampler2D _ContinuityBuffer;
 
 // not Unity internals
 sampler2D _PrevCameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)
@@ -33,14 +34,15 @@ float3x3 tofloat3x3(float4x4 v)
     return float3x3(v[0].xyz, v[1].xyz, v[2].xyz);
 }
 
-half4 GetAlbedo(float2 uv)      { return tex2D(_CameraGBufferTexture0, uv); }
-half4 GetSpecular(float2 uv)    { return tex2D(_CameraGBufferTexture1, uv); }
-half3 GetNormal(float2 uv)      { return tex2D(_CameraGBufferTexture2, uv).xyz * 2.0 - 1.0; }
-half4 GetEmission(float2 uv)    { return tex2D(_CameraGBufferTexture3, uv); }
-float GetDepth(float2 uv)       { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
-float GetLinearDepth(float2 uv) { return LinearEyeDepth(GetDepth(uv)); }
-half4 GetFrameBuffer(float2 uv) { return tex2D(_FrameBuffer, uv); }
-half4 GetVelocity(float2 uv)    { return tex2D(_VelocityBuffer, uv); }
+half4 GetAlbedo(float2 uv)          { return tex2D(_CameraGBufferTexture0, uv); }
+half4 GetSpecular(float2 uv)        { return tex2D(_CameraGBufferTexture1, uv); }
+half3 GetNormal(float2 uv)          { return tex2D(_CameraGBufferTexture2, uv).xyz * 2.0 - 1.0; }
+half4 GetEmission(float2 uv)        { return tex2D(_CameraGBufferTexture3, uv); }
+float GetDepth(float2 uv)           { return SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv); }
+float GetLinearDepth(float2 uv)     { return LinearEyeDepth(GetDepth(uv)); }
+half4 GetFrameBuffer(float2 uv)     { return tex2D(_FrameBuffer, uv); }
+half4 GetVelocity(float2 uv)        { return tex2D(_VelocityBuffer, uv); }
+half4 GetContinuity(float2 uv)      { return tex2D(_ContinuityBuffer, uv); }
 
 float3 GetPosition(float2 screen_position, float depth)
 {

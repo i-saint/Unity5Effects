@@ -168,19 +168,39 @@ half4 frag_blur(vs_out i) : SV_Target
 
     float2 ref = tex2D(_AOBuffer, uv).rg;
     float accumulation = ref.g;
-    float ao = 0.0;
     float2 o = _BlurOffset.xy * max( 2.5 - accumulation*_MaxAccumulation*0.25, 1.0 );
-    ao += tex2D(_AOBuffer, uv - o*4.0).r * weights[0];
-    ao += tex2D(_AOBuffer, uv - o*3.0).r * weights[1];
-    ao += tex2D(_AOBuffer, uv - o*2.0).r * weights[2];
-    ao += tex2D(_AOBuffer, uv - o*1.0).r * weights[3];
-    ao +=                          ref.r * weights[4];
-    ao += tex2D(_AOBuffer, uv + o*1.0).r * weights[3];
-    ao += tex2D(_AOBuffer, uv + o*2.0).r * weights[2];
-    ao += tex2D(_AOBuffer, uv + o*3.0).r * weights[1];
-    ao += tex2D(_AOBuffer, uv + o*4.0).r * weights[0];
+
+    float ao = ref.r * weights[4];
+    float denom = weights[4];
+
+    float c1 = 1.0;
+    for (int i = 0; i < 4; ++i) {
+        float2 nuv = uv + o*i;
+#if BLUR_HORIZONTAL
+        c1 *= GetContinuity(nuv).x;
+#elif BLUR_VERTICAL
+        c1 *= GetContinuity(nuv).z;
+#endif
+        ao += tex2D(_AOBuffer, nuv).r * weights[i] * c1;
+        denom += weights[i] * c1;
+    }
+
+    float c2 = 1.0;
+    for (int i = 0; i < 4; ++i) {
+        float2 nuv = uv - o*i;
+#if BLUR_HORIZONTAL
+        c2 *= GetContinuity(nuv).y;
+#elif BLUR_VERTICAL
+        c2 *= GetContinuity(nuv).w;
+#endif
+        ao += tex2D(_AOBuffer, nuv).r * weights[i] * c2;
+        denom += weights[i] * c2;
+    }
+    ao /= denom;
+    return half4(ao, (c1+c2)*0.5, 0.0, 0.0);
     return half4(ao, accumulation, 0.0, 0.0);
 }
+
 
 
 half4 frag_combine(vs_out I) : SV_Target
@@ -221,6 +241,7 @@ ENDCG
         #pragma vertex vert
         #pragma fragment frag_blur
         #pragma target 3.0
+        #pragma multi_compile BLUR_HORIZONTAL BLUR_VERTICAL
         ENDCG
     }
     Pass {
