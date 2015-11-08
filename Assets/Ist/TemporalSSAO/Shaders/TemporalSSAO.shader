@@ -10,7 +10,7 @@ SubShader {
 
 CGINCLUDE
 #include "UnityCG.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
+#include "Assets/Ist/Foundation/Shaders/Math.cginc"
 #include "Assets/Ist/GBufferUtils/Shaders/GBufferUtils.cginc"
 sampler2D _MainTex;
 sampler2D _AOBuffer;

@@ -10,8 +10,7 @@ Properties {
 }
 
 CGINCLUDE
-
-#define USE_INSTANCE_BUFFER
+#define ENABLE_INSTANCE_BUFFER 1
 
 #include "UnityStandardCore.cginc"
 #include "BatchRenderer.cginc"
@@ -69,7 +68,7 @@ vs_out vert(ia_out v)
     float4 color = 0.0;
     float4 emission = 0.0;
 
-    ApplyInstanceTransform2(iid, pos, normal, tangent, texcoord, color, emission);
+    ApplyInstanceTransform(iid, pos, normal, tangent, texcoord, color, emission);
     float4 vp = mul(UNITY_MATRIX_VP, pos);
 
     vs_out o;
@@ -103,13 +102,19 @@ SubShader {
         Stencil {
             Comp Always
             Pass Replace
-            //Ref [_StencilNonBackground] // problematic
             Ref 128
         }
 CGPROGRAM
 #pragma target 5.0
 #pragma vertex vert
 #pragma fragment frag
+
+#pragma multi_compile ___ ENABLE_INSTANCE_ROTATION
+#pragma multi_compile ___ ENABLE_INSTANCE_SCALE
+#pragma multi_compile ___ ENABLE_INSTANCE_EMISSION
+#pragma multi_compile ___ ENABLE_INSTANCE_UVOFFSET
+#pragma multi_compile ___ ENABLE_INSTANCE_COLOR
+
 ENDCG
     }
 }

@@ -1,9 +1,9 @@
 Shader "Ist/RadialBlur" {
 CGINCLUDE
 #include "UnityCG.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
+#include "Assets/Ist/Foundation/Shaders/Math.cginc"
+#include "Assets/Ist/Foundation/Shaders/Geometry.cginc"
+#include "Assets/Ist/Foundation/Shaders/BuiltinVariablesExt.cginc"
 
 #if QUALITY_FAST
     #define ITERATION 16

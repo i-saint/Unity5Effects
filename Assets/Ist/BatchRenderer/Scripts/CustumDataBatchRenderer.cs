@@ -4,6 +4,9 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+namespace Ist
+{
+
 
 public class CustumDataBatchRenderer<InstanceData> : BatchRendererBase
     where InstanceData : struct
@@ -111,4 +114,6 @@ public class CustumDataBatchRenderer<InstanceData> : BatchRendererBase
         base.OnDisable();
         ReleaseGPUResources();
     }
+}
+
 }

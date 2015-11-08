@@ -12,8 +12,6 @@ namespace Ist
     public abstract class VelocityDrawer : ICommandBufferExecuter<DepthDrawer>
     {
         public Material[] m_materials;
-        Matrix4x4 m_l2w;
-        Matrix4x4 m_prev_l2w;
 
 #if UNITY_EDITOR
         void Reset()
@@ -30,13 +28,10 @@ namespace Ist
 
         void Start()
         {
-            m_prev_l2w = m_l2w = GetComponent<Transform>().localToWorldMatrix;
         }
 
         void Update()
         {
-            m_prev_l2w = m_l2w;
-            m_l2w = GetComponent<Transform>().localToWorldMatrix;
         }
 
         public override void OnWillRenderObject()

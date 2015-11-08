@@ -1,5 +1,5 @@
 #include "UnityCG.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
+#include "Assets/Ist/Foundation/Shaders/Geometry.cginc"
 
 // G-Buffers (Unity internals)
 sampler2D _CameraGBufferTexture0;   // diffuse color (rgb), occlusion (a)

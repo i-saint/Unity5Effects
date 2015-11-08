@@ -1,18 +1,13 @@
 #ifndef BatchRenderer_h
 #define BatchRenderer_h
 
-#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
+#include "Assets/Ist/Foundation/Shaders/Math.cginc"
+#include "Assets/Ist/Foundation/Shaders/Geometry.cginc"
 
 
 #if ENABLE_INSTANCE_BUFFER
 #if (defined(SHADER_API_D3D11) || defined(SHADER_API_PSSL))
     #define USE_STRUCTURED_BUFFER
-    #define ENABLE_INSTANCE_SCALE
-    #define ENABLE_INSTANCE_ROTATION
-    #define ENABLE_INSTANCE_EMISSION
-    #define ENABLE_INSTANCE_UVOFFSET
-    #define ENABLE_INSTANCE_COLOR
 #endif
 #endif
 
@@ -20,23 +15,12 @@
 int     g_num_instances;
 float4  g_scale;
 float4  g_texel_size;
-int     g_flag_rotation;
-int     g_flag_scale;
-int     g_flag_color;
-int     g_flag_emission;
-int     g_flag_uvoffset;
 int     g_batch_begin;
 
 int     GetNumInstances()       { return g_num_instances; }
 float3  GetBaseScale()          { return g_scale.xyz; }
 int     GetBatchBegin()         { return g_batch_begin; }
 int     GetInstanceID(float2 i) { return i.x + g_batch_begin; }
-
-bool    GetFlag_Rotation()  { return g_flag_rotation!=0; }
-bool    GetFlag_Scale()     { return g_flag_scale!=0; }
-bool    GetFlag_Color()     { return g_flag_color!=0; }
-bool    GetFlag_Emission()  { return g_flag_emission!=0; }
-bool    GetFlag_UVOffset()  { return g_flag_uvoffset!=0; }
 
 #ifdef USE_STRUCTURED_BUFFER
 

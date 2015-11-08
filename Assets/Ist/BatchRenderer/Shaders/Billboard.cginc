@@ -19,14 +19,14 @@ void ApplyBillboardTransform(float2 id, inout float4 vertex, inout float3 normal
     float3 up = float3(0.0, 1.0, 0.0);
 
     vertex.xyz *= GetBaseScale();
-#ifndef BR_WITHOUT_INSTANCE_SCALE
-    if(GetFlag_Scale()) {
+#if ENABLE_INSTANCE_SCALE
+    {
         vertex.xyz *= GetInstanceScale(instance_id);
     }
 #endif
     vertex.xyz = mul(look_matrix33(look, up), vertex.xyz);
-#ifndef BR_WITHOUT_INSTANCE_ROTATION
-    if(GetFlag_Rotation()) {
+#if ENABLE_INSTANCE_ROTATION
+    {
         float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
         normal = mul(rot, normal);
@@ -35,14 +35,14 @@ void ApplyBillboardTransform(float2 id, inout float4 vertex, inout float3 normal
     vertex.xyz += pos;
     vertex = mul(UNITY_MATRIX_VP, vertex);
 
-#ifndef BR_WITHOUT_INSTANCE_UVOFFSET
-    if(GetFlag_UVOffset()) {
+#if ENABLE_INSTANCE_UVOFFSET
+    {
         float4 u = GetInstanceUVOffset(instance_id);
         texcoord = texcoord*u.xy + u.zw;
     }
 #endif
-#ifndef BR_WITHOUT_INSTANCE_COLOR
-    if(GetFlag_Color()) {
+#if ENABLE_INSTANCE_COLOR
+    {
         color *= GetInstanceColor(instance_id);
     }
 #endif
@@ -78,13 +78,13 @@ void ApplyViewPlaneBillboardTransform(float2 id, inout float4 vertex, inout floa
 
     float3 pos = GetInstanceTranslation(instance_id);
     vertex.xyz *= GetBaseScale();
-#ifndef BR_WITHOUT_INSTANCE_SCALE
-    if(GetFlag_Scale()) {
+#if ENABLE_INSTANCE_SCALE
+    {
         vertex.xyz *= GetInstanceScale(instance_id);
     }
 #endif
-#ifndef BR_WITHOUT_INSTANCE_ROTATION
-    if(GetFlag_Rotation()) {
+#if ENABLE_INSTANCE_ROTATION
+    {
         float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
         normal = mul(rot, normal);
@@ -94,14 +94,14 @@ void ApplyViewPlaneBillboardTransform(float2 id, inout float4 vertex, inout floa
         return;
     }
 
-#ifndef BR_WITHOUT_INSTANCE_UVOFFSET
-    if(GetFlag_UVOffset()) {
+#if ENABLE_INSTANCE_UVOFFSET
+    {
         float4 u = GetInstanceUVOffset(instance_id);
         texcoord = texcoord*u.xy + u.zw;
     }
 #endif
-#ifndef BR_WITHOUT_INSTANCE_COLOR
-    if(GetFlag_Color()) {
+#if ENABLE_INSTANCE_COLOR
+    {
         color *= GetInstanceColor(instance_id);
     }
 #endif

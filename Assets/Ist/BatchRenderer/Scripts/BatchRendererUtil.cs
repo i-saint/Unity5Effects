@@ -4,6 +4,11 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+
+
+namespace Ist
+{
+
 public static class BatchRendererUtil
 {
     public static Vector4 ComputeUVOffset(Texture texture, Rect rect)
@@ -29,7 +34,9 @@ public static class BatchRendererUtil
     }
 
 
-    const int max_vertices = 65000; // Mesh's limitation
+    public const int max_vertices = 65000; // Mesh's limitation
+    public const int data_texture_width = 128;
+    public const int max_data_transfer_size = 64768;
 
 
     public enum DataConversion
@@ -41,7 +48,7 @@ public static class BatchRendererUtil
     }
 
     [DllImport("CopyToTexture")]
-    public static extern void CopyToTexture(System.IntPtr texptr, int width, int height, System.IntPtr dataptr, int data_num, DataConversion conv);
+    public static extern void CopyToTexture(System.IntPtr texptr, int width, int height, System.IntPtr dataptr, int num_data, DataConversion conv);
 
     public static bool IsCopyToTextureAvailable()
     {
@@ -56,102 +63,92 @@ public static class BatchRendererUtil
         return true;
     }
 
-    public static void CopyToTexture(RenderTexture rt, System.Array data, int data_num, DataConversion conv)
+
+    public static void CopyToTexturePlugin(Texture2D rt, System.Array data, int num_data, DataConversion conv)
     {
         System.IntPtr dataptr = Marshal.UnsafeAddrOfPinnedArrayElement(data, 0);
-        CopyToTexture(rt.GetNativeTexturePtr(), rt.width, rt.height, dataptr, data_num, conv);
-    }
-
-    public static void CopyToTextureViaMesh(RenderTexture rt, Mesh mesh, Material mat, Vector3[] data, int data_num)
-    {
-        Graphics.SetRenderTarget(rt);
-        for (int i = 0; i < data_num; i += mesh.vertexCount)
-        {
-            var dst1 = mesh.vertices;
-            System.Array.Copy(data, i, dst1, 0, Mathf.Min(mesh.vertexCount, data_num - i));
-            mesh.vertices = dst1;
-            mesh.UploadMeshData(false);
-            mat.SetInt("g_begin", i);
-            mat.SetPass(0);
-            Graphics.DrawMeshNow(mesh, Matrix4x4.identity);
-        }
-        Graphics.SetRenderTarget(null);
-    }
-    public static void CopyToTextureViaMesh(RenderTexture rt, Mesh mesh, Material mat, Vector4[] data, int data_num)
-    {
-        Graphics.SetRenderTarget(rt);
-        for (int i = 0; i < data_num; i += mesh.vertexCount)
-        {
-            int n = Mathf.Min(mesh.vertexCount, data_num - i);
-            var dst1 = mesh.vertices;
-            var dst2 = mesh.uv;
-            for (int vi = 0; vi < n; ++vi)
-            {
-                int ivi = i + vi;
-                var e = data[ivi];
-                dst1[vi] = new Vector3(e.x, e.y, e.z);
-                dst2[vi] = new Vector2(vi, e.w);
-            }
-            mesh.vertices = dst1;
-            mesh.uv = dst2;
-            mesh.UploadMeshData(false);
-            mat.SetInt("g_begin", i);
-            mat.SetPass(0);
-            Graphics.DrawMeshNow(mesh, Matrix4x4.identity);
-        }
-        Graphics.SetRenderTarget(null);
-    }
-    public static void CopyToTextureViaMesh(RenderTexture rt, Mesh mesh, Material mat, Quaternion[] data, int data_num)
-    {
-        Graphics.SetRenderTarget(rt);
-        for (int i = 0; i < data_num; i += mesh.vertexCount)
-        {
-            int n = Mathf.Min(mesh.vertexCount, data_num - i);
-            var dst1 = mesh.vertices;
-            var dst2 = mesh.uv;
-            for (int vi = 0; vi < n; ++vi)
-            {
-                int ivi = i + vi;
-                var e = data[ivi];
-                dst1[vi] = new Vector3(e.x, e.y, e.z);
-                dst2[vi] = new Vector2(vi, e.w);
-            }
-            mesh.vertices = dst1;
-            mesh.uv = dst2;
-            mesh.UploadMeshData(false);
-            mat.SetInt("g_begin", i);
-            mat.SetPass(0);
-            Graphics.DrawMeshNow(mesh, Matrix4x4.identity);
-        }
-        Graphics.SetRenderTarget(null);
-    }
-    public static void CopyToTextureViaMesh(RenderTexture rt, Mesh mesh, Material mat, Color[] data, int data_num)
-    {
-        Graphics.SetRenderTarget(rt);
-        for (int i = 0; i < data_num; i += mesh.vertexCount)
-        {
-            int n = Mathf.Min(mesh.vertexCount, data_num - i);
-            var dst1 = mesh.vertices;
-            var dst2 = mesh.uv;
-            for (int vi = 0; vi < n; ++vi)
-            {
-                int ivi = i + vi;
-                var e = data[ivi];
-                dst1[vi] = new Vector3(e.r, e.g, e.b);
-                dst2[vi] = new Vector2(vi, e.a);
-            }
-            mesh.vertices = dst1;
-            mesh.uv = dst2;
-            mesh.UploadMeshData(false);
-            mat.SetInt("g_begin", i);
-            mat.SetPass(0);
-            Graphics.DrawMeshNow(mesh, Matrix4x4.identity);
-        }
-        Graphics.SetRenderTarget(null);
+        CopyToTexture(rt.GetNativeTexturePtr(), rt.width, rt.height, dataptr, num_data, conv);
     }
 
 
-    public static Mesh CreateExpandedMesh(Mesh mesh, out int instances_par_batch)
+
+    public static void CopyToTextureCS(Texture2D tex, Vector3[] data, int num_data, byte[] buffer)
+    {
+        if (tex.format == TextureFormat.RGBAFloat)
+        {
+            float[] buf = ArrayCaster<byte, float>.cast(buffer);
+            for(int i=0; i < num_data; ++i)
+            {
+                buf[i * 4 + 0] = data[i].x;
+                buf[i * 4 + 1] = data[i].y;
+                buf[i * 4 + 2] = data[i].z;
+                buf[i * 4 + 3] = 1.0f; // for debug
+            }
+        }
+        else if (tex.format == TextureFormat.RGBAHalf)
+        {
+            ushort[] buf = ArrayCaster<byte, ushort>.cast(buffer);
+            ushort one = HalfConverter.ToHalf(1.0f);
+            for (int i = 0; i < num_data; ++i)
+            {
+                buf[i * 4 + 0] = HalfConverter.ToHalf(data[i].x);
+                buf[i * 4 + 1] = HalfConverter.ToHalf(data[i].y);
+                buf[i * 4 + 2] = HalfConverter.ToHalf(data[i].z);
+                buf[i * 4 + 3] = one; // for debug
+            }
+        }
+        else
+        {
+            Debug.Log("unsupported format");
+            return;
+        }
+        tex.LoadRawTextureData(buffer);
+        tex.Apply();
+    }
+    public static void CopyToTextureCS(Texture2D tex, Vector4[] data, int num_data, byte[] buffer)
+    {
+        if (tex.format == TextureFormat.RGBAFloat)
+        {
+            float[] buf = ArrayCaster<byte, float>.cast(buffer);
+            for (int i = 0; i < num_data; ++i)
+            {
+                buf[i * 4 + 0] = data[i].x;
+                buf[i * 4 + 1] = data[i].y;
+                buf[i * 4 + 2] = data[i].z;
+                buf[i * 4 + 3] = data[i].w;
+            }
+        }
+        else if (tex.format == TextureFormat.RGBAHalf)
+        {
+            ushort[] buf = ArrayCaster<byte, ushort>.cast(buffer);
+            for (int i = 0; i < num_data; ++i)
+            {
+                buf[i * 4 + 0] = HalfConverter.ToHalf(data[i].x);
+                buf[i * 4 + 1] = HalfConverter.ToHalf(data[i].y);
+                buf[i * 4 + 2] = HalfConverter.ToHalf(data[i].z);
+                buf[i * 4 + 3] = HalfConverter.ToHalf(data[i].w);
+            }
+        }
+        else
+        {
+            Debug.Log("unsupported format");
+            return;
+        }
+        tex.LoadRawTextureData(buffer);
+        tex.Apply();
+    }
+    public static void CopyToTextureCS(Texture2D tex, Quaternion[] data, int num_data, byte[] buffer)
+    {
+        CopyToTextureCS(tex, ArrayCaster<Quaternion, Vector4>.cast(data), num_data, buffer);
+    }
+    public static void CopyToTextureCS(Texture2D tex, Color[] data, int num_data, byte[] buffer)
+    {
+        CopyToTextureCS(tex, ArrayCaster<Color, Vector4>.cast(data), num_data, buffer);
+    }
+    
+
+
+    public static Mesh CreateExpandedMesh(Mesh mesh, int required_instances, out int instances_par_batch)
     {
         Vector3[] vertices_base = mesh.vertices;
         Vector3[] normals_base = (mesh.normals == null || mesh.normals.Length == 0) ? null : mesh.normals;
@@ -159,7 +156,7 @@ public static class BatchRendererUtil
         Vector2[] uv_base = (mesh.uv == null || mesh.uv.Length == 0) ? null : mesh.uv;
         Color[] colors_base = (mesh.colors == null || mesh.colors.Length == 0) ? null : mesh.colors;
         int[] indices_base = (mesh.triangles == null || mesh.triangles.Length == 0) ? null : mesh.triangles;
-        instances_par_batch = max_vertices / mesh.vertexCount;
+        instances_par_batch = Mathf.Min(max_vertices / mesh.vertexCount, required_instances);
 
         Vector3[] vertices = new Vector3[vertices_base.Length * instances_par_batch];
         Vector2[] idata = new Vector2[vertices_base.Length * instances_par_batch];
@@ -258,50 +255,7 @@ public static class BatchRendererUtil
         ret.triangles = indices;
         return ret;
     }
-
-    public static Mesh CreateDataTransferMesh(int num_vertices)
-    {
-        int n = Mathf.Min(num_vertices, max_vertices);
-        Vector3[] vertices = new Vector3[n];
-        Vector2[] uv = new Vector2[n];
-        int[] indices = new int[n];
-        for (int i = 0; i < n; ++i)
-        {
-            uv[i].x = i;
-            indices[i] = i;
-        }
-
-        Mesh ret = new Mesh();
-        ret.MarkDynamic();
-        ret.vertices = vertices;
-        ret.uv = uv;
-        ret.SetIndices(indices, MeshTopology.Points, 0);
-        return ret;
-    }
-
-    // なんか WebGL だと POINT が表示されないので LINE 代用版
-    public static Mesh CreateDataTransferMesh_Line(int num_vertices)
-    {
-        int n = Mathf.Min(num_vertices, max_vertices);
-        Vector3[] vertices = new Vector3[n];
-        Vector2[] uv = new Vector2[n];
-        int[] indices = new int[n*2];
-        for (int i = 0; i < n; ++i)
-        {
-            uv[i].x = i;
-            uv[i].y = 1.0f;
-            indices[i * 2 + 0] = i;
-            indices[i * 2 + 1] = i + 128 >= n ? i : i + 128;
-        }
-
-        Mesh ret = new Mesh();
-        ret.MarkDynamic();
-        ret.vertices = vertices;
-        ret.uv = uv;
-        //ret.SetIndices(indices, MeshTopology.Points, 0);
-        ret.SetIndices(indices, MeshTopology.Lines, 0);
-        return ret;
-    }
+    
 
 
     public static void Swap<T>(ref T lhs, ref T rhs)
@@ -343,7 +297,8 @@ public static class BatchRendererUtil
 
     public static int ceildiv(int v, int d)
     {
-        return v/d + (v%d==0 ? 0 : 1);
+        return v / d + (v % d == 0 ? 0 : 1);
     }
 }
 
+}

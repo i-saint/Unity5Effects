@@ -8,6 +8,8 @@ using UnityEngine.Rendering;
 using UnityEditor;
 #endif
 
+namespace Ist
+{
 
 [AddComponentMenu("BatchRenderer/ProceduralGBuffer")]
 public class ProceduralGBuffer : MonoBehaviour
@@ -260,11 +262,27 @@ public class ProceduralGBuffer : MonoBehaviour
 
         {
             Material m = m_material;
-            m.SetInt("g_flag_rotation", m_enable_rotation ? 1 : 0);
-            m.SetInt("g_flag_scale", m_enable_scale ? 1 : 0);
-            m.SetInt("g_flag_color", m_enable_color ? 1 : 0);
-            m.SetInt("g_flag_emission", m_enable_emission ? 1 : 0);
-            m.SetInt("g_flag_uvoffset", m_enable_uv_offset ? 1 : 0);
+            if (m_enable_rotation)
+            {
+                m.EnableKeyword("ENABLE_INSTANCE_ROTATION");
+            }
+            if (m_enable_scale)
+            {
+                m.EnableKeyword("ENABLE_INSTANCE_SCALE");
+            }
+            if (m_enable_emission)
+            {
+                m.EnableKeyword("ENABLE_INSTANCE_EMISSION");
+            }
+            if (m_enable_color)
+            {
+                m.EnableKeyword("ENABLE_INSTANCE_COLOR");
+            }
+            if (m_enable_uv_offset)
+            {
+                m.EnableKeyword("ENABLE_INSTANCE_UVOFFSET");
+            }
+
             if (m_instance_buffer != null)
             {
                 m.SetBuffer("g_vertices", m_vertex_buffer);
@@ -366,5 +384,6 @@ public class ProceduralGBuffer : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(t.position, new Vector3(m_bounds_size.x * s.x, m_bounds_size.y * s.y, m_bounds_size.z * s.z));
     }
+}
 
 }

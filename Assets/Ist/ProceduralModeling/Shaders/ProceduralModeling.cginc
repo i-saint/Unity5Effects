@@ -2,9 +2,9 @@
 #define IstProceduralModeling_h
 
 #include "UnityStandardCore.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
+#include "Assets/Ist/Foundation/Shaders/Math.cginc"
+#include "Assets/Ist/Foundation/Shaders/Geometry.cginc"
+#include "Assets/Ist/Foundation/Shaders/BuiltinVariablesExt.cginc"
 
 #ifndef ENABLE_CUSTUM_VERTEX
 struct ia_out

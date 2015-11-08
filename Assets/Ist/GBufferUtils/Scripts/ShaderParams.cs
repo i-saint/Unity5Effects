@@ -41,7 +41,6 @@ public class ShaderParams : MonoBehaviour
     {
         var renderer = GetComponent<Renderer>();
         var trans = GetComponent<Transform>();
-        var material = renderer.sharedMaterial;
 
         if (m_mpb == null)
         {

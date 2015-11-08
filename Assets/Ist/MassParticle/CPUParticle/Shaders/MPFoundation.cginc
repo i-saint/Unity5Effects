@@ -1,7 +1,7 @@
 #ifndef MPFoundation_h
 #define MPFoundation_h
 
-#include "Assets/Ist/BatchRenderer/Shaders/Math.cginc"
+#include "Assets/Ist/Foundation/Shaders/Math.cginc"
 
 int         g_batch_begin;
 int         g_num_max_instances;

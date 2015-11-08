@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 
+namespace Ist
+{
 
 public abstract class BatchRendererBase : MonoBehaviour
 {
@@ -109,7 +111,7 @@ public abstract class BatchRendererBase : MonoBehaviour
 
         if (m_expanded_mesh == null && m_mesh != null)
         {
-            m_expanded_mesh = BatchRendererUtil.CreateExpandedMesh(m_mesh, out m_instances_par_batch);
+            m_expanded_mesh = BatchRendererUtil.CreateExpandedMesh(m_mesh, m_max_instances, out m_instances_par_batch);
             m_expanded_mesh.UploadMeshData(true);
         }
 
@@ -146,4 +148,6 @@ public abstract class BatchRendererBase : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(t.position, new Vector3(m_bounds_size.x * s.x, m_bounds_size.y * s.y, m_bounds_size.z * s.z));
     }
+}
+
 }

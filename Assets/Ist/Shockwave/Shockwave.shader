@@ -2,8 +2,8 @@ Shader "Ist/Shockwave" {
 
 CGINCLUDE
 #include "UnityCG.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/Geometry.cginc"
-#include "Assets/Ist/BatchRenderer/Shaders/BuiltinVariablesExt.cginc"
+#include "Assets/Ist/Foundation/Shaders/Geometry.cginc"
+#include "Assets/Ist/Foundation/Shaders/BuiltinVariablesExt.cginc"
 
 sampler2D _FrameBuffer_Shockwave;
 float4 _Params1;

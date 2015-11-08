@@ -1,7 +1,7 @@
 ﻿Shader "BatchRenderer/FixedBillboard" {
 Properties {
-    _SrcBlend("", Int) = 1
-    _DstBlend("", Int) = 1
+    [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend("Src Blend", Int) = 5
+    [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend("Dst Blend", Int) = 10
 
     _MainTex ("Texture", 2D) = "white" {}
     g_base_color ("Base Color", Color) = (1,1,1,1)
@@ -18,18 +18,14 @@ Category {
         Pass {
 CGPROGRAM
 #pragma target 3.0
-#define ENABLE_INSTANCE_SCALE
-#define ENABLE_INSTANCE_ROTATION
-#define ENABLE_INSTANCE_UVOFFSET
-#define ENABLE_INSTANCE_EMISSION
-#if SHADER_TARGET > 30
-    // on shader model 3.0, this exceeds max interpolator values..
-    #define ENABLE_INSTANCE_COLOR
-#endif
-
 #pragma vertex vert
 #pragma fragment frag
 #pragma multi_compile ___ ENABLE_INSTANCE_BUFFER
+#pragma multi_compile ___ ENABLE_INSTANCE_ROTATION
+#pragma multi_compile ___ ENABLE_INSTANCE_SCALE
+#pragma multi_compile ___ ENABLE_INSTANCE_EMISSION
+#pragma multi_compile ___ ENABLE_INSTANCE_COLOR
+#pragma multi_compile ___ ENABLE_INSTANCE_UVOFFSET
 
 #define BR_FIXED_BILLBOARD
 #include "Billboard.cginc"
