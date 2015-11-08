@@ -1,6 +1,15 @@
 #ifndef BezierPatch_h
 #define BezierPatch_h
 
+/*
+// HLSL to GLSL
+#define float2 vec2
+#define float3 vec3
+#define float3 vec3
+#define lerp mix
+#define frac fract
+*/
+
 
 struct BezierPatch
 {

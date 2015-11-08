@@ -209,6 +209,38 @@ float4x4 axis_rotation_matrix44(float3 axis, float angle)
         0.0,                                0.0,                                0.0,                                1.0);
 }
 
+float4x4 zalign(float3 pos, float3 dir)
+{
+    float3 z = dir;
+
+    int plane = 0;
+    if (abs(z[1]) < abs(z[plane])) plane = 1;
+    if (abs(z[2]) < abs(z[plane])) plane = 2;
+
+    float3 up = 0.0;
+    if (plane == 0) up.x = 1.0;
+    if (plane == 1) up.y = 1.0;
+    if (plane == 2) up.z = 1.0;
+
+    float3 y = normalize(cross(dir, up));
+    float3 x = cross(y, dir);
+
+    float4x4 rot = (
+        x[0], y[0], z[0], 0.0,
+        x[1], y[1], z[1], 0.0,
+        x[2], y[2], z[2], 0.0,
+         0.0,  0.0,  0.0, 1.0
+    );
+    float4x4 trs = float4x4(
+        1.0, 0.0, 0.0,-pos.x,
+        0.0, 1.0, 0.0,-pos.y,
+        0.0, 0.0, 1.0,-pos.z,
+        0.0, 0.0, 0.0,   1.0
+    );
+    return rot * trs;
+}
+
+
 float3x3 quaternion_to_matrix33(float4 q)
 {
     return float3x3(
