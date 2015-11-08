@@ -14,6 +14,8 @@
 
 
 #include "MPGPFoundation.cginc"
+#include "../../../Foundation/Shaders/BezierPatch.cginc"
+#include "../../../Foundation/Shaders/BezierPatchIntersection.cginc"
 
 
 

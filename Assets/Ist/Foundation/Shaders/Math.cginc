@@ -209,6 +209,7 @@ float4x4 axis_rotation_matrix44(float3 axis, float angle)
         0.0,                                0.0,                                0.0,                                1.0);
 }
 
+// align to ray. pos: ray origin, dir: ray direction
 float4x4 zalign(float3 pos, float3 dir)
 {
     float3 z = dir;
@@ -225,7 +226,7 @@ float4x4 zalign(float3 pos, float3 dir)
     float3 y = normalize(cross(dir, up));
     float3 x = cross(y, dir);
 
-    float4x4 rot = (
+    float4x4 rot = float4x4(
         x[0], y[0], z[0], 0.0,
         x[1], y[1], z[1], 0.0,
         x[2], y[2], z[2], 0.0,

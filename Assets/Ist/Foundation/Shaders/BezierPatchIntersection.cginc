@@ -1,91 +1,55 @@
 #ifndef BezierPatchIntersection_h
 #define BezierPatchIntersection_h
 
-#define BPI_MAX_STACK_DEPTH 20
-#define BPI_MAX_LOOP 1000
-#define BPI_EPS 1e-3f
 
-struct Intersection
+// prototypes
+
+struct BezierPatchHit
 {
     float t, u, v;
     int clip_level;
 };
 
-struct WorkingBuffer
+bool BPIRaycast(BezierPatch bp, Ray ray, float zmin, float zmax, out BezierPatchHit hit);
+
+
+
+
+// implements
+
+#define BPI_MAX_STACK_DEPTH 20
+#define BPI_MAX_LOOP        1000
+#define BPI_EPS             1e-3
+
+struct BPIWorkingBuffer
 {
-    BezierPatch source;
-    BezierPatch aligned;
+    BezierPatch source; // input
     BezierPatch crop;
     BezierPatch rotate;
     BezierPatch tmp0;
-    float4x4 mat;
-    float4x4 mat1;
-    Ray ray;
-};
-
-struct RangeAABB
-{
-    float tmin, tmax;
-};
-
-struct UVT
-{
-    float u, v, t;
-    int clip_level;
 };
 
 
-
-// prototypes
-bool BPITest(inout WorkingBuffer work, inout Intersection info, float tmin, float tmax);
-
-bool BPITestBezierPatch(inout WorkingBuffer work, inout UVT info, float zmin, float zmax, float eps);
-
-
-bool BPITest(inout WorkingBuffer work, inout Intersection info, float tmin, float tmax)
+void BPICrop_(inout BPIWorkingBuffer work, float u0, float u1, float v0, float v1)
 {
-    UVT uvt;
-    uvt.t = tmax;
-
-    work.aligned = work.source;
-    BPTransform(work.aligned, work.mat);
-
-    if (BPITestBezierPatch(work, uvt, tmin, tmax, BPI_EPS)) {
-        float t = uvt.t;
-        float u = uvt.u;
-        float v = uvt.v;
-
-        info.t = t;
-        info.u = u;
-        info.v = v;
-        info.clip_level = uvt.clip_level;
-        return true;
+    int i;
+    for (i = 0; i < 4; ++i) {
+        BPCropU_(work.source, work.tmp0, u0, u1, i * 4);
     }
-    return false;
-}
-
-
-void BPICrop_(inout WorkingBuffer work, float u0, float u1, float v0, float v1)
-{
-    for (int i = 0; i < 4; ++i) {
-        BPCropU_(work.aligned, work.tmp0, u0, u1, i * 4);
-    }
-    for (int i = 0; i < 4; ++i) {
+    for (i = 0; i < 4; ++i) {
         BPCropV_(work.tmp0, work.crop, v0, v1, i);
     }
 }
 
-void BPIRotate_(inout WorkingBuffer work, float3 dx)
+float3x3 BPIRotate2D_(float3 dx)
 {
     dx.z = 0;
     dx = normalize(dx);
-    work.mat1 = float4x4(
-        dx.x, dx.y, dx.z, 0.0,
-       -dx.y, dx.x,  0.0, 0.0,
-         0.0,  0.0,  1.0, 0.0,
-         0.0,  0.0,  0.0, 1.0
+    return float3x3(
+        dx.x, dx.y, dx.z,
+       -dx.y, dx.x,  0.0,
+         0.0,  0.0,  1.0
     );
-    BPTransform(work.rotate, work.mat1);
 }
 
 bool BPITriangleIntersect_(
@@ -121,7 +85,7 @@ bool BPITriangleIntersect_(
 }
 
 bool BPITestBezierClipL_(
-    BezierPatch patch, inout UVT info, float u0, float u1, float v0, float v1, float zmin, float zmax)
+    BezierPatch patch, inout BezierPatchHit info, float u0, float u1, float v0, float v1, float zmin, float zmax)
 {
     // TODO (NO_DIRECT)
     // DIRECT_BILINEAR
@@ -155,16 +119,19 @@ bool BPITestBezierClipL_(
     return ret;
 }
 
-bool BPITestBezierPatch(inout WorkingBuffer work, inout UVT info, float zmin, float zmax, float eps)
+bool BPITestBounds_(inout BPIWorkingBuffer work, inout BezierPatchHit info, float zmin, float zmax, float eps)
 {
-    float3 min, max;
-    BPGetMinMax(work.aligned, min, max, eps*1e-3f);
+    float3 bmin, bmax;
+    BPGetMinMax(work.source, bmin, bmax, eps*1e-3f);
 
-    if (0 < min.x || max.x < 0 || 0 < min.y || max.y < 0 || max.z < zmin || zmax < min.z) {
+    if (0.0 < bmin.x || bmax.x < 0.0 || 0.0 < bmin.y || bmax.y < 0.0 || bmax.z < zmin || zmax < bmin.z) {
         return false;
     }
+    return true;
+}
 
-
+bool BPITestBezierPatch_(inout BPIWorkingBuffer work, inout BezierPatchHit info, float zmin, float zmax, float eps)
+{
     // non-recursive iteration
     bool ret = false;
 
@@ -186,22 +153,22 @@ bool BPITestBezierPatch(inout WorkingBuffer work, inout UVT info, float zmin, fl
         float3 LV = work.crop.cp[12] - work.crop.cp[0];
         bool clipU = length(LU) > length(LV);
 
-        float3 min, max;
-        // rotate and min/max
+        float3 bmin, bmax;
+        // rotate and bmin/bmax
         float3 dx = clipU
             ? work.crop.cp[12] - work.crop.cp[0] + work.crop.cp[15] - work.crop.cp[3]
             : work.crop.cp[3] - work.crop.cp[0] + work.crop.cp[15] - work.crop.cp[12];
         work.rotate = work.crop;
-        BPIRotate_(work, dx);
-        BPGetMinMax(work.rotate, min, max, eps*1e-3f);
+        BPTransform(work.rotate, BPIRotate2D_(dx));
+        BPGetMinMax(work.rotate, bmin, bmax, eps*1e-3f);
 
         // out
-        if (0 < min.x || max.x < 0 || 0 < min.y || max.y < 0 || max.z < zmin || zmax < min.z) {
+        if (0.0 < bmin.x || bmax.x < 0.0 || 0.0 < bmin.y || bmax.y < 0.0 || bmax.z < zmin || zmax < bmin.z) {
             continue;
         }
 
         // if it's small enough, test bilinear.
-        if ((max.x - min.x) < eps || (max.y - min.y) < eps) {
+        if ((bmax.x - bmin.x) < eps || (bmax.y - bmin.y) < eps) {
             if (BPITestBezierClipL_(work.crop, info, u0, u1, v0, v1, zmin, zmax)) {
                 // info is updated.
                 zmax = info.t;
@@ -228,5 +195,24 @@ bool BPITestBezierPatch(inout WorkingBuffer work, inout UVT info, float zmin, fl
     return ret;
 }
 
+
+bool BPIRaycast(BezierPatch bp, Ray ray, float zmin, float zmax, out BezierPatchHit hit)
+{
+    BPIWorkingBuffer work;
+    work.source = bp;
+    BPTransform(work.source, zalign(ray.origin, ray.direction));
+
+    //// all pixels pass this test when draw aabb as mesh
+    //// (but viable if run on GLSLSandbox etc.)
+    //if (!BPITestBounds_(work, hit, zmin, zmax, BPI_EPS)) {
+    //    return false;
+    //}
+
+    hit.t = zmax;
+    if (BPITestBezierPatch_(work, hit, zmin, zmax, BPI_EPS)) {
+        return true;
+    }
+    return false;
+}
 
 #endif // BezierPatchIntersection_h
