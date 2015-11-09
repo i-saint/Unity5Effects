@@ -2,6 +2,7 @@
 #define Trail_h
 
 #include "UnityCG.cginc"
+#define MPGP_FOR_DRAW
 #include "MPGPFoundation.cginc"
 
 fixed4 _BaseColor;

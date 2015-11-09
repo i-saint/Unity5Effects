@@ -3,7 +3,13 @@
 
 #include "../../../Foundation/Shaders/Math.cginc"
 #include "../../../Foundation/Shaders/Geometry.cginc"
+#include "../../../Foundation/Shaders/Random.cginc"
 
+// surface shader + BezierPatch.cginc cause compile error...
+#ifndef MPGP_FOR_DRAW
+    #include "../../../Foundation/Shaders/BezierPatch.cginc"
+    #include "../../../Foundation/Shaders/BezierPatchIntersection.cginc"
+#endif
 
 struct WorldIData
 {
@@ -28,6 +34,7 @@ struct WorldData
     int num_sphere_colliders;
     int num_capsule_colliders;
     int num_box_colliders;
+    int num_bp_colliders;
     int num_forces;
     float3 world_center;
     float3 world_extents;
@@ -67,6 +74,8 @@ struct Particle
     float pad0;
 };
 
+#ifndef MPGP_FOR_DRAW
+
 struct Cell
 {
     int begin;
@@ -105,6 +114,12 @@ struct BoxCollider
     Box shape;
 };
 
+struct BezierPatchCollider
+{
+    ColliderInfo info;
+    BezierPatch shape;
+};
+
 
 struct ForceInfo
 {
@@ -125,6 +140,8 @@ struct Force
     Capsule capsule;
     Box box;
 };
+
+#endif // MPGP_FOR_DRAW
 
 
 
@@ -172,22 +189,6 @@ float2 screen_to_texcoord(float2 p)
 float2 screen_to_texcoord(float4 p)
 {
     return (p.xy/p.w)*0.5+0.5;
-}
-
-
-float  iq_rand( float  p )
-{
-    return frac(sin(p)*43758.5453);
-}
-float2 iq_rand( float2 p )
-{
-    p = float2( dot(p,float2(127.1,311.7)), dot(p,float2(269.5,183.3)) );
-    return frac(sin(p)*43758.5453);
-}
-float3 iq_rand( float3 p )
-{
-        p = float3( dot(p,float3(127.1,311.7,311.7)), dot(p,float3(269.5,183.3,183.3)), dot(p,float3(269.5,183.3,183.3)) );
-        return frac(sin(p)*43758.5453);
 }
 
 

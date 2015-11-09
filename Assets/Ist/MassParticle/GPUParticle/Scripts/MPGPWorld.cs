@@ -110,12 +110,14 @@ namespace Ist
         int m_max_box_colliders = 256;
         int m_max_forces = 128;
         ComputeBuffer m_buf_sphere_colliders;
-        ComputeBuffer m_buf_box_colliders;
         ComputeBuffer m_buf_capsule_colliders;
+        ComputeBuffer m_buf_box_colliders;
+        ComputeBuffer m_buf_bp_colliders;
         ComputeBuffer m_buf_forces;
         List<MPGPSphereColliderData> m_sphere_colliders = new List<MPGPSphereColliderData>();
         List<MPGPCapsuleColliderData> m_capsule_colliders = new List<MPGPCapsuleColliderData>();
         List<MPGPBoxColliderData> m_box_colliders = new List<MPGPBoxColliderData>();
+        List<MPGPBezierPatchColliderData> m_bp_colliders = new List<MPGPBezierPatchColliderData>();
         List<CSForce> m_forces = new List<CSForce>();
     
         MPGPCell[] m_dbg_cell_data;
@@ -144,6 +146,7 @@ namespace Ist
         public void AddSphereCollider(ref MPGPSphereColliderData v) { if (enabled) m_sphere_colliders.Add(v); }
         public void AddCapsuleCollider(ref MPGPCapsuleColliderData v) { if (enabled) m_capsule_colliders.Add(v); }
         public void AddBoxCollider(ref MPGPBoxColliderData v) { if (enabled) m_box_colliders.Add(v); }
+        public void AddBezierPatchCollider(ref MPGPBezierPatchColliderData v) { if (enabled) m_bp_colliders.Add(v); }
         public void AddForce(ref CSForce v) { if (enabled) m_forces.Add(v); }
     
         public MPGPParticle[] GetParticles() { return m_particles; }
@@ -230,6 +233,7 @@ namespace Ist
             m_buf_sphere_colliders = new ComputeBuffer(m_max_sphere_colliders, MPGPSphereColliderData.size);
             m_buf_capsule_colliders = new ComputeBuffer(m_max_capsule_colliders, MPGPCapsuleColliderData.size);
             m_buf_box_colliders = new ComputeBuffer(m_max_box_colliders, MPGPBoxColliderData.size);
+            m_buf_bp_colliders = new ComputeBuffer(m_max_box_colliders, MPGPBezierPatchColliderData.size);
             m_buf_forces = new ComputeBuffer(m_max_forces, CSForce.size);
         }
     
@@ -240,6 +244,7 @@ namespace Ist
             if (m_buf_forces != null)
             {
                 m_buf_forces.Release();
+                m_buf_bp_colliders.Release();
                 m_buf_box_colliders.Release();
                 m_buf_capsule_colliders.Release();
                 m_buf_sphere_colliders.Release();
@@ -298,6 +303,7 @@ namespace Ist
             m_world_data[0].num_sphere_colliders = m_sphere_colliders.Count;
             m_world_data[0].num_capsule_colliders = m_capsule_colliders.Count;
             m_world_data[0].num_box_colliders = m_box_colliders.Count;
+            m_world_data[0].num_bp_colliders = m_bp_colliders.Count;
             m_world_data[0].num_forces = m_forces.Count;
             m_world_data[0].damping = m_damping;
             m_world_data[0].advection = m_advection;
@@ -324,6 +330,7 @@ namespace Ist
             m_buf_sphere_colliders.SetData(m_sphere_colliders.ToArray());   m_sphere_colliders.Clear();
             m_buf_capsule_colliders.SetData(m_capsule_colliders.ToArray()); m_capsule_colliders.Clear();
             m_buf_box_colliders.SetData(m_box_colliders.ToArray());         m_box_colliders.Clear();
+            m_buf_bp_colliders.SetData(m_bp_colliders.ToArray());           m_bp_colliders.Clear();
             m_buf_forces.SetData(m_forces.ToArray());                       m_forces.Clear();
     
             int num_cells = m_world_data[0].world_div_x * m_world_data[0].world_div_y * m_world_data[0].world_div_z;
@@ -505,6 +512,7 @@ namespace Ist
                 cs.SetBuffer(kernel, "sphere_colliders", m_buf_sphere_colliders);
                 cs.SetBuffer(kernel, "capsule_colliders", m_buf_capsule_colliders);
                 cs.SetBuffer(kernel, "box_colliders", m_buf_box_colliders);
+                cs.SetBuffer(kernel, "bp_colliders", m_buf_bp_colliders);
                 cs.Dispatch(kernel, num_active_blocks, 1, 1);
             }
     

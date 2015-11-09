@@ -272,36 +272,4 @@ float3 ExtractPosition(float4x4 m)
     return float3(m[0][3], m[1][3], m[2][3]);
 }
 
-
-/*
-example:
-
-float4 g_state;
-float MyRnd()
-{
-    return GPURand(g_state);
-}
-
-// ...
-// initialize state
-g_state = float4(I.uvuv*_Time.y);
-for(int i=0; i<N; ++i) {
-    float r = MyRnd();
-    // ...
-}
-// ... 
-*/
-float GPURand(float4 state)
-{
-    const float4 q = float4(1225.0, 1585.0, 2457.0, 2098.0);
-    const float4 r = float4(1112.0, 367.0, 92.0, 265.0);
-    const float4 a = float4(3423.0, 2646.0, 1707.0, 1999.0);
-    const float4 m = float4(4194287.0, 4194277.0, 4194191.0, 4194167.0);
-    float4 beta = floor(state / q);
-    float4 p = a * (state - beta * q) - beta * r;
-    beta = (sign(-p) + 1.0) * 0.5 * m;
-    state = (p + beta);
-    return frac(dot(state / m, float4(1.0, -1.0, 1.0, -1.0)));
-}
-
 #endif // IstMath_h

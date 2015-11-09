@@ -17,7 +17,7 @@ namespace Ist
         public uint id;
         public float pad0;
     };
-    
+
     public struct MPGPSortData
     {
         public const int size = 8;
@@ -25,7 +25,7 @@ namespace Ist
         public uint key;
         public uint index;
     }
-    
+
     public struct MPGPCell
     {
         public const int size = 8;
@@ -33,7 +33,7 @@ namespace Ist
         public int begin;
         public int end;
     }
-    
+
     public struct MPGPParticleIData
     {
         public const int size = 16;
@@ -41,38 +41,39 @@ namespace Ist
         public int begin;
         public int end;
     }
-    
+
     public struct MPGPAABB
     {
         public Vector3 center;
         public Vector3 extents;
     }
-    
+
+    // 28 byte
     public struct MPGPColliderInfo
     {
         public int owner_objid;
         public MPGPAABB aabb;
     }
-    
+
     public struct MPGPSphere
     {
         public Vector3 center;
         public float radius;
     }
-    
+
     public struct MPGPCapsule
     {
         public Vector3 pos1;
         public Vector3 pos2;
         public float radius;
     }
-    
+
     public struct MPGPPlane
     {
         public Vector3 normal;
         public float distance;
     }
-    
+
     public struct MPGPBox
     {
         public Vector3 center;
@@ -83,7 +84,7 @@ namespace Ist
         public MPGPPlane plane4;
         public MPGPPlane plane5;
     }
-    
+
     public struct MPGPSphereColliderData
     {
         public const int size = 44;
@@ -91,7 +92,7 @@ namespace Ist
         public MPGPColliderInfo info;
         public MPGPSphere shape;
     }
-    
+
     public struct MPGPCapsuleColliderData
     {
         public const int size = 56;
@@ -99,7 +100,7 @@ namespace Ist
         public MPGPColliderInfo info;
         public MPGPCapsule shape;
     }
-    
+
     public struct MPGPBoxColliderData
     {
         public const int size = 136;
@@ -107,9 +108,31 @@ namespace Ist
         public MPGPColliderInfo info;
         public MPGPBox shape;
     }
-    
-    
-    
+
+    public struct MPGPBezierPatchColliderData
+    {
+        public const int size = 220;
+
+        public MPGPColliderInfo info;
+        // raw bezier patch (control points) data
+        public Vector3
+            cp00, cp01, cp02, cp03,
+            cp10, cp11, cp12, cp13,
+            cp20, cp21, cp22, cp23,
+            cp30, cp31, cp32, cp33;
+
+        public void AssignControlPoints(Vector3[] src)
+        {
+            // I hate C# :(
+            cp00 = src[0]; cp01 = src[1]; cp02 = src[2]; cp03 = src[3];
+            cp10 = src[4]; cp11 = src[5]; cp12 = src[6]; cp13 = src[7];
+            cp20 = src[8]; cp21 = src[9]; cp22 = src[10]; cp23 = src[11];
+            cp30 = src[12]; cp31 = src[13]; cp32 = src[14]; cp33 = src[15];
+        }
+    }
+
+
+
     public struct MPGPWorldIData
     {
         public const int size = 16;
@@ -122,7 +145,7 @@ namespace Ist
     
     public struct MPGPWorldData
     {
-        public const int size = 296;
+        public const int size = 300;
     
         public float timestep;
         public float particle_size;
@@ -138,6 +161,7 @@ namespace Ist
         public int num_sphere_colliders;
         public int num_capsule_colliders;
         public int num_box_colliders;
+        public int num_bp_colliders;
         public int num_forces;
         public Vector3 world_center;
         public Vector3 world_extents;
@@ -172,6 +196,7 @@ namespace Ist
             num_sphere_colliders = 0;
             num_capsule_colliders = 0;
             num_box_colliders = 0;
+            num_bp_colliders = 0;
             rcp_particle_size2 = 1.0f / (particle_size * 2.0f);
             coord_scaler = Vector3.one;
         }

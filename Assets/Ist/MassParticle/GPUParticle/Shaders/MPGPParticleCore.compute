@@ -14,28 +14,25 @@
 
 
 #include "MPGPFoundation.cginc"
-#include "../../../Foundation/Shaders/BezierPatch.cginc"
-#include "../../../Foundation/Shaders/BezierPatchIntersection.cginc"
-
-
 
 
 
 #define BLOCK_SIZE 512
 
-StructuredBuffer<WorldData>         world_data;
-RWStructuredBuffer<WorldIData>      world_idata;
-StructuredBuffer<SPHParams>         sph_params;
-StructuredBuffer<Cell>              cells;
-RWStructuredBuffer<Particle>        particles;
-StructuredBuffer<Particle>          particles_to_add;
-RWStructuredBuffer<ParticleIData>   pimd;
-Texture2D                           gbuffer_depth;
-Texture2D                           gbuffer_normal;
-StructuredBuffer<SphereCollider>    sphere_colliders;
-StructuredBuffer<CapsuleCollider>   capsule_colliders;
-StructuredBuffer<BoxCollider>       box_colliders;
-StructuredBuffer<Force>             forces;
+StructuredBuffer<WorldData>             world_data;
+RWStructuredBuffer<WorldIData>          world_idata;
+StructuredBuffer<SPHParams>             sph_params;
+StructuredBuffer<Cell>                  cells;
+RWStructuredBuffer<Particle>            particles;
+StructuredBuffer<Particle>              particles_to_add;
+RWStructuredBuffer<ParticleIData>       pimd;
+Texture2D                               gbuffer_depth;
+Texture2D                               gbuffer_normal;
+StructuredBuffer<SphereCollider>        sphere_colliders;
+StructuredBuffer<CapsuleCollider>       capsule_colliders;
+StructuredBuffer<BoxCollider>           box_colliders;
+StructuredBuffer<BezierPatchCollider>   bp_colliders;
+StructuredBuffer<Force>                 forces;
 
 SamplerState samplergbuffer_position
 {
@@ -467,6 +464,20 @@ void ProcessColliders(uint3 dtid : SV_DispatchThreadID)
             pimd[pi].accel += dd.direction * -penetration * wd.wall_stiffness;
             particles[pi].hit_objid = col.info.owner_objid;
         }
+    }
+
+    // process bezier patch colliders
+    for(ci=0; ci<wd.num_bp_colliders; ++ci) {
+        BezierPatchCollider col = bp_colliders[ci];
+        if(!IsOverlaped(ppos, col.info.aabb, psize)) { continue; }
+
+        // todo
+        //DistanceData dd = DistancePointBox(ppos, col.shape);
+        //float penetration = dd.distance - wd.particle_size;
+        //if(penetration<0.0) {
+        //    pimd[pi].accel += dd.direction * -penetration * wd.wall_stiffness;
+        //    particles[pi].hit_objid = col.info.owner_objid;
+        //}
     }
 }
 

@@ -3,6 +3,7 @@
 
 #define MPGP_ENABLE_SPIN
 #define MPGP_ENABLE_HEAT_EMISSION
+#define MPGP_FOR_DRAW
 
 
 #if (defined(SHADER_API_D3D11) || defined(SHADER_API_PSSL))
