@@ -1,6 +1,10 @@
 #ifndef BezierPatch_h
 #define BezierPatch_h
 
+// thanks to @ototoi, @gishicho
+// http://jcgt.org/published/0004/01/04/
+
+
 /*
 // HLSL to GLSL
 #define float2 vec2

@@ -1,6 +1,9 @@
 #ifndef BezierPatchIntersection_h
 #define BezierPatchIntersection_h
 
+// thanks to @ototoi, @gishicho
+// http://jcgt.org/published/0004/01/04/
+
 
 // prototypes
 
@@ -17,9 +20,15 @@ bool BPIRaycast(BezierPatch bp, Ray ray, float zmin, float zmax, out BezierPatch
 
 // implements
 
-#define BPI_MAX_STACK_DEPTH 20
-#define BPI_MAX_LOOP        1000
-#define BPI_EPS             1e-3
+#ifndef BPI_MAX_STACK_DEPTH
+    #define BPI_MAX_STACK_DEPTH 20
+#endif
+#ifndef BPI_MAX_LOOP
+    #define BPI_MAX_LOOP 1000
+#endif
+#ifndef BPI_EPS
+    #define BPI_EPS 1e-3
+#endif
 
 struct BPIWorkingBuffer
 {
@@ -27,6 +36,7 @@ struct BPIWorkingBuffer
     BezierPatch crop;
     BezierPatch rotate;
     BezierPatch tmp0;
+    float4 uv_range; // input
 };
 
 
@@ -46,9 +56,9 @@ float3x3 BPIRotate2D_(float3 dx)
     dx.z = 0;
     dx = normalize(dx);
     return float3x3(
-        dx.x, dx.y, dx.z,
-       -dx.y, dx.x,  0.0,
-         0.0,  0.0,  1.0
+        dx.x, dx.y, 0.0,
+       -dx.y, dx.x, 0.0,
+         0.0,  0.0, 1.0
     );
 }
 
@@ -137,7 +147,7 @@ bool BPITestBezierPatch_(inout BPIWorkingBuffer work, inout BezierPatchHit info,
 
     float4 range_stack[BPI_MAX_STACK_DEPTH];
     int stack_index = 0;
-    range_stack[0] = float4(0.0, 1.0, 0.0, 1.0);
+    range_stack[0] = work.uv_range;
 
     for (int i = 0; i < BPI_MAX_LOOP && stack_index >= 0; ++i) {
 
@@ -200,6 +210,7 @@ bool BPIRaycast(BezierPatch bp, Ray ray, float zmin, float zmax, out BezierPatch
 {
     BPIWorkingBuffer work;
     work.source = bp;
+    work.uv_range = float4(0.0, 1.0, 0.0, 1.0);
     BPTransform(work.source, ZAlign(ray.origin, ray.direction));
 
     //// all pixels pass this test when draw aabb as mesh

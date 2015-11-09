@@ -1,6 +1,9 @@
 #ifndef IstBuiltinVariablesExt_h
 #define IstBuiltinVariablesExt_h
 
+float3 GetObjectPosition() { return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]); }
+float3 GetObjectUp() { return normalize(_Object2World[1].xyz); }
+
 float3 GetCameraPosition() { return _WorldSpaceCameraPos; }
 float3 GetCameraForward() { return -UNITY_MATRIX_V[2].xyz; }
 float3 GetCameraUp() { return UNITY_MATRIX_V[1].xyz; }
