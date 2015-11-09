@@ -5,6 +5,7 @@ CGINCLUDE
 #include "Assets/Ist/Foundation/Shaders/Geometry.cginc"
 #include "Assets/Ist/Foundation/Shaders/BuiltinVariablesExt.cginc"
 
+
 sampler2D _FrameBuffer_Shockwave;
 float4 _Params1;
 
@@ -15,11 +16,6 @@ float4 _Params1;
 float4 _Scale;
 float4 _OffsetCenter;
 half4 _ColorBias;
-
-float3 GetObjectPosition()
-{
-    return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
-}
 
 struct ia_out
 {

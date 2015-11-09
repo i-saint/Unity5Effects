@@ -34,8 +34,8 @@ namespace Ist
     #if UNITY_EDITOR
         void Reset()
         {
-            m_cs_trail = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/GPUParticle/Shaders/MPGPTrail.compute");
-            m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/GPUParticle/Materials/MPGPTrail.mat");
+            m_cs_trail = AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/Ist/MassParticle/GPUParticle/Shaders/MPGPTrail.compute");
+            m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/MassParticle/GPUParticle/Materials/MPGPTrail.mat");
             m_bounds_size = Vector3.one * 2.0f;
         }
     

@@ -20,6 +20,7 @@
 
 
 
+
 #define BLOCK_SIZE 512
 
 StructuredBuffer<WorldData>         world_data;

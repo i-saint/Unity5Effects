@@ -531,8 +531,8 @@ public class BatchRenderer : BatchRendererBase
 #if UNITY_EDITOR
     void Reset()
     {
-        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BatchRenderer/Materials/BatchLambert.mat");
-        m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/BatchRenderer/Meshes/cube.asset");
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/BatchRenderer/Materials/BatchStandard.mat");
+        m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/Cube.asset");
     }
 #endif
 

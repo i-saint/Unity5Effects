@@ -142,6 +142,8 @@ bool BPITestBounds_(inout BPIWorkingBuffer work, inout BezierPatchHit info, floa
 
 bool BPITestBezierPatch_(inout BPIWorkingBuffer work, inout BezierPatchHit info, float zmin, float zmax, float eps)
 {
+    info = (BezierPatchHit)0;
+
     // non-recursive iteration
     bool ret = false;
 
@@ -208,7 +210,8 @@ bool BPITestBezierPatch_(inout BPIWorkingBuffer work, inout BezierPatchHit info,
 
 bool BPIRaycast(BezierPatch bp, Ray ray, float zmin, float zmax, out BezierPatchHit hit)
 {
-    BPIWorkingBuffer work;
+    BPIWorkingBuffer work = (BPIWorkingBuffer)0;
+
     work.source = bp;
     work.uv_range = float4(0.0, 1.0, 0.0, 1.0);
     BPTransform(work.source, ZAlign(ray.origin, ray.direction));

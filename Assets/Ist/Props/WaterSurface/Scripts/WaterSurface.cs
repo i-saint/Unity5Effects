@@ -43,7 +43,7 @@ namespace Ist
 #if UNITY_EDITOR
         void Reset()
         {
-            m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/WaterSurface/Shaders/WaterSurface.shader");
+            m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/Props/WaterSurface/Shaders/WaterSurface.shader");
         }
 #endif // UNITY_EDITOR
 

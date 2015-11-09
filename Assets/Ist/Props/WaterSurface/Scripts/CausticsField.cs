@@ -34,7 +34,7 @@ namespace Ist
 #if UNITY_EDITOR
         void Reset()
         {
-            m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/WaterSurface/Shaders/CausticsField.shader");
+            m_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/Props/WaterSurface/Shaders/CausticsField.shader");
         }
 #endif
 

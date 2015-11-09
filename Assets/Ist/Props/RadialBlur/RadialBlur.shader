@@ -26,10 +26,6 @@ half4 _ColorBias;
 half4 _BloomThreshold;
 half4 _BloomIntensity;
 
-float3 GetObjectPosition()
-{
-    return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
-}
 
 struct ia_out
 {

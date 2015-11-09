@@ -40,7 +40,7 @@ namespace Ist
 #if UNITY_EDITOR
         void Reset()
         {
-            m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphere.asset");
+            m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/IcoSphere.asset");
             m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/MassParticle/CPUParticle/Materials/MPPointLight.mat");
             m_bounds_size = Vector3.one * 2.0f;
         }

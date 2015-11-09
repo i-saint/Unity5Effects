@@ -335,8 +335,8 @@ public class ProceduralGBuffer : MonoBehaviour
 #if UNITY_EDITOR
     void Reset()
     {
-        m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/BatchRenderer/Meshes/cube.asset");
-        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/BatchRenderer/Materials/ProceduralGBuffer.mat");
+        m_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/Cube.asset");
+        m_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/BatchRenderer/Materials/ProceduralGBuffer.mat");
         m_bounds_size = Vector3.one * 2.0f;
     }
 #endif

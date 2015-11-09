@@ -48,7 +48,7 @@ void   BPTransform(inout BezierPatch bp, float4x4 m);
 // --------------------------------------------------------------------
 // internal functions
 
-void BPSplitU_(out BezierPatch a, out BezierPatch b, BezierPatch p, float t, int i)
+void BPSplitU_(inout BezierPatch a, inout BezierPatch b, BezierPatch p, float t, int i)
 {
     float S = 1.0f - t;
     float3 p0 = p.cp[i + 0];
@@ -66,7 +66,7 @@ void BPSplitU_(out BezierPatch a, out BezierPatch b, BezierPatch p, float t, int
     b.cp[i + 3] = p3;
 }
 
-void BPSplitV_(out BezierPatch a, out BezierPatch b, BezierPatch p, float t, int i)
+void BPSplitV_(inout BezierPatch a, inout BezierPatch b, BezierPatch p, float t, int i)
 {
     float S = 1.0f - t;
     float3 p0 = p.cp[i + 0];
@@ -84,7 +84,7 @@ void BPSplitV_(out BezierPatch a, out BezierPatch b, BezierPatch p, float t, int
     b.cp[i + 12] = p3;
 }
 
-void BPCropU_(out BezierPatch dst, BezierPatch src, float s, float t, int i)
+void BPCropU_(inout BezierPatch dst, BezierPatch src, float s, float t, int i)
 {
     float3 p0 = src.cp[i + 0];
     float3 p1 = src.cp[i + 1];
@@ -100,7 +100,7 @@ void BPCropU_(out BezierPatch dst, BezierPatch src, float s, float t, int i)
     dst.cp[i + 3] = (p3*(t*t)*t + p0*(S*S)*S) + (p2*(S*t)*(3.0f * t) + p1*(S*S)*(3.0f * t));
 }
 
-void BPCropV_(out BezierPatch dst, BezierPatch src, float s, float t, int i)
+void BPCropV_(inout BezierPatch dst, BezierPatch src, float s, float t, int i)
 {
     float3 p0 = src.cp[i + 0];
     float3 p1 = src.cp[i + 4];

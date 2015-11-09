@@ -149,8 +149,8 @@ namespace Ist
         {
             m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/StencilShadows/Shaders/Light.shader");
             m_stencil_material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/StencilShadows/Materials/Stencil.mat");
-            m_quad_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/Quad.asset");
-            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/Sphere.asset");
+            m_quad_mesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/Quad.asset");
+            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/Sphere.asset");
             GetComponent<MeshRenderer>().sharedMaterials = new Material[0];
         }
 #endif // UNITY_EDITOR

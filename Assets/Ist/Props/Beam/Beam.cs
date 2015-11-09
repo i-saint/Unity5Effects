@@ -66,8 +66,8 @@ namespace Ist
 #if UNITY_EDITOR
         public virtual void Reset()
         {
-            GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/Beam/Beam_DefaultTransparent.mat");
-            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphereI2.asset");
+            GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Ist/Props/Beam/Beam_DefaultTransparent.mat");
+            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/IcoSphereI2.asset");
         }
 #endif // UNITY_EDITOR
 

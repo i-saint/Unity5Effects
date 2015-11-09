@@ -143,7 +143,7 @@ namespace Ist
         void Reset()
         {
             m_light_shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/Ist/ScreenSpaceShadows/Shaders/Light.shader");
-            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Utilities/Meshes/IcoSphere.asset");
+            GetComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>("Assets/Ist/Foundation/Meshes/IcoSphere.asset");
             GetComponent<MeshRenderer>().sharedMaterials = new Material[0];
         }
 #endif // UNITY_EDITOR
