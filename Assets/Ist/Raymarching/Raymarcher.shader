@@ -187,7 +187,7 @@ gbuffer_out frag_gbuffer(vs_out I)
 #endif
     float time = _Time.y;
     float2 coord = I.spos.xy;
-    coord.x *= _ScreenParams.x / _ScreenParams.y;
+    coord.x *= GetAspectRatio();
 
     float num_steps = 1.0;
     float last_distance = 0.0;
