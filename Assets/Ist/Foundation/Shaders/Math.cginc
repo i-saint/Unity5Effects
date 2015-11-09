@@ -4,46 +4,52 @@
 #define PI 3.1415926535897932384626433832795
 #define INV_PI 0.3183098861837907
 
+// GLSL compatible mod()
 float  modc(float  a, float  b) { return a - b * floor(a/b); }
 float2 modc(float2 a, float2 b) { return a - b * floor(a/b); }
 float3 modc(float3 a, float3 b) { return a - b * floor(a/b); }
 float4 modc(float4 a, float4 b) { return a - b * floor(a/b); }
 
-float3 rotateX(float3 p, float angle)
+
+// rotate vector
+float3 RotateX(float3 p, float angle)
 {
     float s, c;
     sincos(angle, s, c);
     return float3(p.x, c*p.y + s*p.z, -s*p.y + c*p.z);
 }
-
-float3 rotateY(float3 p, float angle)
+float3 RotateY(float3 p, float angle)
 {
     float s, c;
     sincos(angle, s, c);
     return float3(c*p.x - s*p.z, p.y, s*p.x + c*p.z);
 }
-
-float3 rotateZ(float3 p, float angle)
+float3 RotateZ(float3 p, float angle)
 {
     float s, c;
     sincos(angle, s, c);
     return float3(c*p.x + s*p.y, -s*p.x + c*p.y, p.z);
 }
 
+
 // a & b must be normalized
-float angle_between(float3 a, float3 b)
+float AngleBetween(float3 a, float3 b)
 {
     return acos(dot(a, b));
 }
-float angle_between(float3 a, float3 b, float3 center)
+float AngleBetween(float3 pos1, float3 pos2, float3 center)
 {
-    return angle_between(
-        normalize(a - center),
-        normalize(b - center));
+    return AngleBetween(
+        normalize(pos1 - center),
+        normalize(pos2 - center));
 }
 
 
-float4x4 translation_matrix44(float3 t)
+// ----------------------------------
+// matrix functions
+
+
+float4x4 Translate44(float3 t)
 {
     return float4x4(
         1.0, 0.0, 0.0, t.x,
@@ -52,7 +58,7 @@ float4x4 translation_matrix44(float3 t)
         0.0, 0.0, 0.0, 1.0);
 }
 
-float3x3 scale_matrix33(float3 s)
+float3x3 Scale33(float3 s)
 {
     return float3x3(
         s.x, 0.0, 0.0,
@@ -60,7 +66,7 @@ float3x3 scale_matrix33(float3 s)
         0.0, 0.0, s.x);
 }
 
-float4x4 scale_matrix44(float3 s)
+float4x4 Scale44(float3 s)
 {
     return float4x4(
         s.x, 0.0, 0.0, 0.0,
@@ -69,7 +75,7 @@ float4x4 scale_matrix44(float3 s)
         0.0, 0.0, 0.0, 1.0);
 }
 
-float2x2 rotation_matrix22(float angle)
+float2x2 Rotate22(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -78,7 +84,7 @@ float2x2 rotation_matrix22(float angle)
         s, c);
 }
 
-float3x3 rotateX_matrix33(float angle)
+float3x3 RotateX33(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -87,7 +93,7 @@ float3x3 rotateX_matrix33(float angle)
         0.0,   c,  -s,
         0.0,   s,   c);
 }
-float4x4 rotateX_matrix44(float angle)
+float4x4 RotateX44(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -98,7 +104,7 @@ float4x4 rotateX_matrix44(float angle)
         0.0, 0.0, 0.0, 1.0);
 }
 
-float3x3 rotateY_matrix33(float angle)
+float3x3 RotateY33(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -107,7 +113,7 @@ float3x3 rotateY_matrix33(float angle)
         0.0, 1.0, 0.0,
          -s, 0.0,   c);
 }
-float4x4 rotateY_matrix44(float angle)
+float4x4 RotateY44(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -118,7 +124,7 @@ float4x4 rotateY_matrix44(float angle)
         0.0, 0.0, 0.0, 1.0);
 }
 
-float3x3 rotateZ_matrix33(float angle)
+float3x3 RotateZ33(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -127,7 +133,7 @@ float3x3 rotateZ_matrix33(float angle)
           s,   c, 0.0,
         0.0, 0.0, 1.0);
 }
-float4x4 rotateZ_matrix44(float angle)
+float4x4 RotateZ44(float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -139,7 +145,7 @@ float4x4 rotateZ_matrix44(float angle)
 }
 
 // dir must be normalized
-float3x3 look_matrix33(float3 dir, float3 up)
+float3x3 Look33(float3 dir, float3 up)
 {
     float3 z = dir;
     float3 x = normalize(cross(up, z));
@@ -149,8 +155,7 @@ float3x3 look_matrix33(float3 dir, float3 up)
         x.y, y.y, z.y,
         x.z, y.z, z.z );
 }
-// dir must be normalized
-float4x4 look_matrix44(float3 dir, float3 up)
+float4x4 Look44(float3 dir, float3 up)
 {
     float3 z = dir;
     float3 x = normalize(cross(up, z));
@@ -162,7 +167,7 @@ float4x4 look_matrix44(float3 dir, float3 up)
         0.0, 0.0, 0.0, 1.0 );
 }
 
-float3x3 look_matrix33(float3 from, float3 to, float3 up)
+float3x3 Look33(float3 from, float3 to, float3 up)
 {
     float3 z = normalize(to - from);
     float3 x = normalize(cross(up, z));
@@ -172,7 +177,7 @@ float3x3 look_matrix33(float3 from, float3 to, float3 up)
         x.y, y.y, z.y,
         x.z, y.z, z.z);
 }
-float4x4 look_matrix44(float3 from, float3 to, float3 up)
+float4x4 Look44(float3 from, float3 to, float3 up)
 {
     float3 z = normalize(to - from);
     float3 x = normalize(cross(up, z));
@@ -185,7 +190,7 @@ float4x4 look_matrix44(float3 from, float3 to, float3 up)
 }
 
 // axis must be normalized
-float3x3 axis_rotation_matrix33(float3 axis, float angle)
+float3x3 RotateAxis33(float3 axis, float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -195,9 +200,7 @@ float3x3 axis_rotation_matrix33(float3 axis, float angle)
         ic * axis.x * axis.y + axis.z * s,  ic * axis.y * axis.y + c,           ic * axis.y * axis.z - axis.x * s,
         ic * axis.z * axis.x - axis.y * s,  ic * axis.y * axis.z + axis.x * s,  ic * axis.z * axis.z + c          );
 }
-
-// axis must be normalized
-float4x4 axis_rotation_matrix44(float3 axis, float angle)
+float4x4 RotateAxis44(float3 axis, float angle)
 {
     float s, c;
     sincos(angle, s, c);
@@ -209,8 +212,29 @@ float4x4 axis_rotation_matrix44(float3 axis, float angle)
         0.0,                                0.0,                                0.0,                                1.0);
 }
 
-// align to ray. pos: ray origin, dir: ray direction
-float4x4 zalign(float3 pos, float3 dir)
+// align to ray
+// pos: ray origin, dir: ray direction
+float4x4 ZAlign(float3 pos, float3 dir, float3 up)
+{
+    float3 z = dir;
+    float3 y = normalize(cross(dir, up));
+    float3 x = cross(y, dir);
+
+    float4x4 rot = float4x4(
+        x.x, y.x, z.x, 0.0,
+        x.y, y.y, z.y, 0.0,
+        x.z, y.z, z.z, 0.0,
+        0.0, 0.0, 0.0, 1.0
+        );
+    float4x4 trs = float4x4(
+        1.0, 0.0, 0.0, -pos.x,
+        0.0, 1.0, 0.0, -pos.y,
+        0.0, 0.0, 1.0, -pos.z,
+        0.0, 0.0, 0.0, 1.0
+        );
+    return rot * trs;
+}
+float4x4 ZAlign(float3 pos, float3 dir)
 {
     float3 z = dir;
 
@@ -223,33 +247,18 @@ float4x4 zalign(float3 pos, float3 dir)
     if (plane == 1) up.y = 1.0;
     if (plane == 2) up.z = 1.0;
 
-    float3 y = normalize(cross(dir, up));
-    float3 x = cross(y, dir);
-
-    float4x4 rot = float4x4(
-        x[0], y[0], z[0], 0.0,
-        x[1], y[1], z[1], 0.0,
-        x[2], y[2], z[2], 0.0,
-         0.0,  0.0,  0.0, 1.0
-    );
-    float4x4 trs = float4x4(
-        1.0, 0.0, 0.0,-pos.x,
-        0.0, 1.0, 0.0,-pos.y,
-        0.0, 0.0, 1.0,-pos.z,
-        0.0, 0.0, 0.0,   1.0
-    );
-    return rot * trs;
+    return ZAlign(pos, dir, up);
 }
 
 
-float3x3 quaternion_to_matrix33(float4 q)
+float3x3 QuaternionToMatrix33(float4 q)
 {
     return float3x3(
         1.0-2.0*q.y*q.y - 2.0*q.z*q.z,  2.0*q.x*q.y - 2.0*q.z*q.w,          2.0*q.x*q.z + 2.0*q.y*q.w,      
         2.0*q.x*q.y + 2.0*q.z*q.w,      1.0 - 2.0*q.x*q.x - 2.0*q.z*q.z,    2.0*q.y*q.z - 2.0*q.x*q.w,      
         2.0*q.x*q.z - 2.0*q.y*q.w,      2.0*q.y*q.z + 2.0*q.x*q.w,          1.0 - 2.0*q.x*q.x - 2.0*q.y*q.y );
 }
-float4x4 quaternion_to_matrix44(float4 q)
+float4x4 QuaternionToMatrix44(float4 q)
 {
     return float4x4(
         1.0-2.0*q.y*q.y - 2.0*q.z*q.z,  2.0*q.x*q.y - 2.0*q.z*q.w,          2.0*q.x*q.z + 2.0*q.y*q.w,          0.0,
@@ -258,7 +267,7 @@ float4x4 quaternion_to_matrix44(float4 q)
         0.0,                            0.0,                                0.0,                                1.0 );
 }
 
-float3 extract_position(float4x4 m)
+float3 ExtractPosition(float4x4 m)
 {
     return float3(m[0][3], m[1][3], m[2][3]);
 }
@@ -270,7 +279,7 @@ example:
 float4 g_state;
 float MyRnd()
 {
-    return GPURnd(g_state);
+    return GPURand(g_state);
 }
 
 // ...
@@ -282,7 +291,7 @@ for(int i=0; i<N; ++i) {
 }
 // ... 
 */
-float GPURnd(float4 state)
+float GPURand(float4 state)
 {
     const float4 q = float4(1225.0, 1585.0, 2457.0, 2098.0);
     const float4 r = float4(1112.0, 367.0, 92.0, 265.0);

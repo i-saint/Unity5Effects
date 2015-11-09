@@ -35,7 +35,7 @@ float3 _Scale;
 float3 localize(float3 p)
 {
 #if ENABLE_SCREENSPACE
-    p = mul(axis_rotation_matrix33(normalize(float3(_Rotation.xyz)), _Rotation.w), p);
+    p = mul(RotateAxis33(normalize(float3(_Rotation.xyz)), _Rotation.w), p);
     p -= _Position.xyz;
 #else
     p = mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz;

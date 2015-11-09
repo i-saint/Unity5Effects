@@ -24,10 +24,10 @@ void ApplyBillboardTransform(float2 id, inout float4 vertex, inout float3 normal
         vertex.xyz *= GetInstanceScale(instance_id);
     }
 #endif
-    vertex.xyz = mul(look_matrix33(look, up), vertex.xyz);
+    vertex.xyz = mul(Look33(look, up), vertex.xyz);
 #if ENABLE_INSTANCE_ROTATION
     {
-        float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
+        float3x3 rot = QuaternionToMatrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
         normal = mul(rot, normal);
     }
@@ -85,7 +85,7 @@ void ApplyViewPlaneBillboardTransform(float2 id, inout float4 vertex, inout floa
 #endif
 #if ENABLE_INSTANCE_ROTATION
     {
-        float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
+        float3x3 rot = QuaternionToMatrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
         normal = mul(rot, normal);
     }

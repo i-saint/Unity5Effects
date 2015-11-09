@@ -18,7 +18,7 @@ void ApplyInstanceTransform(int instance_id, inout float4 vertex, inout float3 n
 #endif
 #if ENABLE_INSTANCE_ROTATION
     {
-        float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
+        float3x3 rot = QuaternionToMatrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
         normal.xyz = mul(rot, normal.xyz);
         tangent.xyz = mul(rot, tangent.xyz);

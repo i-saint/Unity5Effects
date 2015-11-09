@@ -55,21 +55,21 @@ float sample_upper_depth(float2 t)
 }
 
 
-float3 rotateX(float3 p, float angle)
+float3 RotateX(float3 p, float angle)
 {
     float c = cos(angle);
     float s = sin(angle);
     return float3(p.x, c*p.y+s*p.z, -s*p.y+c*p.z);
 }
 
-float3 rotateY(float3 p, float angle)
+float3 RotateY(float3 p, float angle)
 {
     float c = cos(angle);
     float s = sin(angle);
     return float3(c*p.x-s*p.z, p.y, s*p.x+c*p.z);
 }
 
-float3 rotateZ(float3 p, float angle)
+float3 RotateZ(float3 p, float angle)
 {
     float c = cos(angle);
     float s = sin(angle);
@@ -85,7 +85,7 @@ float4x4 translation_matrix(float3 t)
         0.0, 0.0, 0.0, 1.0 );
 }
 
-float3x3 axis_rotation_matrix33(float3 axis, float angle)
+float3x3 RotateAxis33(float3 axis, float angle)
 {
     axis = normalize(axis);
     float s = sin(angle);
@@ -96,7 +96,7 @@ float3x3 axis_rotation_matrix33(float3 axis, float angle)
         oc * axis.x * axis.y + axis.z * s,  oc * axis.y * axis.y + c,           oc * axis.y * axis.z - axis.x * s,
         oc * axis.z * axis.x - axis.y * s,  oc * axis.y * axis.z + axis.x * s,  oc * axis.z * axis.z + c          );
 }
-float4x4 axis_rotation_matrix44(float3 axis, float angle)
+float4x4 RotateAxis44(float3 axis, float angle)
 {
     axis = normalize(axis);
     float s = sin(angle);
@@ -109,7 +109,7 @@ float4x4 axis_rotation_matrix44(float3 axis, float angle)
         0.0,                                0.0,                                0.0,                                1.0);
 }
 
-float3x3 quaternion_to_matrix33(float4 q)
+float3x3 QuaternionToMatrix33(float4 q)
 {
     return float3x3(
         1.0 - 2.0*q.y*q.y - 2.0*q.z*q.z, 2.0*q.x*q.y - 2.0*q.z*q.w,       2.0*q.x*q.z + 2.0*q.y*q.w,
@@ -117,7 +117,7 @@ float3x3 quaternion_to_matrix33(float4 q)
         2.0*q.x*q.z - 2.0*q.y*q.w,       2.0*q.y*q.z + 2.0*q.x*q.w,       1.0 - 2.0*q.x*q.x - 2.0*q.y*q.y );
 }
 
-float4x4 quaternion_to_matrix44(float4 q)
+float4x4 QuaternionToMatrix44(float4 q)
 {
     return float4x4(
         1.0 - 2.0*q.y*q.y - 2.0*q.z*q.z, 2.0*q.x*q.y - 2.0*q.z*q.w,       2.0*q.x*q.z + 2.0*q.y*q.w,       0.0,

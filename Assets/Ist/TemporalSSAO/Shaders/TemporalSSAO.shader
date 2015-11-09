@@ -129,7 +129,7 @@ half4 frag_ao(vs_out I) : SV_Target
     float occ = 0.0;
     float danger = 0.0;
 
-    float3x3 look = look_matrix33(vn, float3(0.0, 1.0, 0.1));
+    float3x3 look = Look33(vn, float3(0.0, 1.0, 0.1));
     float3x3 proj = tofloat3x3(unity_CameraProjection);
     for (int i = 0; i < _SampleCount; i++)
     {

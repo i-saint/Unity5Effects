@@ -21,7 +21,7 @@ void ApplyInstanceTransformSimplified(float2 id, inout float4 vertex, inout floa
 #endif
 #if ENABLE_INSTANCE_ROTATION
     {
-        float3x3 rot = quaternion_to_matrix33(GetInstanceRotation(instance_id));
+        float3x3 rot = QuaternionToMatrix33(GetInstanceRotation(instance_id));
         vertex.xyz = mul(rot, vertex.xyz);
     }
 #endif

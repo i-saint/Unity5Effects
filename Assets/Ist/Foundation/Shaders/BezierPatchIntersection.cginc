@@ -200,7 +200,7 @@ bool BPIRaycast(BezierPatch bp, Ray ray, float zmin, float zmax, out BezierPatch
 {
     BPIWorkingBuffer work;
     work.source = bp;
-    BPTransform(work.source, zalign(ray.origin, ray.direction));
+    BPTransform(work.source, ZAlign(ray.origin, ray.direction));
 
     //// all pixels pass this test when draw aabb as mesh
     //// (but viable if run on GLSLSandbox etc.)

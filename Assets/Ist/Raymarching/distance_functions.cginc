@@ -11,14 +11,14 @@ float kaleidoscopic_IFS(float3 z)
 
     float c = 2.0;
     z.y = modc(z.y, c)-c/2.0;
-    z = rotateZ(z, PI/2.0);
+    z = RotateZ(z, PI/2.0);
     float r;
     int n1 = 0;
     for (int n = 0; n < FRACT_ITER; n++) {
         float rotate = PI*0.5;
-        z = rotateX(z, rotate);
-        z = rotateY(z, rotate);
-        z = rotateZ(z, rotate);
+        z = RotateX(z, rotate);
+        z = RotateY(z, rotate);
+        z = RotateZ(z, rotate);
 
         z.xy = abs(z.xy);
         if (z.x+z.y<0.0) z.xy = -z.yx; // fold 1
