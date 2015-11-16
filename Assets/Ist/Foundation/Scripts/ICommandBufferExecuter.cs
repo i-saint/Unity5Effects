@@ -89,10 +89,24 @@ namespace Ist
             s_nth = 0;
         }
 
+
         protected virtual string GetCommandBufferName() { return typeof(T).Name; }
-        protected abstract void AddCommandBuffer(Camera c, CommandBuffer cb);
-        protected abstract void RemoveCommandBuffer(Camera c, CommandBuffer cb);
-        protected abstract void UpdateCommandBuffer(CommandBuffer commands);
+
+        // add command buffer to camera
+        // ex.
+        //  cam.AddCommandBuffer(CameraEvent.AfterGBuffer, cb);
+        protected abstract void AddCommandBuffer(Camera cam, CommandBuffer cb);
+
+        // remove command buffer to camera
+        // ex.
+        //  cam.RemoveCommandBuffer(CameraEvent.AfterGBuffer, cb);
+        protected abstract void RemoveCommandBuffer(Camera cam, CommandBuffer cb);
+
+        // issue draw commands
+        // ex.
+        //  cb.Clear();
+        //  foreach (var i in GetInstances()) { i.IssueDrawCall(cb); }
+        protected abstract void UpdateCommandBuffer(CommandBuffer cb);
     }
 
 }

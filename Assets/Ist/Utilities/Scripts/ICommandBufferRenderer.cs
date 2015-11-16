@@ -62,6 +62,6 @@ namespace Ist
         protected virtual string GetCommandBufferName() { return typeof(T).Name; }
         protected abstract void AddCommandBuffer(Camera cam, CommandBuffer cb);
         protected abstract void RemoveCommandBuffer(Camera cam, CommandBuffer cb);
-        protected abstract void UpdateCommandBuffer(CommandBuffer commands);
+        protected abstract void UpdateCommandBuffer(CommandBuffer cb);
     }
 }
