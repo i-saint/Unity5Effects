@@ -221,9 +221,9 @@ float4x4 ZAlign(float3 pos, float3 dir, float3 up)
     float3 x = cross(y, dir);
 
     float4x4 rot = float4x4(
-        x.x, y.x, z.x, 0.0,
-        x.y, y.y, z.y, 0.0,
-        x.z, y.z, z.z, 0.0,
+        x.x, x.y, x.z, 0.0,
+        y.x, y.y, y.z, 0.0,
+        z.x, z.y, z.z, 0.0,
         0.0, 0.0, 0.0, 1.0
         );
     float4x4 trs = float4x4(
@@ -232,7 +232,7 @@ float4x4 ZAlign(float3 pos, float3 dir, float3 up)
         0.0, 0.0, 1.0, -pos.z,
         0.0, 0.0, 0.0, 1.0
         );
-    return rot * trs;
+    return mul(rot, trs);
 }
 float4x4 ZAlign(float3 pos, float3 dir)
 {
