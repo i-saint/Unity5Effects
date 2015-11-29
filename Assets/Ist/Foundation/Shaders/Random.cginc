@@ -45,4 +45,70 @@ void Test()
 //    return frac(dot(state / m, float4(1.0, -1.0, 1.0, -1.0)));
 //}
 
+
+
+float hash(float2 p)
+{
+    float h = dot(p, float2(127.1, 311.7));
+    return frac(sin(h)*43758.5453123);
+}
+float hash(float3 p)
+{
+    float h = dot(p, float3(127.1, 311.7, 496.3));
+    return frac(sin(h)*43758.5453123);
+}
+
+float iqnoise(float2 p)
+{
+    float2 i = floor(p);
+    float2 f = frac(p);
+    float2 u = f*f*(3.0 - 2.0*f);
+    return -1.0 + 2.0*lerp(lerp(hash(i + float2(0.0, 0.0)),
+        hash(i + float2(1.0, 0.0)), u.x),
+        lerp(hash(i + float2(0.0, 1.0)),
+        hash(i + float2(1.0, 1.0)), u.x), u.y);
+}
+
+float iqnoise(float3 p)
+{
+    float3 i = floor(p);
+    float3 f = frac(p);
+    float3 u = f*f*(3.0 - 2.0*f);
+    return -1.0 + 2.0*lerp(lerp(hash(i + float2(0.0, 0.0)),
+        hash(i + float2(1.0, 0.0)), u.x),
+        lerp(hash(i + float2(0.0, 1.0)),
+        hash(i + float2(1.0, 1.0)), u.x), u.y);
+}
+
+#define DefCurlNoise2D(Name, NoiseFunc)\
+    float3 Name(float2 p, float epsilon)\
+    {\
+        float ie = 1.0 / (2.0 * epsilon);\
+        float nx1 = NoiseFunc(float3(p.x + epsilon, p.y, p.z));\
+        float nx2 = NoiseFunc(float3(p.x - epsilon, p.y, p.z));\
+        float ny1 = NoiseFunc(float3(p.x, p.y + epsilon, p.z));\
+        float ny2 = NoiseFunc(float3(p.x, p.y - epsilon, p.z));\
+        return float3(\
+            (ny1 - ny2) * ie,\
+           -(nx1 - nx2) * ie);\
+    }
+
+#define DefCurlNoise3D(Name, NoiseFunc)\
+    float3 Name(float3 p, float epsilon)\
+    {\
+        float ie = 1.0 / (2.0 * epsilon);\
+        float nx1 = NoiseFunc(float3(p.x + epsilon, p.y, p.z));\
+        float nx2 = NoiseFunc(float3(p.x - epsilon, p.y, p.z));\
+        float ny1 = NoiseFunc(float3(p.x, p.y + epsilon, p.z));\
+        float ny2 = NoiseFunc(float3(p.x, p.y - epsilon, p.z));\
+        float nz1 = NoiseFunc(float3(p.x, p.y, p.z + epsilon));\
+        float nz2 = NoiseFunc(float3(p.x, p.y, p.z - epsilon));\
+        return float3(\
+            ((ny1 - ny2) * ie) - ((nz1 - nz2) * ie),\
+            ((nz1 - nz2) * ie) - ((nx1 - nx2) * ie),\
+            ((nx1 - nx2) * ie) - ((ny1 - ny2) * ie));\
+    }
+
+DefCurlNoise3D(curl_iqnoise, iqnoise)
+
 #endif // IstRandom_h

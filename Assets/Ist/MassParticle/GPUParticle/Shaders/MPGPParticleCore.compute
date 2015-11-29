@@ -487,12 +487,12 @@ void ProcessColliders(uint3 dtid : SV_DispatchThreadID)
 float3 VectorField(float3 pos, float3 rcp_cellsize, float strength, float random_seed, float random_diffuse)
 {
     float3 dir = normalize(iq_rand(floor(pos * rcp_cellsize) * random_seed) * 2.0 - 1.0);
-    float rs = iq_rand(dot(pos, pos));
+    float rs = curl_iqnoise(pos, 1.0/rcp_cellsize*0.5);
     float3 accel = dir * (strength + random_diffuse*rs);
     return accel;
 
+    //return curl_iqnoise(pos+random_seed, 0.1) * strength * random_diffuse;
 }
-
 
 [numthreads(BLOCK_SIZE,1,1)]
 void ProcessForces(uint3 dtid : SV_DispatchThreadID)
