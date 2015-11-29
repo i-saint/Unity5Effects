@@ -46,6 +46,7 @@ void Test()
 //}
 
 
+// iq noise
 
 float hash(float2 p)
 {
@@ -80,35 +81,79 @@ float iqnoise(float3 p)
         hash(i + float2(1.0, 1.0)), u.x), u.y);
 }
 
+
+// trinoise
+
+float tri(float x)
+{
+    return abs(frac(x) - .5);
+}
+
+float3 tri3(float3 p)
+{
+    return float3(
+        tri(p.z + tri(p.y * 1.)),
+        tri(p.z + tri(p.x * 1.)),
+        tri(p.y + tri(p.x * 1.)) );
+}
+
+float trinoise(float3 p, float spd, float time)
+{
+    float z = 1.4;
+    float rz = 0.;
+    float3  bp = p;
+    for (float i = 0.; i <= 3.; i++) {
+        float3 dg = tri3(bp * 2.);
+        p += (dg + time * .1 * spd);
+        bp *= 1.8;
+        z *= 1.5;
+        p *= 1.2;
+        float t = tri(p.z + tri(p.x + tri(p.y)));
+        rz += t / z;
+        bp += 0.14;
+    }
+    return rz;
+}
+
+float trinoise(float3 p)
+{
+    return trinoise(p, 0.0, 0.0);
+}
+
+
+
+// curl variants
+
 #define DefCurlNoise2D(Name, NoiseFunc)\
     float3 Name(float2 p, float epsilon)\
     {\
-        float ie = 1.0 / (2.0 * epsilon);\
         float nx1 = NoiseFunc(float3(p.x + epsilon, p.y, p.z));\
         float nx2 = NoiseFunc(float3(p.x - epsilon, p.y, p.z));\
         float ny1 = NoiseFunc(float3(p.x, p.y + epsilon, p.z));\
         float ny2 = NoiseFunc(float3(p.x, p.y - epsilon, p.z));\
+        float re = 1.0 / (2.0 * epsilon);\
         return float3(\
-            (ny1 - ny2) * ie,\
-           -(nx1 - nx2) * ie);\
+            (ny1 - ny2),\
+           -(nx1 - nx2)) re;\
     }
 
 #define DefCurlNoise3D(Name, NoiseFunc)\
     float3 Name(float3 p, float epsilon)\
     {\
-        float ie = 1.0 / (2.0 * epsilon);\
         float nx1 = NoiseFunc(float3(p.x + epsilon, p.y, p.z));\
         float nx2 = NoiseFunc(float3(p.x - epsilon, p.y, p.z));\
         float ny1 = NoiseFunc(float3(p.x, p.y + epsilon, p.z));\
         float ny2 = NoiseFunc(float3(p.x, p.y - epsilon, p.z));\
         float nz1 = NoiseFunc(float3(p.x, p.y, p.z + epsilon));\
         float nz2 = NoiseFunc(float3(p.x, p.y, p.z - epsilon));\
+        float re = 1.0 / (2.0 * epsilon);\
         return float3(\
-            ((ny1 - ny2) * ie) - ((nz1 - nz2) * ie),\
-            ((nz1 - nz2) * ie) - ((nx1 - nx2) * ie),\
-            ((nx1 - nx2) * ie) - ((ny1 - ny2) * ie));\
+            (ny1 - ny2) - (nz1 - nz2),\
+            (nz1 - nz2) - (nx1 - nx2),\
+            (nx1 - nx2) - (ny1 - ny2)) * re;\
     }
 
 DefCurlNoise3D(curl_iqnoise, iqnoise)
+DefCurlNoise3D(curl_trinoise, trinoise)
 
 #endif // IstRandom_h
