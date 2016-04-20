@@ -61,7 +61,6 @@ Shader "Hidden/Dof/DX11Dof"
 
 	struct vs_out {
 		float4 pos : SV_POSITION;
-		float2 uv : TEXCOORD0;
 		float4 color : TEXCOORD1;
 		float cocOverlap : TEXCOORD2;
 	};

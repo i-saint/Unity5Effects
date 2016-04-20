@@ -159,14 +159,11 @@ Shader "Hidden/FastBloom" {
 			o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 			
 			o.uv = v.texcoord.xy;
-			half2 netFilterWidth = _MainTex_TexelSize.xy * half2(1.0, 0.0) * _Parameter.x; 
-			half4 coords = -netFilterWidth.xyxy * 3.0;
-			
-			o.offs[0] = v.texcoord.xyxy + coords * half4(1.0h,1.0h,-1.0h,-1.0h);
-			coords += netFilterWidth.xyxy;
-			o.offs[1] = v.texcoord.xyxy + coords * half4(1.0h,1.0h,-1.0h,-1.0h);
-			coords += netFilterWidth.xyxy;
-			o.offs[2] = v.texcoord.xyxy + coords * half4(1.0h,1.0h,-1.0h,-1.0h);
+
+			half offsetMagnitude = _MainTex_TexelSize.x * _Parameter.x;
+			o.offs[0] = v.texcoord.xyxy + offsetMagnitude * half4(-3.0h, 0.0h, 3.0h, 0.0h);
+			o.offs[1] = v.texcoord.xyxy + offsetMagnitude * half4(-2.0h, 0.0h, 2.0h, 0.0h);
+			o.offs[2] = v.texcoord.xyxy + offsetMagnitude * half4(-1.0h, 0.0h, 1.0h, 0.0h);
 
 			return o; 
 		}		
@@ -177,14 +174,11 @@ Shader "Hidden/FastBloom" {
 			o.pos = mul (UNITY_MATRIX_MVP, v.vertex);
 			
 			o.uv = half4(v.texcoord.xy,1,1);
-			half2 netFilterWidth = _MainTex_TexelSize.xy * half2(0.0, 1.0) * _Parameter.x;
-			half4 coords = -netFilterWidth.xyxy * 3.0;
-			
-			o.offs[0] = v.texcoord.xyxy + coords * half4(1.0h,1.0h,-1.0h,-1.0h);
-			coords += netFilterWidth.xyxy;
-			o.offs[1] = v.texcoord.xyxy + coords * half4(1.0h,1.0h,-1.0h,-1.0h);
-			coords += netFilterWidth.xyxy;
-			o.offs[2] = v.texcoord.xyxy + coords * half4(1.0h,1.0h,-1.0h,-1.0h);
+
+			half offsetMagnitude = _MainTex_TexelSize.y * _Parameter.x;
+			o.offs[0] = v.texcoord.xyxy + offsetMagnitude * half4(0.0h, -3.0h, 0.0h, 3.0h);
+			o.offs[1] = v.texcoord.xyxy + offsetMagnitude * half4(0.0h, -2.0h, 0.0h, 2.0h);
+			o.offs[2] = v.texcoord.xyxy + offsetMagnitude * half4(0.0h, -1.0h, 0.0h, 1.0h);
 
 			return o; 
 		}	

@@ -66,7 +66,7 @@ if (Target > ½) R = 1 - (1-2x(Target-½)) x (1-Blend)
 if (Target <= ½) R = (2xTarget) x Blend		
 		*/
 		
-		float3 check = step(0.5, color.rgb);
+		float3 check = step(half3(0.5,0.5,0.5), color.rgb);
 		float3 result = 0;
 		
 			result =  check * (half3(1,1,1) - ( (half3(1,1,1) - 2*(color.rgb-0.5)) *  (1-m.rgb))); 

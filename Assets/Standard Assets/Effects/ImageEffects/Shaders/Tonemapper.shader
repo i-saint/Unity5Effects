@@ -35,14 +35,14 @@ Shader "Hidden/Tonemapper" {
 
 	float4 fragLog(v2f i) : SV_Target 
 	{
-		const float DELTA = 0.0001f;
+		const float EPSILON = 1e-4h;
  
 		float fLogLumSum = 0.0f;
  
-		fLogLumSum += log( Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(-1,-1)).rgb) + DELTA);		
-		fLogLumSum += log( Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(1,1)).rgb) + DELTA);		
-		fLogLumSum += log( Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(-1,1)).rgb) + DELTA);		
-		fLogLumSum += log( Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(1,-1)).rgb) + DELTA);		
+		fLogLumSum += log( max( EPSILON, Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(-1,-1)).rgb)));		
+		fLogLumSum += log( max( EPSILON, Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(1,1)).rgb)));		
+		fLogLumSum += log( max( EPSILON, Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(-1,1)).rgb)));		
+		fLogLumSum += log( max( EPSILON, Luminance(tex2D(_MainTex, i.uv + _MainTex_TexelSize.xy * float2(1,-1)).rgb)));		
 
 		float avg = fLogLumSum / 4.0;
 		return float4(avg, avg, avg, avg);

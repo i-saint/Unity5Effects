@@ -148,7 +148,7 @@ namespace Ist
                 }
     
                 m_mpb = new MaterialPropertyBlock();
-                m_mpb.AddColor("_Color", GetLinearColor());
+                m_mpb.SetColor("_Color", GetLinearColor());
     
             }
             m_cb.Clear();
