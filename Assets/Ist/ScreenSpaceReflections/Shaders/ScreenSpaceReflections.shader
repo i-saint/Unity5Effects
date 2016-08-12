@@ -1,3 +1,6 @@
+// Upgrade NOTE: commented out 'float4x4 _WorldToCamera', a built-in variable
+// Upgrade NOTE: replaced '_WorldToCamera' with 'unity_WorldToCamera'
+
 Shader "Hidden/ScreenSpaceReflections" {
 Properties{
     _MainTex("Base (RGB)", 2D) = "" {}
@@ -20,7 +23,7 @@ float4 _PrePassBuffer_TexelSize;
 float4 _Params0;
 float4 _Params1;
 float4 _BlurOffset;
-float4x4 _WorldToCamera;
+// float4x4 _WorldToCamera;
 
 #define _Intensity          _Params0.x
 #define _RayMarchDistance   _Params0.y
@@ -117,7 +120,7 @@ RayHitData RayMarching(float adv, float3 p, float3 vp, float3 n, float smoothnes
     //float3 vp = mul(_WorldToCamera, float4(p, 1.0)).xyz; // doesn't work on OpenGL
     float3 cam_dir = normalize(p - _WorldSpaceCameraPos);
     float3 ref_dir = normalize(reflect(cam_dir, n.xyz) + Diffusion(p, _RayDiffusion) * (1.0-smoothness));
-    float3 ref_vdir = mul(tofloat3x3(_WorldToCamera), ref_dir);
+    float3 ref_vdir = mul(tofloat3x3(unity_WorldToCamera), ref_dir);
 
     float hit = 0.0;
     float3 ray_vpos = 0.0;

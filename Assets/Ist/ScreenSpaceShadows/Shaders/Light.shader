@@ -1,3 +1,6 @@
+// Upgrade NOTE: replaced '_CameraToWorld' with 'unity_CameraToWorld'
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "Hidden/Ist/ScreenSpaceShadowLight" {
 Properties {
     _SrcBlend("", Int) = 1
@@ -121,9 +124,9 @@ void DeferredCalculateLightParams (
     float depth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, uv);
     depth = Linear01Depth (depth);
     float4 vpos = float4(i.ray * depth,1);
-    float3 wpos = mul (_CameraToWorld, vpos).xyz;
+    float3 wpos = mul (unity_CameraToWorld, vpos).xyz;
     
-    float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
+    float3 lightPos = float3(unity_ObjectToWorld[0][3], unity_ObjectToWorld[1][3], unity_ObjectToWorld[2][3]);
 
     // Point light
     float3 tolight = wpos - lightPos;
@@ -177,7 +180,7 @@ ps_out frag(unity_v2f_deferred i)
     UnityLight light = (UnityLight)0;
     DeferredCalculateLightParams (i, wpos, uv, light.dir, atten, fadeDist);
     
-    float3 lightPos = float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]);
+    float3 lightPos = float3(unity_ObjectToWorld[0][3], unity_ObjectToWorld[1][3], unity_ObjectToWorld[2][3]);
 
     half4 gbuffer0 = tex2D (_CameraGBufferTexture0, uv);
     half4 gbuffer1 = tex2D (_CameraGBufferTexture1, uv);
@@ -187,7 +190,7 @@ ps_out frag(unity_v2f_deferred i)
     float3 eyeVec = normalize(wpos-_WorldSpaceCameraPos);
 
 #if LINE_LIGHT
-    float3 lightAxisX = normalize(float3(_Object2World[0][0], _Object2World[1][0], _Object2World[2][0]));
+    float3 lightAxisX = normalize(float3(unity_ObjectToWorld[0][0], unity_ObjectToWorld[1][0], unity_ObjectToWorld[2][0]));
     float3 lightPos1 = lightPos + lightAxisX * _CapsuleLength;
     float3 lightPos2 = lightPos - lightAxisX * _CapsuleLength;
     light.dir = CalcTubeLightToLight(wpos, lightPos1, lightPos2, eyeVec, normalWorld, _InnerRadius);

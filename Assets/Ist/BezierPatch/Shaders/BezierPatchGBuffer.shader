@@ -1,4 +1,6 @@
-﻿Shader "Ist/BezierPatch/GBuffer" {
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+Shader "Ist/BezierPatch/GBuffer" {
 Properties {
     _Color("Color", Color) = (0.5, 0.5, 0.5, 0.5)
     _SpecularColor("Specular Color", Color) = (0.5, 0.5, 0.5, 0.5)
@@ -59,7 +61,7 @@ vs_out vert(ia_out I)
     O.vertex = mul(UNITY_MATRIX_MVP, vertex);
     //O.screen_pos = ComputeScreenPos(O.vertex);
     O.screen_pos = O.vertex;
-    O.world_pos = mul(_Object2World, vertex);
+    O.world_pos = mul(unity_ObjectToWorld, vertex);
     O.instance_id = iid;
     return O;
 }

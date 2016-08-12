@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "Ist/Beam/Transparent" {
 Properties {
     _SrcBlend("SrcBlend", Int) = 1
@@ -39,9 +41,9 @@ struct ps_out
 
 vs_out vert(ia_out v)
 {
-    float3 pos1 = mul(_Object2World, v.vertex).xyz;
+    float3 pos1 = mul(unity_ObjectToWorld, v.vertex).xyz;
     float3 pos2 = pos1 + normalize(_BeamDirection.xyz) * _BeamDirection.w;
-    float3 n = normalize(mul(_Object2World, float4(v.normal.xyz,0.0)).xyz);
+    float3 n = normalize(mul(unity_ObjectToWorld, float4(v.normal.xyz,0.0)).xyz);
     float t = saturate(dot(-_BeamDirection.xyz, n.xyz) * 1000000);
     float3 pos = lerp(pos2, pos1, t);
 

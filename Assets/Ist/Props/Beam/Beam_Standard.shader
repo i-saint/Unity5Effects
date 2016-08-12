@@ -1,4 +1,7 @@
-﻿Shader "Ist/Beam/Standard" {
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+
+Shader "Ist/Beam/Standard" {
 Properties
 {
     _Color("Color", Color) = (1,1,1,1)
@@ -47,13 +50,13 @@ float4 _BeamDirection; // xyz: direction w: length
 
 void BeamTransform(inout float4 vertex, half3 normal)
 {
-    float3 pos1 = mul(_Object2World, vertex).xyz;
+    float3 pos1 = mul(unity_ObjectToWorld, vertex).xyz;
     float3 pos2 = pos1 + normalize(_BeamDirection.xyz) * _BeamDirection.w;
-    float3 n = normalize(mul(_Object2World, float4(normal, 0.0)).xyz);
+    float3 n = normalize(mul(unity_ObjectToWorld, float4(normal, 0.0)).xyz);
     float t = saturate(dot(-_BeamDirection.xyz, n.xyz) * 1000000);
     float3 pos = lerp(pos2, pos1, t);
 
-    vertex.xyz = mul(_World2Object, float4(pos,1)).xyz;
+    vertex.xyz = mul(unity_WorldToObject, float4(pos,1)).xyz;
 }
 ENDCG
 

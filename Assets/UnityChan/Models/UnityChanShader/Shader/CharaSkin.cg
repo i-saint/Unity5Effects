@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 // Character skin shader
 // Includes falloff shadow
 
@@ -56,10 +58,10 @@ v2f vert( appdata_base v )
 	v2f o;
 	o.pos = mul( UNITY_MATRIX_MVP, v.vertex );
 	o.uv = TRANSFORM_TEX( v.texcoord.xy, _MainTex );
-	o.normal = normalize( mul( _Object2World, float4_t( v.normal, 0 ) ).xyz );
+	o.normal = normalize( mul( unity_ObjectToWorld, float4_t( v.normal, 0 ) ).xyz );
 	
 	// Eye direction vector
-	float4_t worldPos =  mul( _Object2World, v.vertex );
+	float4_t worldPos =  mul( unity_ObjectToWorld, v.vertex );
 	o.eyeDir = normalize( _WorldSpaceCameraPos - worldPos );
 
 	o.lightDir = WorldSpaceLightDir( v.vertex );

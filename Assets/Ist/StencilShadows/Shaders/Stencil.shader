@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "Ist/StencilShadows/Stencil"
 {
 Properties {
@@ -75,8 +77,8 @@ void Project(inout float3 pos, float3 n)
 
 vs_out vert(ia_out v)
 {
-    float3 pos = mul(_Object2World, v.vertex).xyz;
-    float3 n = normalize(mul(_Object2World, float4(v.normal.xyz, 0.0)).xyz);
+    float3 pos = mul(unity_ObjectToWorld, v.vertex).xyz;
+    float3 n = normalize(mul(unity_ObjectToWorld, float4(v.normal.xyz, 0.0)).xyz);
     Project(pos, n);
 
     vs_out o;

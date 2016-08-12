@@ -1,4 +1,6 @@
-﻿Shader "Raymarcher/RayMarcher" {
+﻿// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+
+Shader "Raymarcher/RayMarcher" {
 Properties {
     _Color ("Color", Color) = (1,1,1,1)
     _MainTex ("Albedo (RGB)", 2D) = "white" {}
@@ -38,7 +40,7 @@ float3 localize(float3 p)
     p = mul(RotateAxis33(normalize(float3(_Rotation.xyz)), _Rotation.w), p);
     p -= _Position.xyz;
 #else
-    p = mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz;
+    p = mul(unity_WorldToObject, float4(p, 1)).xyz * _Scale.xyz;
 #endif
     return p;
 }

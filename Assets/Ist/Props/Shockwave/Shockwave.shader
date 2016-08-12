@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 Shader "Ist/Shockwave" {
 
 CGINCLUDE
@@ -41,7 +43,7 @@ vs_out vert (ia_out I)
     O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
-    O.world_pos = mul(_Object2World, I.vertex);
+    O.world_pos = mul(unity_ObjectToWorld, I.vertex);
     O.obj_pos = float4(GetObjectPosition(), 1);
     return O;
 }

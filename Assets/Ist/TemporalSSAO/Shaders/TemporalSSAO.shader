@@ -1,3 +1,6 @@
+// Upgrade NOTE: commented out 'float4x4 _WorldToCamera', a built-in variable
+// Upgrade NOTE: replaced '_WorldToCamera' with 'unity_WorldToCamera'
+
 Shader "Hidden/TemporalSSAO" {
 Properties{
     _MainTex("Base (RGB)", 2D) = "" {}
@@ -18,7 +21,7 @@ sampler2D _RandomTexture;
 
 float4 _Params0;
 float4 _BlurOffset;
-float4x4 _WorldToCamera;
+// float4x4 _WorldToCamera;
 
 #define _Radius             _Params0.x
 #define _InvRadius          (1.0/_Params0.x)
@@ -112,7 +115,7 @@ half4 frag_ao(vs_out I) : SV_Target
 
     float3 vp = GetViewPosition(uv);
     float3 n = GetNormal(uv);
-    float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    float3 vn = mul(tofloat3x3(unity_WorldToCamera), n);
     //float3 vn = -normalize(cross(ddx(vp), ddy(vp))); // not good :(
     float4 vel = GetVelocity(uv);
 
@@ -216,7 +219,7 @@ half4 frag_combine(vs_out I) : SV_Target
     c.rgb = GetVelocity(uv).b;
 #elif DEBUG_SHOW_VIEW_NORMAL
     float3 n = GetNormal(uv);
-    float3 vn = mul(tofloat3x3(_WorldToCamera), n);
+    float3 vn = mul(tofloat3x3(unity_WorldToCamera), n);
 
     //float3 vp = GetViewPosition(uv);
     //float3 vn = -normalize(cross(ddx(vp), ddy(vp))); 

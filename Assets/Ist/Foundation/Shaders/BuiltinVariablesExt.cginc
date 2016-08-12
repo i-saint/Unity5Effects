@@ -1,10 +1,12 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
 #ifndef IstBuiltinVariablesExt_h
 #define IstBuiltinVariablesExt_h
 
-float3 GetObjectPosition()  { return float3(_Object2World[0][3], _Object2World[1][3], _Object2World[2][3]); }
-float3 GetObjectForward()   { return normalize(-_Object2World[2].xyz); }
-float3 GetObjectUp()        { return normalize(_Object2World[1].xyz); }
-float3 GetObjectRight()     { return normalize(_Object2World[0].xyz); }
+float3 GetObjectPosition()  { return float3(unity_ObjectToWorld[0][3], unity_ObjectToWorld[1][3], unity_ObjectToWorld[2][3]); }
+float3 GetObjectForward()   { return normalize(-unity_ObjectToWorld[2].xyz); }
+float3 GetObjectUp()        { return normalize(unity_ObjectToWorld[1].xyz); }
+float3 GetObjectRight()     { return normalize(unity_ObjectToWorld[0].xyz); }
 
 float3 GetCameraPosition()  { return _WorldSpaceCameraPos; }
 float3 GetCameraForward()   { return -UNITY_MATRIX_V[2].xyz; }

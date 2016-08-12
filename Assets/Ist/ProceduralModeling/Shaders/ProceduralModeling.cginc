@@ -1,3 +1,6 @@
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+
 #ifndef IstProceduralModeling_h
 #define IstProceduralModeling_h
 
@@ -27,8 +30,8 @@ vs_out vert(ia_out I)
     vs_out O;
     O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
-    O.world_pos = mul(_Object2World, I.vertex);
-    O.world_normal = mul(_Object2World, float4(I.normal, 0.0));
+    O.world_pos = mul(unity_ObjectToWorld, I.vertex);
+    O.world_normal = mul(unity_ObjectToWorld, float4(I.normal, 0.0));
     return O;
 }
 #endif // ENABLE_CUSTUM_VERTEX
@@ -123,7 +126,7 @@ float soft_max(float a, float b, float r)
 
 float3 localize(float3 p)
 {
-    return mul(_World2Object, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
+    return mul(unity_WorldToObject, float4(p, 1)).xyz * _Scale.xyz + _OffsetPosition.xyz;
 }
 
 #endif // IstProceduralModeling_h
