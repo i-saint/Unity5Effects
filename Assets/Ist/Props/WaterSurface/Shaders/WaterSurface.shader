@@ -133,7 +133,13 @@ ps_out frag(vs_out i)
             float ray_depth = ComputeDepth(ray_pos4);
             ray_coord = (ray_pos4.xy / ray_pos4.w) * 0.5 + 0.5;
             ref_depth = GetDepth(ray_coord);
-            if(ray_depth >= ref_depth) { break; }
+
+#if defined(UNITY_REVERSED_Z)
+            if (ray_depth <= ref_depth) { break; }
+#else
+            if (ray_depth >= ref_depth) { break; }
+#endif
+
             ray_adv += step;
             step *= _MarchBoost;
         }
