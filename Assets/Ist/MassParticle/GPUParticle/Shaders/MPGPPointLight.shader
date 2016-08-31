@@ -158,8 +158,8 @@ ps_out frag(vs_out I)
     float3 eyeVec = normalize(wpos - _WorldSpaceCameraPos);
 
     light.dir = normalize(lightPos - wpos);
-    light.ndotl = LambertTerm(normalWorld, light.dir);
-    if (dot(gbuffer2.xyz, 1.0) * light.ndotl <= 0.0) { discard; }
+    float ndotl = LambertTerm(normalWorld, light.dir);
+    if (dot(gbuffer2.xyz, 1.0) * ndotl <= 0.0) { discard; }
 
     float occlusion = 0.0;
 #if ENABLE_SHADOW
