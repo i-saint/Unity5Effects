@@ -43,10 +43,15 @@ ps_out frag(vs_out i)
     float fd2 = tex2D(_FrontDepth2, coord).x;
     float bd1 = tex2D(_BackDepth, coord).x;
     float bd2 = tex2D(_BackDepth2, coord).x;
-    if(bd2 < fd1 || bd1 < fd2) { discard; }
-
     ps_out r;
+#if defined(UNITY_REVERSED_Z)
+    if(bd2 > fd1 || bd1 > fd2) { discard; }
+    r.color = r.depth = min(fd1, fd2);
+#else
+    if(bd2 < fd1 || bd1 < fd2) { discard; }
     r.color = r.depth = max(fd1, fd2);
+#endif
+
     return r;
 }
 ENDCG
