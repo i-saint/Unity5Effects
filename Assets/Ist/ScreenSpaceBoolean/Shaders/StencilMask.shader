@@ -59,8 +59,13 @@ depth_out frag_pierce(vs_out i)
     depth_out o;
     float2 t = i.screen_pos.xy / i.screen_pos.w;
     float target_depth = tex2D(_BackDepth, t);
+#if defined(UNITY_REVERSED_Z)
+    if (d >= target_depth) { discard; }
+    o.color = o.depth = 0.0;
+#else
     if (d <= target_depth) { discard; }
     o.color = o.depth = 1.0;
+#endif
     return o;
 }
 ENDCG
