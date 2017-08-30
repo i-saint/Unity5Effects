@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Upgrade NOTE: commented out 'float4x4 _WorldToCamera', a built-in variable
 // Upgrade NOTE: replaced '_WorldToCamera' with 'unity_WorldToCamera'
 
@@ -81,7 +83,7 @@ vs_out vert(ia_out v)
 vs_out vert_combine(ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.vertex = o.screen_pos = UnityObjectToClipPos(v.vertex);
     o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }

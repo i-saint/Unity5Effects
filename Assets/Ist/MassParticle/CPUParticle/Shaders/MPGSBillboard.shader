@@ -1,4 +1,6 @@
-﻿// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
 
 Shader "MassParticle/GSBillboard" {
 Properties {
@@ -63,7 +65,7 @@ GS_INPUT vert(appdata_full v)
 [maxvertexcount(4)]
 void geom(point GS_INPUT p[1], inout TriangleStream<FS_INPUT> triStream)
 {
-    float4x4 vp = mul(UNITY_MATRIX_MVP, unity_WorldToObject);
+    float4x4 vp = UnityObjectToClipPos(unity_WorldToObject);
     float3 up = float3(0, 1, 0);
     float3 look = _WorldSpaceCameraPos - p[0].pos.xyz;
     look.y = 0;

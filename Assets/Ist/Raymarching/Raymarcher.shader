@@ -1,4 +1,6 @@
-﻿// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
 
 Shader "Raymarcher/RayMarcher" {
 Properties {
@@ -130,7 +132,7 @@ vs_out vert(ia_out I)
 #if ENABLE_SCREENSPACE
     O.vertex = I.vertex;
 #else
-    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
+    O.vertex = UnityObjectToClipPos(I.vertex);
 #endif
     O.spos = O.vertex;
     return O;

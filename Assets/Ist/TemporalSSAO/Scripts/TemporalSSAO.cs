@@ -56,7 +56,7 @@ namespace Ist
             RenderTexture r = new RenderTexture(w, h, d, f);
             r.filterMode = FilterMode.Point;
             r.useMipMap = false;
-            r.generateMips = false;
+            r.autoGenerateMips = false;
             r.wrapMode = TextureWrapMode.Clamp;
             r.Create();
             return r;

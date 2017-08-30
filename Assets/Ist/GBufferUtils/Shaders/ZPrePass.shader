@@ -1,4 +1,6 @@
-﻿Shader "Ist/ZPrePass" {
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Ist/ZPrePass" {
 CGINCLUDE
 struct ia_out
 {
@@ -13,7 +15,7 @@ struct vs_out
 vs_out vert(ia_out v)
 {
     vs_out o;
-    o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.vertex = UnityObjectToClipPos(v.vertex);
     return o;
 }
 

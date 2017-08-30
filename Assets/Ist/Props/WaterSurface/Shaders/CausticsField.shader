@@ -1,4 +1,6 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 Shader "Hidden/Ist/CausticsField" {
 SubShader {
@@ -44,7 +46,7 @@ struct ps_out
 vs_out vert(ia_out v)
 {
     vs_out o;
-    o.vertex = o.screen_pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.vertex = o.screen_pos = UnityObjectToClipPos(v.vertex);
     o.screen_pos.y *= _ProjectionParams.x;
     return o;
 }

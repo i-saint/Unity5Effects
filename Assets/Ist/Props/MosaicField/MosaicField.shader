@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 Shader "Ist/MosaicField" {
 Properties {
     _BlockSize ("Block Size", Float) = 15.0
@@ -17,7 +19,7 @@ struct v2f {
 v2f vert (appdata_img v)
 {
     v2f o;
-    o.vertex = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.vertex = UnityObjectToClipPos(v.vertex);
     o.screen_pos = ComputeScreenPos(o.vertex);
     return o;
 }

@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 
 #ifndef MAP_NORMAL
 #   define MAP_NORMAL map
@@ -100,7 +102,7 @@ struct v2f_shadow {
 v2f_shadow vert_shadow(appdata_full I)
 {
     v2f_shadow O;
-    O.pos = mul(UNITY_MATRIX_MVP, I.vertex);
+    O.pos = UnityObjectToClipPos(I.vertex);
     TRANSFER_VERTEX_TO_FRAGMENT(O);
     return O;
 }

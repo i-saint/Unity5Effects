@@ -160,7 +160,7 @@ public static class IcoSphere
         mesh.normals = normales;
 
         mesh.RecalculateBounds();
-        mesh.Optimize();
+        ;
         AssetDatabase.CreateAsset(mesh, "Assets/IcoSphere.asset");
     }
 }

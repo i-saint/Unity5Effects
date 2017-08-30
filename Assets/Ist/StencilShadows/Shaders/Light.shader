@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Upgrade NOTE: replaced '_CameraToWorld' with 'unity_CameraToWorld'
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
@@ -62,7 +64,7 @@ struct ps_out
 unity_v2f_deferred vert_point(ia_out v)
 {
     unity_v2f_deferred o;
-    o.pos = mul(UNITY_MATRIX_MVP, v.vertex);
+    o.pos = UnityObjectToClipPos(v.vertex);
     o.uv = ComputeScreenPos(o.pos);
     o.ray = mul (UNITY_MATRIX_MV, v.vertex).xyz * float3(-1,-1,1);
     return o;

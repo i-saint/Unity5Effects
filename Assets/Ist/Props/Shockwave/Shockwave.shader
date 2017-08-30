@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 Shader "Ist/Shockwave" {
@@ -40,7 +42,7 @@ struct ps_out
 vs_out vert (ia_out I)
 {
     vs_out O;
-    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
+    O.vertex = UnityObjectToClipPos(I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.center = ComputeScreenPos(mul(UNITY_MATRIX_VP, float4(GetObjectPosition() + _OffsetCenter.xyz, 1)));
     O.world_pos = mul(unity_ObjectToWorld, I.vertex);

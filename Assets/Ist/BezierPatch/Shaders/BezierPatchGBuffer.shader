@@ -1,4 +1,6 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 Shader "Ist/BezierPatch/GBuffer" {
 Properties {
@@ -58,7 +60,7 @@ vs_out vert(ia_out I)
     float4 vertex = float4((_Vertices[vid].position * (aabb.extents * 2.0)) + aabb.center, 1.0);
 
     vs_out O;
-    O.vertex = mul(UNITY_MATRIX_MVP, vertex);
+    O.vertex = UnityObjectToClipPos(vertex);
     //O.screen_pos = ComputeScreenPos(O.vertex);
     O.screen_pos = O.vertex;
     O.world_pos = mul(unity_ObjectToWorld, vertex);

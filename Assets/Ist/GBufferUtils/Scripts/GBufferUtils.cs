@@ -73,7 +73,7 @@ namespace Ist
             var ret = new RenderTexture(m_camera.pixelWidth, m_camera.pixelHeight, depth, format);
             ret.filterMode = FilterMode.Point;
             ret.useMipMap = false;
-            ret.generateMips = false;
+            ret.autoGenerateMips = false;
             ret.enableRandomWrite = m_enable_uav;
             ret.Create();
             return ret;

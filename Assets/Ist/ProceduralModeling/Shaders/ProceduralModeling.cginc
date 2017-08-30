@@ -1,3 +1,5 @@
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
 // Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 // Upgrade NOTE: replaced '_World2Object' with 'unity_WorldToObject'
 
@@ -28,7 +30,7 @@ struct vs_out
 vs_out vert(ia_out I)
 {
     vs_out O;
-    O.vertex = mul(UNITY_MATRIX_MVP, I.vertex);
+    O.vertex = UnityObjectToClipPos(I.vertex);
     O.screen_pos = ComputeScreenPos(O.vertex);
     O.world_pos = mul(unity_ObjectToWorld, I.vertex);
     O.world_normal = mul(unity_ObjectToWorld, float4(I.normal, 0.0));
